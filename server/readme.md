@@ -17,7 +17,7 @@ fab -H 192.168.0.106 -u pi -pMyPassword deploy
 ```
 This will deploy the project to the host located at 192.168.0.101 using the username 'pi' and the password 'MyPassword'.
 
-# Web services
+## Web services
 - Website: http://IP_ADDRESS/
 - Chronograf:  http://IP_ADDRESS:8888/
 - Admin: http://IP_ADDRESS/admin

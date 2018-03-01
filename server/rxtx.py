@@ -23,15 +23,21 @@ ifdb.create_database(INFLUX_DBNAME)
 
 while True:
 
-    for i in range(5):
+    for i in range(3):
         data = dict(
-            temp=randint(180,350) / 10.0, 
-            signal=randint(100,500),
-            other=randint(100,500),
-            db=randint(100,200),
-            db2=randint(110,210)
-
+            signal=randint(0,100),
+            db=randint(1,110),
+            lux=randint(100,200)
         )
         print (data)
         comm.rx(datetime.utcnow(), 'test_device_{}'.format(i), data)
+    
+    for i in range(7,10):
+        data = dict(
+            temp=randint(180,350) / 10.0, 
+            signal=randint(0,100)
+        )
+        print (data)
+        comm.rx(datetime.utcnow(), 'test_device_{}'.format(i), data)
+
     time.sleep(1)

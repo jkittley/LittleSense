@@ -87,7 +87,7 @@ def device_register_config(device_id):
 # Register - Helper function
 def get_device_reg_stages(stage_id="home"):
     stages = [
-        dict(id="home", title="Find Device", link="device_register"),
+        dict(id="home", title="Unregistered Devices", link="device_register"),
         dict(id="preview", title="Preview", link="device_register_preview"),
         dict(id="config", title="Configuration", link="device_register_config"),
         dict(id="done", title="Complete", link=None)
@@ -119,14 +119,10 @@ def api_get(device_id):
         return json.dumps({ "error" : "Invalid interval. Must be in second (integer) and > 0" })
 
     # Fields
-    field_keys = []
-    fields = ""
+    fields, field_keys = "", []
     for fk in get_field_names(device_id=device_id):
-        fields = fields + 'mean("{0}") AS "mean_{0}", '.format(fk['name'])
-        field_keys.append({
-            'name': "mean_{0}".format(fk['name']),
-            'type': fk['type']
-        })
+        fields += 'mean("{0}") AS "mean_{0}", '.format(fk['name'])
+        field_keys.append(dict(name="mean_{0}".format(fk['name']), type=fk['type']))
 
     # Timespan
     s = arrow.utcnow().shift(hours=-1)
@@ -162,12 +158,19 @@ def api_get(device_id):
     readings = app.config.get('IFDB').query(q).get_points()
     readings = list(readings)
     
-    timestamps = [ x['time'] for x in readings ]
-
+    timestamps = []
+    used_keys = []
+    for r in readings:
+        timestamps.append(r['time'])
+        for k, v in r.items():
+            if v is not None:
+                used_keys.append(k)
+    
+    
     return json.dumps({ 
-        "field_keys" : field_keys, 
+        "field_keys": list(filter(lambda x: x['name'] in used_keys, field_keys)), 
         'readings': readings, 
-        'timestamps': timestamps
+        'timestamps': timestamps,
      })
 
 # ------------------------------------------------------------
@@ -189,11 +192,16 @@ def get_devices():
     db = TinyDB(app.config.get('DB_DEVICE_REGISTRATION'))
     
     all_devices = []
-    Device = namedtuple('Device', ['id', 'name', 'registered', 'last_upd'])
+    Device = namedtuple('Device', ['id', 'name', 'registered', 'last_upd', 'last_upd_keys'])
     
     for device in devices:
         device_id = device['value']
+
         last_upd = list(last_upds.get_points(tags={'device_id': device_id}))[0]
+        last_upd_keys = []
+        for k, v in last_upd.items():
+            if v is not None:
+                last_upd_keys.append(k)
 
         try:
             registration_record = db.search(Query().device_id == device_id)[0]
@@ -208,6 +216,7 @@ def get_devices():
             id=device_id,
             name=name,
             last_upd=last_upd,
+            last_upd_keys=last_upd_keys,
             registered=registered,
         ))
     
@@ -221,11 +230,8 @@ def get_devices():
 
 def get_field_names(**kwargs):
     q = 'SHOW FIELD KEYS FROM "reading"'
-    tags=None
-    # if kwargs.get('device_id', None) is not None:
-    #     tags = dict(device_id=str(kwargs.get('device_id')))
-    #     print(tags)
-    field_names = app.config.get('IFDB').query(q).get_points(tags=tags)
+    field_names = app.config.get('IFDB').query(q).get_points()
+    print(field_names)
     return [ dict(name=f['fieldKey'], type=f['fieldType']) for f in field_names ]
     
    

@@ -3,7 +3,8 @@
 {% block style %}
 <style>
     .stage {
-        padding: 20px;
+        padding-top: 10px;
+        padding-bottom: 10px;
         text-align: center;
         background-color: #eee;
         border-width: 1px;
@@ -62,6 +63,11 @@
                             labelString: 'Closing price ($)'
                         }
                     }]
+                },
+                legend: {
+                    onClick: function (e) {
+                        e.stopPropagation();
+                    }
                 }
             }
         };
@@ -156,6 +162,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
 <div class="row stages">
     {% for s in stages %}
     <div class="col stage {% if current.id == s.id %}active{% endif %}">
@@ -165,7 +172,7 @@
     </div>
     {% endfor %}
 </div>
-
+</div>
 {% if current.id == 'home' %}
     <div class="container">
     <h3>Unregistered devices which have sent data recently.</h3>
@@ -186,8 +193,8 @@
                     <td>{{ loop.index }}</td>
                     <td>{{ device.id }}</th>
                     <td class="time-to-rel">{{ device.last_upd.time }}</td>
-                    <td>{% for k in device.last_upd.keys() %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-                    <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-dark">Preview</a></td>
+                    <td>{% for k in device.last_upd_keys %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                    <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Preview</a></td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -196,10 +203,17 @@
 {% endif %}
 
 {% if current.id == 'preview' %}
-        <div class="container">
-            <canvas id="chart1"></canvas>
-            <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-dark">Register</a>
+    <div class="container">
+        <canvas id="chart1"></canvas>
+        <div class="row">
+            <div class="col">
+                <a href="{{ url_for('device_register') }}" class="btn btn-block btn-info">Back</a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>
+            </div>
         </div>
+    </div>
 
 {% endif %}
 
@@ -229,8 +243,14 @@
                         </label>
                     </div>
                     <hr>
-                    <a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-dark">Back</a>
-                    <input type="submit" class="btn btn-success float-right" value="Register">
+                    <div class="row">
+                        <div class="col">
+                            <a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-block btn-info">Back</a>
+                        </div>
+                        <div class="col">
+                            <input type="submit" class="btn btn-block btn-success float-right" value="Register">
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
