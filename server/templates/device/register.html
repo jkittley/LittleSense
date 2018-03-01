@@ -1,0 +1,250 @@
+{% extends '/base.html' %}
+
+{% block style %}
+<style>
+    .stage {
+        padding: 20px;
+        text-align: center;
+        background-color: #eee;
+        border-width: 1px;
+        border-top: 0;
+        border-color: #ccc;
+        border-style: solid;
+        font-size: 16px;
+    }
+    .stage.active {
+        background-color:skyblue;
+    }
+    .stages {
+        margin-bottom: 25px;
+    }
+</style>
+{% endblock%}
+
+{% block script %}
+<script>
+    // Convert timestamps to local
+    $(document).ready(function() {
+        $('.time-to-rel').each(function(k,v) {
+            var m = moment($(this).html()); 
+            $(this).html(m.format('llll') + " (" + m.fromNow() + ")");
+        })
+    });
+</script>
+{% if current.id == 'preview' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+<script>
+
+    var chart = null;
+    
+    var build_charts = function() {
+        var ctx = document.getElementById("chart1").getContext("2d");
+        ctx.canvas.width = 1000;
+        ctx.canvas.height = 300;
+        var cfg = {
+            type: 'bar',
+            labels: [],
+            data: {
+                datasets: []
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        distribution: 'series',
+                        ticks: {
+                            source: 'labels'
+                        }
+                    }],
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Closing price ($)'
+                        }
+                    }]
+                }
+            }
+        };
+        chart = new Chart(ctx, cfg);
+    };
+
+  
+
+    function prepData(readings, field_name) {
+        data   = []
+        labels = []
+        for (i in readings) {
+            data.push({
+                t: moment(readings[i].time),
+                y: readings[i][field_name]
+            })
+            labels.push(
+                moment(readings[i].time).format()
+            );
+        }
+        return [data, labels]
+    }
+
+
+    function makeDataset(chart, timestamps, field_keys, readings) {
+        datasets = []
+        for (i in field_keys) {
+            var dataset = {
+                label: field_keys[i].name, 
+                data: [],
+                type: 'line',
+                pointRadius: 0,
+                fill: false,
+                lineTension: 0,
+                borderWidth: 2,
+                borderColor: colors[i]
+            }
+
+            prepped = prepData(readings, field_keys[i].name)
+            data = prepped[0];
+            labels = prepped[1];
+            for (i in data) { 
+                // dataset.labels.push(labels[i]);
+                dataset.data.push(data[i]);
+            }
+            
+            datasets.push(dataset);
+        }
+
+        chart.data.labels = timestamps;
+        chart.data.datasets = datasets;
+        chart.update(0);
+    }
+    
+    var colors = [];
+    for (var i=0; i<100; i++) { colors.push('#'+Math.random().toString(16).slice(-3)); } 
+
+    $(document).ready(function() {
+        build_charts();
+        setInterval(function() {
+            $.ajax({
+                dataType: "json",
+                url: "{{ url_for('api_get', device_id=device_id) }}",
+                data: {
+                    start: moment().utc().subtract(1, 'minutes').format(),
+                    end: moment().utc().format(),
+                    fill: "null",
+                    interval: 1,
+                    limit: 30,
+                },
+                success: function(resp) { makeDataset(chart, resp.timestamps, resp.field_keys, resp.readings); }
+            }); 
+        }, 500);
+        
+        
+
+		// document.getElementById('update').addEventListener('click', function() {
+		// 	var type = document.getElementById('type').value;
+ 		// 	chart.config.data.datasets[0].type = type;
+		// 	chart.update();
+		// });
+
+    });
+</script>
+{% endif %}
+{% endblock %}
+
+{% block navmenu %}
+<li class="nav-item mr-0">  
+    <a class="nav-link" href="/">Exit</a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row stages">
+    {% for s in stages %}
+    <div class="col stage {% if current.id == s.id %}active{% endif %}">
+        {% if device_id and s.link %}<a href="{{ url_for(s.link, device_id=device_id) }}">{% endif %}
+        {{ loop.index }}. {{ s.title }}
+        {% if device_id %}</a>{% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% if current.id == 'home' %}
+    <div class="container">
+    <h3>Unregistered devices which have sent data recently.</h3>
+    <hr>
+    <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">ID</th>
+                <th scope="col">Last Updated</th>
+                <th scope="col">Fields</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for device in devices.unregistered %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ device.id }}</th>
+                    <td class="time-to-rel">{{ device.last_upd.time }}</td>
+                    <td>{% for k in device.last_upd.keys() %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                    <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-dark">Preview</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+{% endif %}
+
+{% if current.id == 'preview' %}
+        <div class="container">
+            <canvas id="chart1"></canvas>
+            <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-dark">Register</a>
+        </div>
+
+{% endif %}
+
+{% if current.id == 'config' %}
+    <div class="container">
+        <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
+
+                {% for field in form.errors %}
+                {% for error in form.errors[field] %}
+                    <div class="alert alert-danger">
+                        <strong>{{ form[field].label }}</strong> {{error}}
+                    </div>
+                {% endfor %}
+                {% endfor %}
+
+            <div class="card">
+                <div class="card-body">
+                    {{ form.csrf_token }}
+                    <div class="form-group">
+                        <label>{{ form.device_id.label }}
+                        {{ form.device_id(size=40, class="form-control") }} 
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.name.label }}
+                        {{ form.name(size=40, class="form-control") }}
+                        </label>
+                    </div>
+                    <hr>
+                    <a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-dark">Back</a>
+                    <input type="submit" class="btn btn-success float-right" value="Register">
+                </div>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+{% if current.id == 'done' %}
+<div class="container">
+        <div class="jumbotron">
+            <h1>Registration complete</h1>
+        </div>
+    </div>
+{% endif %}
+
+
+
+{% endblock%}

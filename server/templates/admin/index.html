@@ -1,0 +1,14 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+
+{% set url_parts = request.host.split(':') %}
+
+  <h2>Welcome {{ url_parts[0] }}</h2>
+    <p>
+        <ul>
+            <li><a href="http://{{ url_parts[0] }}:8083">InfluxDB</a></li>
+            <li><a href="http://{{ url_parts[0] }}:3000">Grafana</a></li>
+        </ul>
+    </p>
+{% endblock %}
