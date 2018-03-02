@@ -13,7 +13,7 @@ from flask import render_template, Flask, request, abort, redirect, url_for, fla
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 from tinydb import TinyDB, Query
-
+from utils import Devices
 from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired
@@ -42,11 +42,11 @@ try:
 except requests.exceptions.RequestException as e:
     app.config['IFDB'] = None
     
-
-
 #  Setup the Web API manager
 from commlink import WebAPI
 webapi = WebAPI(app.config.get('IFDB'))
+
+devices = Devices(app)
 
 
 # ------------------------------------------------------------
@@ -55,7 +55,7 @@ webapi = WebAPI(app.config.get('IFDB'))
 
 @app.route("/")
 def home():
-    return render_template('dashboard/index.html', field_names=get_field_names())
+    return render_template('dashboard/index.html', field_names=devices.field_names())
 
 # Register - pick device
 @app.route("/device/register")
@@ -113,7 +113,12 @@ def api_put():
     return webapi.rx(request.values)['json_response']
 
 # WebAPI - get
-@app.route("/api/get/<string:device_id>")
+@app.route("/api/devices/get")
+def api_get_devices():
+    return json.dumps(devices.as_dict())
+
+# WebAPI - get
+@app.route("/api/readings/get/<string:device_id>")
 def api_get(device_id):
 
     # Fill gabs in period none=dont fill, null=fill intervals with null readings
@@ -129,7 +134,7 @@ def api_get(device_id):
 
     # Fields
     fields, field_keys = "", []
-    for fk in get_field_names(device_id=device_id):
+    for fk in devices.field_names():
         fields += 'mean("{0}") AS "mean_{0}", '.format(fk['name'])
         field_keys.append(dict(name="mean_{0}".format(fk['name']), type=fk['type']))
 
@@ -190,64 +195,7 @@ class DeviceSettingsForm(FlaskForm):
     device_id = StringField('Device Id', validators=[DataRequired()]) 
     name = StringField('Name', validators=[DataRequired()])
 
-# ------------------------------------------------------------
-# Data Functions
-# ------------------------------------------------------------
 
-def get_devices():
-    if app.config['IFDB'] == None:
-        return None
-    devices = app.config.get('IFDB').query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
-    last_upds = app.config.get('IFDB').query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
-    
-    db = TinyDB(app.config.get('DB_DEVICE_REGISTRATION'))
-    
-    all_devices = []
-    Device = namedtuple('Device', ['id', 'name', 'registered', 'last_upd', 'last_upd_keys'])
-    
-    for device in devices:
-        device_id = device['value']
-
-        last_upd = list(last_upds.get_points(tags={'device_id': device_id}))[0]
-        last_upd_keys = []
-        for k, v in last_upd.items():
-            if v is not None:
-                last_upd_keys.append(k)
-
-        try:
-            registration_record = db.search(Query().device_id == device_id)[0]
-            registered = True
-            name = registration_record['name']
-        except IndexError:
-            registration_record = None
-            registered = False
-            name = "Unregistered"
-
-        all_devices.append(Device(
-            id=device_id,
-            name=name,
-            last_upd=last_upd,
-            last_upd_keys=last_upd_keys,
-            registered=registered,
-        ))
-    
-    Devices = namedtuple('Devices', ['all', 'registered', 'unregistered'])
-    return Devices(
-        all=all_devices, 
-        registered=list(filter(lambda x: x.registered, all_devices)),
-        unregistered= list(filter(lambda x: not x.registered, all_devices))
-    )
-
-
-def get_field_names(**kwargs):
-    if app.config['IFDB'] == None:
-        return []
-    q = 'SHOW FIELD KEYS FROM "reading"'
-    field_names = app.config.get('IFDB').query(q).get_points()
-    print(field_names)
-    return [ dict(name=f['fieldKey'], type=f['fieldType']) for f in field_names ]
-    
-   
 
 # ------------------------------------------------------------
 # Other
@@ -257,7 +205,7 @@ def get_field_names(**kwargs):
 def context_basics():
     if app.config['IFDB'] == None:
         flash('No connection to InfluxDB', 'danger')
-    return dict(config=app.config, devices=get_devices())
+    return dict(config=app.config, devices=devices.get())
 
 
 if __name__ == '__main__':

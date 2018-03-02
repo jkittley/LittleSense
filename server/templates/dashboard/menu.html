@@ -12,14 +12,14 @@
 
         {% for device in devices.registered %}
         <li class="nav-item">
-          <div class="nav-link active">
+          <div class="nav-link device-link" data-device-id="{{ device.id }}">
             <span data-feather="activity"></span>
             {{ device.name }}
             <a class="float-right" href="{{ url_for('device_register_config', device_id=device.id) }}"><span data-feather="edit-2"></span></a>
           </div>
-          <ul class="">
+          <ul class="device-fields">
               {% for f in field_names %}
-              <li class="nav-item">
+              <li class="nav-item  field-link" data-field-name="{{ f.name }}">
                 <a class="nav-link" href="#">
                   <span data-feather="file-text"></span>
                   {{ f.name }} ({{ f.type }})

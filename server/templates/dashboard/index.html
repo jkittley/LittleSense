@@ -4,32 +4,91 @@
  <!-- Icons -->
  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
  <script>
-     $(document).ready(function() { feather.replace(); });
+    $(document).ready(function() { feather.replace(); });
 
-    $(document).ready(function() { $(function () {
-        console.log('HEY');
-        $('#datetimepicker_start').datetimepicker();
-        // $('#datetimepicker_end').datetimepicker({
-        //     useCurrent: false
+    function getData(test_device_0, callback_success, callback_error) {
+        var apiUrl = "{{ url_for('api_get', device_id='DEVICE_ID') }}".replace('DEVICE_ID',test_device_0);
+        $.ajax({
+                dataType: "json",
+                url: apiUrl,
+                data: {
+                    start: moment().utc().subtract(1, 'minutes').format(),
+                    end: moment().utc().format(),
+                    fill: "null",
+                    interval: 1,
+                    limit: 30,
+                },
+                success: callback_success,
+                error: callback_error
+        }); 
+    }
+
+    function getDevices(callback_success, callback_error) {
+        var apiUrl = "{{ url_for('api_get_devices') }}";
+        $.ajax({
+                dataType: "json",
+                url: apiUrl,
+                success: callback_success,
+                error: callback_error
+        }); 
+    }
+
+    function update() {
+        console.log("UPDATE");
+        // getData(test_device_0, function() {
         // });
-        // $("#datetimepicker7").on("change.datetimepicker", function (e) {
-        //     $('#datetimepicker8').datetimepicker('minDate', e.date);
-        // });
-        // $("#datetimepicker8").on("change.datetimepicker", function (e) {
-        //     $('#datetimepicker7').datetimepicker('maxDate', e.date);
-        // });
+    }
+
+    $(document).ready(function() {
+
+        $(".device-link").click(function() {
+            console.log(["data-device-id", $(this).data('device-id') ]);
+            var is_active = $(this).find('.nav-link').first().hasClass('active');
+            if (is_active) {
+                // Deactivate this and all children
+                $(this).find('.nav-link').removeClass('active');
+            } else {
+                // Activate this only
+                $(this).find('.nav-link').first().addClass('active');
+            }
         });
+        
+        $(".field-link").click(function() {
+            console.log(["data-device-id", $(this).data('device-id') ]);
+            $(this).toggleClass('active');
+        });
+
+
+        // setInterval(update, 2500);
+
+        getDevices(function(resp) {
+            console.log(resp);
+            $('#menu').html('');
+            for (i in resp.devices) {
+                var device = resp.registered[i]
+                console.log(device);
+                $('#menu').append('<li>'+device.name+'</li>');
+            }
+        }, null);
     });
 </script>
-
-
 {% endblock %}
 
 
 
 {% block content %}
 
-    {% include 'dashboard/menu.html' %}
+    <nav class="col-md-2 d-none d-md-block bg-light sidebar">   
+        <div class="sidebar-sticky">
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+              <span>Devices</span>
+              <a class="d-flex align-items-center text-muted" href="{{ url_for('device_register') }}">
+                <span data-feather="plus-circle"> </span> &nbsp;Register
+              </a>
+            </h6>
+            <ul id="menu"></ul>
+        </div>
+    </nav>
 
     <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
