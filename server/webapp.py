@@ -55,7 +55,7 @@ webapi = WebAPI(app.config.get('IFDB'))
 
 @app.route("/")
 def home():
-    return render_template('index.html', field_names=get_field_names())
+    return render_template('dashboard/index.html', field_names=get_field_names())
 
 # Register - pick device
 @app.route("/device/register")

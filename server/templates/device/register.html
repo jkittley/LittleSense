@@ -141,15 +141,6 @@
                 success: function(resp) { makeDataset(chart, resp.timestamps, resp.field_keys, resp.readings); }
             }); 
         }, 500);
-        
-        
-
-		// document.getElementById('update').addEventListener('click', function() {
-		// 	var type = document.getElementById('type').value;
- 		// 	chart.config.data.datasets[0].type = type;
-		// 	chart.update();
-		// });
-
     });
 </script>
 {% endif %}
