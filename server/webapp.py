@@ -55,7 +55,6 @@ webapi = WebAPI(app.config.get('IFDB'))
 
 @app.route("/")
 def home():
-    flash('TEST', 'success')
     return render_template('index.html', field_names=get_field_names())
 
 # Register - pick device
@@ -87,9 +86,9 @@ def device_register_config(device_id):
         # Save to database
         db.upsert({'device_id': device_id, 'name': form.name.data}, Query().device_id == device_id)
         # Show done page
-        stages, current = get_device_reg_stages("done")
-        return render_template('device/register.html', stages=stages, current=current, device_id=device_id)
-    
+        flash('Device registered', 'success')
+        return redirect(url_for('home'))
+
     # Show config form page 
     stages, current = get_device_reg_stages("config")
     return render_template('device/register.html', stages=stages, current=current, device_id=device_id, form=form)
