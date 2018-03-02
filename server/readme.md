@@ -17,7 +17,9 @@ To run the project locally and to use Fabric to deploy the code to a Raspberry P
 
 That's all you need to do if you don't want to run the InfluxDB database locally.
 
-6. To test the system run: `python webapp.py` and the Flask debug server should start. Now you can navigating to http://localhost:5000/ in your browser.
+6. To tell the webapp that this is a local deployment set an environment variable: `export LOCAL=1`. This will tell the webapp to run in Debug mode.
+
+7. To test the system run: `python webapp.py` and the Flask debug server should start. Now you can navigating to http://localhost:5000/ in your browser.
 
 #### Additional - Local Influx Setup
 To install InfluxDB follow the instructions relativant to your operating system [here](https://docs.influxdata.com/influxdb/v1.4/introduction/installation/) and start the server. On MacOS the command is `influxd -config /usr/local/etc/influxdb.conf`

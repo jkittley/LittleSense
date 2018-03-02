@@ -5,10 +5,11 @@
 
 import config
 import json, os, arrow
+import requests
 from collections import namedtuple
 from random import randint
 from datetime import datetime
-from flask import render_template, Flask, request, abort, redirect, url_for
+from flask import render_template, Flask, request, abort, redirect, url_for, flash
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 from tinydb import TinyDB, Query
@@ -33,11 +34,19 @@ else:
     app.config.from_object('config.remote')
 
 # Influx
-app.config['IFDB'] = InfluxDBClient('localhost', 8086, 'root', 'root', app.config.get('INFLUX_DBNAME'))
 
-#  Setup the commlink
+try:
+    app.config['IFDB'] = InfluxDBClient('localhost', 8086, 'root', 'root', app.config.get('INFLUX_DBNAME'))
+    # Test connection
+    _ = app.config.get('IFDB').query('SHOW FIELD KEYS FROM "reading"')
+except requests.exceptions.RequestException as e:
+    app.config['IFDB'] = None
+    
+
+
+#  Setup the Web API manager
 from commlink import WebAPI
-comm = WebAPI(app.config.get('IFDB'))
+webapi = WebAPI(app.config.get('IFDB'))
 
 
 # ------------------------------------------------------------
@@ -101,7 +110,7 @@ def get_device_reg_stages(stage_id="home"):
 # WebAPI - put
 @app.route("/api/put", methods=['GET', 'POST'])
 def api_put():
-    return comm.rx(request.values)['json_response']
+    return webapi.rx(request.values)['json_response']
 
 # WebAPI - get
 @app.route("/api/get/<string:device_id>")
@@ -186,6 +195,8 @@ class DeviceSettingsForm(FlaskForm):
 # ------------------------------------------------------------
 
 def get_devices():
+    if app.config['IFDB'] == None:
+        return None
     devices = app.config.get('IFDB').query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
     last_upds = app.config.get('IFDB').query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
     
@@ -229,6 +240,8 @@ def get_devices():
 
 
 def get_field_names(**kwargs):
+    if app.config['IFDB'] == None:
+        return []
     q = 'SHOW FIELD KEYS FROM "reading"'
     field_names = app.config.get('IFDB').query(q).get_points()
     print(field_names)
@@ -242,6 +255,8 @@ def get_field_names(**kwargs):
 
 @app.context_processor
 def context_basics():
+    if app.config['IFDB'] == None:
+        flash('No connection to InfluxDB', 'danger')
     return dict(config=app.config, devices=get_devices())
 
 
