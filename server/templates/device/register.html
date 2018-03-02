@@ -122,12 +122,18 @@
         chart.update(0);
     }
     
+    function show_error(msg) {
+        $('#chart1').before('<div class="alert alert-danger">'+msg+'</div>');
+        $('#option-config').hide();
+        $('#chart1').hide();
+    }
+
     var colors = [];
     for (var i=0; i<100; i++) { colors.push('#'+Math.random().toString(16).slice(-3)); } 
 
     $(document).ready(function() {
         build_charts();
-        setInterval(function() {
+        var timer = setInterval(function() {
             $.ajax({
                 dataType: "json",
                 url: "{{ url_for('api_get', device_id=device_id) }}",
@@ -138,7 +144,14 @@
                     interval: 1,
                     limit: 30,
                 },
-                success: function(resp) { makeDataset(chart, resp.timestamps, resp.field_keys, resp.readings); }
+                success: function(resp) { 
+                    makeDataset(chart, resp.timestamps, resp.field_keys, resp.readings); 
+                },
+                error: function(jqXHR) {
+                    console.log(jqXHR.responseText);
+                    show_error(jqXHR.responseText);
+                    clearInterval(timer);
+                }
             }); 
         }, 500);
     });
@@ -202,7 +215,7 @@
             <div class="col">
                 <a href="{{ url_for('device_register') }}" class="btn btn-block btn-info">Back</a>
             </div>
-            <div class="col">
+            <div id="option-config" class="col">
                 <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>
             </div>
         </div>

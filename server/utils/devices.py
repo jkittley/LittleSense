@@ -29,7 +29,6 @@ class Devices():
         if self._ifdb is not None:
             self.update()
         
-        
     def get(self, update=False):
         if update:
             self.update()
@@ -100,7 +99,10 @@ class Device():
 
     def is_registered(self):
         registration_record = self._dev_reg.get_record(device_id=self.id)
-        return (registration_record is not None)
+        if registration_record is not None:
+            if 'registered' in registration_record.keys():
+                return registration_record['registered']
+        return False
         
     def field_names(self, **kwargs):
         return self._dev_reg.get_seen_fields(self.id)
@@ -142,13 +144,14 @@ class Device():
         # Fields
         fields, field_keys = "", []
         for fk in self.field_names():
-            fields += 'mean("{0}") AS "mean_{0}", '.format(fk['name'])
-            field_keys.append(dict(name="mean_{0}".format(fk['name']), type=fk['type']))
+            fields += 'mean("{0}") AS "mean_{0}", '.format(fk)
+            field_keys.append(dict(name="mean_{0}".format(fk), type="TODO"))
+        if len(field_keys) == 0:
+            return False, { "error" : "Device has no fields" }
 
         # Timespan
         s = arrow.utcnow().shift(hours=-1)
         e = arrow.utcnow()
-
         try:
             if kwargs.get('start', None) is not None:
                 s = arrow.get(kwargs.get('start'))
@@ -171,7 +174,6 @@ class Device():
             return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
         
             
-    
         # Build Query
         q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
             device_id=self.id, 
@@ -193,7 +195,7 @@ class Device():
                 if v is not None:
                     used_keys.append(k)
 
-        return { 
+        return True, { 
             "count": len(readings),
             "field_keys": list(filter(lambda x: x['name'] in used_keys, field_keys)), 
             'readings': readings, 

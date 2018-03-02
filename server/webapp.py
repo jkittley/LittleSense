@@ -49,6 +49,7 @@ def home():
 # Register - pick device
 @app.route("/device/register")
 def device_register():
+    devices.update()
     stages, current = get_device_reg_stages()
     return render_template('device/register.html', stages=stages, current=current)
 
@@ -116,9 +117,12 @@ def api_get(device_id):
     start    = request.args.get('start', None)
     end      = request.args.get('end', None)
     limit    = request.args.get('limit', None)
-    device = Device(device_id)
-    readings = device.get_readings(fill=fillmode, interval=interval, start=start, end=end, limit=limit)
-    return json.dumps(readings)
+    device   = Device(device_id)
+    success, readings = device.get_readings(fill=fillmode, interval=interval, start=start, end=end, limit=limit)
+    if success:
+        return json.dumps(readings), 200 , {'ContentType':'application/json'} 
+    else:
+        return readings['error'], 400
 
 # ------------------------------------------------------------
 # Forms

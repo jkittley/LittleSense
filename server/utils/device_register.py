@@ -31,11 +31,15 @@ class DeviceRegister():
         return True 
 
     def add_seen_fields(self, device_id, field_names):
+        seen = self.get_seen_fields(device_id)
+        seen = list(set(seen + field_names))
         self._db.update({
-            'device_id': device_id, 
-            'fields': field_names
-        })
+            'fields': seen
+        }, Query().device_id == device_id)
     
     def get_seen_fields(self, device_id):
         record = self._db.get(Query().device_id == device_id)
-        return record.fields
+        if record is not None:
+            if 'fields' in record:
+                return record['fields']
+        return []
