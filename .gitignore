@@ -1,4 +1,4 @@
 
 old/
 *.pyc
-server/confid/secure.py
+server/config/secure.py
