@@ -4,6 +4,7 @@
 
 import json
 from tinydb import TinyDB, Query
+from utils import Device
 
 class CommLink:
     
@@ -30,18 +31,9 @@ class CommLink:
 
 
     def _save_reading(self, utc, device_id, sensor_readings):
-        readings = [
-            {
-                "measurement": "reading",
-                "tags": {
-                    "device_id": device_id
-                },
-                "time": utc.strftime("%c"),
-                "fields": sensor_readings
-            }
-        ]
-        self.db.write_points(readings)
-        return (True, { "readings" : readings })
+        dev = Device(device_id=device_id)
+        return dev.add_reading(utc, sensor_readings)
+
     
     def _ping(self):
         print("ping")

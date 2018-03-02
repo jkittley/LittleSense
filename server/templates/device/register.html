@@ -25,12 +25,12 @@
 {% block script %}
 <script>
     // Convert timestamps to local
-    $(document).ready(function() {
-        $('.time-to-rel').each(function(k,v) {
-            var m = moment($(this).html()); 
-            $(this).html(m.format('llll') + " (" + m.fromNow() + ")");
-        })
-    });
+    // $(document).ready(function() {
+    //     $('.time-to-rel').each(function(k,v) {
+    //         var m = moment($(this).html()); 
+    //         $(this).html(m.format('llll') + " (" + m.fromNow() + ")");
+    //     })
+    // });
 </script>
 {% if current.id == 'preview' %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
@@ -179,14 +179,16 @@
               </tr>
             </thead>
             <tbody>
-            {% for device in devices.unregistered %}
+            {% for device in devices %}
+                {% with last_update, last_upd_keys = device.last_update() %}
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ device.id }}</th>
-                    <td class="time-to-rel">{{ device.last_upd.time }}</td>
-                    <td>{% for k in device.last_upd_keys %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                    <td class="time-to-rel">{{ last_update.time }}</td>
+                    <td>{% for k in last_upd_keys %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
                     <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Preview</a></td>
                 </tr>
+                {% endwith %}
             {% endfor %}
             </tbody>
           </table>
