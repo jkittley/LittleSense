@@ -2,7 +2,7 @@
 The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi shared access over a local network. To deploy this code to a Raspberry Pi we use Fabric, a tool which automates the process. The first step however is to setup the system on your local machine.
 
 ## 1 Setup
-### 1.1 Local Setup
+### Local Setup
 To run the project locally and to use Fabric to deploy the code to a Raspberry PI on the local network, you fill first need to setup the local environment.
 
 1. Create a Python 3.5+ virtual environment (we recommend using [Anaconda](https://www.anaconda.com/download/)) e.g. `conda create --name myenv` and launch it e.g. `conda activate myenv`
@@ -23,7 +23,7 @@ That's all you need to do if you don't want to run the InfluxDB database locally
 To install InfluxDB follow the instructions relativant to your operating system [here](https://docs.influxdata.com/influxdb/v1.4/introduction/installation/) and start the server. On MacOS the command is `influxd -config /usr/local/etc/influxdb.conf`
 
 
-### 1.2 Remote (Raspberry PI) Setup
+### Remote (Raspberry PI) Setup
 To deploy the project to a remote host you must first have created a local virtual environment (Local Setup above). 
 
 1. If you have not already activated the environment then do so e.g. `conda activate myenv`
