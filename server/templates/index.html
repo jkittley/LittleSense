@@ -5,9 +5,27 @@
  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
  <script>
      $(document).ready(function() { feather.replace(); });
- </script>
+
+    $(document).ready(function() { $(function () {
+        console.log('HEY');
+        $('#datetimepicker_start').datetimepicker();
+        // $('#datetimepicker_end').datetimepicker({
+        //     useCurrent: false
+        // });
+        // $("#datetimepicker7").on("change.datetimepicker", function (e) {
+        //     $('#datetimepicker8').datetimepicker('minDate', e.date);
+        // });
+        // $("#datetimepicker8").on("change.datetimepicker", function (e) {
+        //     $('#datetimepicker7').datetimepicker('maxDate', e.date);
+        // });
+        });
+    });
+</script>
+
 
 {% endblock %}
+
+
 
 {% block content %}
 
@@ -17,19 +35,29 @@
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group mr-2">
+            <!-- <div class="btn-group mr-2">
             <button class="btn btn-sm btn-outline-secondary">Share</button>
             <button class="btn btn-sm btn-outline-secondary">Export</button>
+            </div> -->
+                  
+                <div class="form-group">
+                    <div class='input-group date' id='datetimepicker_start'>
+                        <input type='text' class="form-control" />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+           
+                <div class="form-group">
+                    <div class='input-group date' id='datetimepicker_end'>
+                        <input type='text' class="form-control" />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
-            <span data-feather="calendar"></span>
-            This week
-            </button>
-        </div>
-        </div>
-
-        <iframe src="http://192.168.1.188:3000/dashboard-solo/db/new-dashboard?panelId=1&fullscreen&from=1519841522757&to=1519842365597" width="100%" height="400" frameborder="0"></iframe>
-        
         </div>
     </main>
 {% endblock %}
