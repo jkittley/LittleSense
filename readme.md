@@ -1,7 +1,7 @@
 # Sensor Store
 Welcome to Sensor Store! This project is designed to make the deployment of sensor devices and the subsequent logging and inspection of the data they produce simple.
 
-The project architecture is composed of a RasperryPi (acting as a server and data store) and Arduino based sensor devices. For more information, please see the respective reader files: [Server](server/readme.md) and [Devices](device/readme.md).
+The project architecture is composed of a RasperryPi (acting as a server and data store) and Arduino based sensor devices. For more information, please see the respective reader files: [Server](server/) and [Devices](device/).
 
 Devices can communicate with the server via a Web API or using a number of Radio technologies. Currently RFM69 and BLE are implemented, but you can easily ass your own. If you do then please share it with us and we might included it in the project.
 

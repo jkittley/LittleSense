@@ -4,10 +4,17 @@ The code in this folder can be run locally on your machine for testing and deplo
 ## Run locally
 The project can be run locally for developement.
 
-1. Create a python environment (Python 3.5+)
-2. Install the local requirements '''pip install -r requirements/local.txt'''
-3. Edit the config/general.py, config/secure.py and config/remote.py files as the comments instruct
-4. Run '''fab deploy''' and the remote host will be initialised.
+1. Create a Python 3.5+ environment (we recommend using [Anaconda](https://www.anaconda.com/download/)) and start launce it e.g. conda ativate myenv.
+
+2. Install the local requirements: "pip install -r requirements/local.txt"
+
+3. Edit the "config/general.py", "config/secure.py" and "config/remote.py" files as the comments instruct.
+
+3. Install InfluxDB. Instruction can be found [here](https://docs.influxdata.com/influxdb/v1.4/introduction/installation/) and start the server running with "influxd -config /usr/local/etc/influxdb.conf"
+
+4. Run "fab deploy" and the remote host will be initialised.
+
+
 
 ## Run remotely
 To deploy the project to a remote host for execution e.g. on a RaspberryPi simply call:
