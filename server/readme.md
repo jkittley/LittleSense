@@ -1,40 +1,51 @@
 # Sensor Store - Server
 The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi shared access over a local network. To deploy this code to a Raspberry Pi we use Fabric, a tool which automates the process. The first step however is to setup the system on your local machine.
 
-## Run locally
-The project can be run locally for developement.
+## 1 Setup
+### 1.1 Local Setup
+To run the project locally and to use Fabric to deploy the code to a Raspberry PI on the local network, you fill first need to setup the local environment.
 
-1. Create a Python 3.5+ environment (we recommend using [Anaconda](https://www.anaconda.com/download/)) and launch it e.g. `conda ativate myenv`.
+1. Create a Python 3.5+ virtual environment (we recommend using [Anaconda](https://www.anaconda.com/download/)) e.g. `conda create --name myenv` and launch it e.g. `conda activate myenv`
 
-2. Navigate to the sever directory and install the local requirements: `pip install -r requirements/local.txt`
+2. Navigate to the directory where you downloaded this file e.g `cd /Users/me/sensorStore/server`
 
-3. Edit the "config/general.py", "config/secure.py" and "config/remote.py" files as the comments instruct.
+3. Install the local requirements: `pip install -r requirements/local.txt`
 
-3. Install InfluxDB. Instruction can be found [here](https://docs.influxdata.com/influxdb/v1.4/introduction/installation/) and start the server running with `influxd -config /usr/local/etc/influxdb.conf` if you are on a mac.
+4. Edit the "config/general.py" and "config/remote.py" files as the comments instruct.
 
-4. Run "fab deploy" and the remote host will be initialised.
+5. Rename the "config/secure.example.py" file to  "config/secure.py" and edit as instructed by the comments.
 
+That's all you need to do if you don't want to run the InfluxDB database locally.
 
+6. To test the system run: `python webapp.py` and the Flask debug server should start. Now you can navigating to http://localhost:5000/ in your browser.
 
-## Run remotely
-To deploy the project to a remote host for execution e.g. on a RaspberryPi simply call:
-
-```
-fab -H 192.168.0.106 -u pi -pMyPassword deploy
-```
-This will deploy the project to the host located at 192.168.0.101 using the username 'pi' and the password 'MyPassword'.
-
-## Web services
-- Website: http://IP_ADDRESS/
+#### Additional - Local Influx Setup
+To install InfluxDB follow the instructions relativant to your operating system [here](https://docs.influxdata.com/influxdb/v1.4/introduction/installation/) and start the server. On MacOS the command is `influxd -config /usr/local/etc/influxdb.conf`
 
 
-## Scripts
-- webapp.py - This script provides a web ui for inspecting data and configuring the system
-- rxtx.py - Runs as a background service (Systemd) and manages communication e.g. through radios like RMF69.
-- fabfile.py - Is for deploying the webapp and rxtx services to a remote host e.g. a raspberry pi
+### 1.2 Remote (Raspberry PI) Setup
+To deploy the project to a remote host you must first have created a local virtual environment (Local Setup above). 
 
-## Technologies
-To server employs many technologies. Below we list the core components used and link to their respective websites. If all of this is a bit confusing then don’t worry, we only mention them here as a reference for anyone who is interested.
+1. If you have not already activated the environment then do so e.g. `conda activate myenv`
+
+2. Navigate to the server folder (where this file is stored).
+
+3. Run `fab -H 192.168.0.106 -u pi -pMyPassword deploy`
+to deploy the project to the host located at 192.168.0.101 using the username 'pi' and the password 'MyPassword'. Change these details as needed.
+
+## 2. System Design
+In this section we outline some of the most important files and folders in the project.
+
+### Key files
+- webapp.py - This script creates a website using the Flask microframework. 
+- rxtx.py - This script runs a background service to  listen to a communication channel e.g. a RMF69 radio receiver.
+- fabfile.py - This file is used by Fabric to automate the deplotment of the project and setup services such as InfluxDB on a remote host i.e. a Raspberry Pi.
+- commlink/ - In this folder (package) there are Classes which manage the communication through various channels.
+- static/ - This is where all images, javascript, css and media files should be stored.
+- templates/ - This folder contains all the HTML templates used in the site.
+
+### Technologies
+The server employs many technologies. Below we list the most prominant and link to their respective websites. If all of this is a bit confusing then don’t worry, we only mention them here as a reference for anyone who is interested.
 
 - [InfluxDb](https://www.influxdata.com/) to store and inspect time series sensor data
 - [TinyDb](http://tinydb.readthedocs.io/) to store general information and settings.
