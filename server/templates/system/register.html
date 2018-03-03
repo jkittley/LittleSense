@@ -163,65 +163,19 @@
 {% block title %}Register - {{ current.id|capitalize }}{% endblock %}
 
 {% block menu %}
-<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-    <span>Stages</span>
-</h6>
-<ul class="nav flex-column">
-    <li class="nav-item">
-        {% for s in stages %}
-        <a class="nav-link {% if current.id == s.id %}active{% endif %}" href="{% if device_id and s.link %}{{ url_for(s.link, device_id=device_id) }}{% else %}#{% endif %}">
-            <span data-feather="circle"></span>
-            {{ s.title }}
-        </a>
-        {% endfor %}
-    </li>
-</ul>
-<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-        <span>Options</span>
-    </h6>
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a class="nav-link" href="/">
-                <span data-feather="home"></span>
-                Back to home
-            </a>
-        </li>
-    </ul>
+{% with active = 'devices' %}
+{% include 'system/menu.html' %}
+{% endwith %}
 {% endblock %}
 
 {% block content %}
-{% if current.id == 'devices' %}
-    <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">ID</th>
-                <th scope="col">Last Updated</th>
-                <th scope="col">Fields</th>
-                <th scope="col"></th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for device in devices %}
-                {% with last_update, last_upd_keys = device.last_update() %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ device.id }}</th>
-                    <td class="time-to-rel">{{ last_update.time }}</td>
-                    <td>{% for k in last_upd_keys %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-                    <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Preview</a></td>
-                </tr>
-                {% endwith %}
-            {% endfor %}
-            </tbody>
-          </table>
-{% endif %}
+
 
 {% if current.id == 'preview' %}
 <canvas id="chart1"></canvas>
 <div class="row">
     <div class="col">
-        <a href="{{ url_for('device_register') }}" class="btn btn-block btn-info">Back</a>
+        <a href="{{ url_for('sysadmin_devices') }}" class="btn btn-block btn-info">Back</a>
     </div>
     <div id="option-config" class="col">
         <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>

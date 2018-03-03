@@ -7,6 +7,10 @@
                 <span data-feather="activity"></span>
                 System Stats
             </a>
+            <a class="nav-link {{ 'active' if active=='devices' else '' }}" href="{{ url_for('sysadmin_devices') }}">
+                    <span data-feather="activity"></span>
+                    Devices
+            </a>
             <a class="nav-link {{ 'active' if active=='logs' else '' }}" href="{{ url_for('sysadmin_logs') }}">
                 <span data-feather="file-text"></span>
                 View Logs

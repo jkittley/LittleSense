@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% import 'macros.html' as b_wtf %}
 
 {% block title %}System Admin - Database Tools{% endblock %}
 
@@ -11,5 +12,23 @@
 
 
 {% block content %}
-  Hello
+<form id="confirm_purge" action="{{ url_for('sysadmin_db') }}" method="POST">
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white lead">Purge Data</div>
+    <div class="card-body">
+      <p class="lead">
+        Danger! This option allow you to delete all data related to unregistered 
+        and registered devices. </p>
+      <p><strong>Note:</strong> Data older than {{ config.AUTO_PURGE_UNREG_KEEP }} 
+        minutes for unregistered devices is deleted automatically every 
+        {{ config.AUTO_PURGE_UNREG_INTERVAL }} minutes.
+      </p>
+    </div>
+    <div class="card-footer">
+          {{ b_wtf.bootstrap_form(purge_form) }}      
+          <button type="submit" class="btn btn-block btn-danger">Purge</button>
+    </div>
+  </div>
+</form> 
+  
 {% endblock %}

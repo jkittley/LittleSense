@@ -12,8 +12,8 @@ from flask import render_template, Flask, request, abort, redirect, url_for, fla
 
 from utils import Device, Devices, DeviceRegister
 from flask_wtf import FlaskForm
-from wtforms import StringField
-from wtforms.validators import DataRequired
+from wtforms import StringField, HiddenField, BooleanField, SubmitField
+from wtforms.validators import DataRequired, EqualTo
 
 app = Flask(__name__)
 
@@ -46,21 +46,13 @@ dev_reg = DeviceRegister()
 def home():
     return render_template('dashboard/index.html', field_names=devices.field_names())
 
-# Register - pick device
-@app.route("/device/register")
-def device_register():
-    devices.update()
-    stages, current = get_device_reg_stages()
-    return render_template('device/register.html', stages=stages, current=current)
-
 # Register - preview device
-@app.route("/device/register/device/<string:device_id>", methods=['GET'])
+@app.route("/system/register/device/<string:device_id>")
 def device_register_preview(device_id):
-    stages, current = get_device_reg_stages("preview")
-    return render_template('device/register.html', stages=stages, current=current, device_id=device_id)
+    return render_template('system/register.html', current="preview", device_id=device_id)
 
 # Register - configure device
-@app.route("/device/configure/<string:device_id>", methods=['GET','POST'])
+@app.route("/system/configure/device/<string:device_id>", methods=['GET','POST'])
 def device_register_config(device_id):
     # Does the device already have a record?
     try:
@@ -74,34 +66,35 @@ def device_register_config(device_id):
         dev_reg.register_device(device_id=device_id, name=form.name.data)
         # Show done page
         flash('Device registered', 'success')
-        return redirect(url_for('home'))
+        return redirect(url_for('sysadmin_devices'))
     # Show config form page 
-    stages, current = get_device_reg_stages("configure")
-    return render_template('device/register.html', stages=stages, current=current, device_id=device_id, form=form)
-
-# Register - Helper function
-def get_device_reg_stages(stage_id="devices"):
-    stages = [
-        dict(id="devices", title="Unregistered Devices", link="device_register"),
-        dict(id="preview", title="Preview", link="device_register_preview"),
-        dict(id="configure", title="Configuration", link="device_register_config"),
-        dict(id="complete", title="Complete", link=None)
-    ]
-    current = list(filter(lambda stage: stage['id'] == stage_id, stages))
-    if len(current) > 0:
-        return stages, current[0]
-    else:
-        abort(404)
+    return render_template('system/register.html', current="configure", device_id=device_id, form=form)
 
 # System Admin - Index
 @app.route("/sys/admin")
 def sysadmin_index():
     return render_template('system/index.html', stats=devices.stats())
 
+# System Admin - Index
+@app.route("/sys/devices")
+def sysadmin_devices():
+    return render_template('system/devices.html')
+
 # System Admin - Database Functions
-@app.route("/sys/admin/db")
+@app.route("/sys/admin/db", methods=['GET','POST'])
 def sysadmin_db():
-    return render_template('system/db.html')
+    purge_form = DBPurgeForm()
+    if purge_form.validate_on_submit():
+        # Purge
+        success = devices.purge(datetime.utcnow(), None, 
+            unregistered=purge_form.unreg.data,
+            registered=purge_form.reged.data
+        )
+        if success:
+            flash('Purged devices data', 'success')
+        else:
+            flash('Failed to purge devices data', 'danger')
+    return render_template('system/db.html', purge_form=purge_form)
 
 # System Admin - Logs
 @app.route("/sys/admin/logs")
@@ -145,6 +138,16 @@ def api_get(device_id):
 class DeviceSettingsForm(FlaskForm):
     device_id = StringField('Device Id', validators=[DataRequired()]) 
     name = StringField('Name', validators=[DataRequired()])
+
+class DBPurgeForm(FlaskForm):
+    reged = BooleanField('Registered Devices')
+    unreg = BooleanField('Unregistered Devices')
+    confirm = HiddenField("conf", default="I CONFIRM")
+    verify = StringField('Confirm by typing "I CONFIRM"', validators=[
+        DataRequired(),
+        EqualTo('confirm', message='You must enter "I CONFIRM"')
+    ])
+
 
 
 

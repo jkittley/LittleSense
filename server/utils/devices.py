@@ -40,6 +40,18 @@ class Devices():
             "registered_devices": len(self._registered)
         }
 
+    def purge(self, start, end, **kwargs):
+        registered   = kwargs.get('registered', False)
+        unregistered = kwargs.get('unregistered', False)
+
+        for device_id in ["test_device_0"]:
+            q = 'DROP SERIES FROM "reading" WHERE "device_id"=\'{device_id}\''.format(device_id=device_id)
+            o = self._ifdb.query(q)
+            print(q)
+            print(o)
+        
+        return True
+
     def get(self, update=False):
         if update:
             self.update()
