@@ -30,6 +30,14 @@ class DeviceRegister():
         self._db.upsert(data, Query().device_id == device_id)
         return True 
 
+    def unregister_device(self, device_id):
+        data = {
+            'device_id': device_id, 
+            "registered": False
+        }
+        self._db.upsert(data, Query().device_id == device_id)
+        return True 
+
     def add_seen_fields(self, device_id, field_names):
         seen = self.get_seen_fields(device_id)
         seen = list(set(seen + field_names))

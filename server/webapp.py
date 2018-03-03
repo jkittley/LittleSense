@@ -36,7 +36,6 @@ from commlink import WebAPI
 webapi = WebAPI(app.config.get('IFDB'))
 
 devices = Devices()
-dev_reg = DeviceRegister()
 
 # ------------------------------------------------------------
 # Pages
@@ -54,16 +53,12 @@ def device_register_preview(device_id):
 # Register - configure device
 @app.route("/system/configure/device/<string:device_id>", methods=['GET','POST'])
 def device_register_config(device_id):
-    # Does the device already have a record?
-    try:
-        record = dev_reg.get_record(device_id=device_id)
-        form = DeviceSettingsForm(device_id=device_id, name=record['name']) 
-    except IndexError:
-        form = DeviceSettingsForm(device_id=device_id) 
+    device = devices.get_device(device_id)
+    form = DeviceSettingsForm(device_id=device_id, name=device.get_name()) 
     # Save form data
     if form.is_submitted and form.validate_on_submit():
         # Save to database
-        dev_reg.register_device(device_id=device_id, name=form.name.data)
+        device.register(name=form.name.data)
         # Show done page
         flash('Device registered', 'success')
         return redirect(url_for('sysadmin_devices'))
@@ -79,6 +74,17 @@ def sysadmin_index():
 @app.route("/sys/devices")
 def sysadmin_devices():
     return render_template('system/devices.html')
+
+# System Admin - Index
+@app.route("/sys/devices/unregister/<string:device_id>", methods=['POST','GET'])
+def sysadmin_unreg(device_id):
+    unreg_form = AreYouSureForm()
+    if unreg_form.validate_on_submit():
+        flash('Device {} unregistered'.format(device_id), 'success')
+        devices.unregister(device_id)
+        return redirect(url_for('sysadmin_devices'))
+    return render_template('system/unregister.html', device_id=device_id, unreg_form=unreg_form)
+
 
 # System Admin - Database Functions
 @app.route("/sys/admin/db", methods=['GET','POST'])
@@ -148,7 +154,8 @@ class DBPurgeForm(FlaskForm):
         EqualTo('confirm', message='You must enter "I CONFIRM"')
     ])
 
-
+class AreYouSureForm(FlaskForm):
+    confirm = BooleanField('Confirm', validators=[DataRequired()])
 
 
 # ------------------------------------------------------------

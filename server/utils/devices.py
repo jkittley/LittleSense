@@ -57,6 +57,12 @@ class Devices():
             self.update()
         return self._all
 
+    def get_device(self, device_id):
+        for x in self._all:
+            if x.id == device_id:
+                return x
+        return None
+
     def registered(self, update=False):
         if update:
             self.update()
@@ -66,6 +72,10 @@ class Devices():
         if update:
             self.update()
         return self._unregistered 
+
+    def unregister(self, device_id):
+        d = self.get_device(device_id)
+        d.unregister()
 
     def to_dict(self, devs):
         return [ d.as_dict() for d in devs ]
@@ -104,6 +114,10 @@ class Device():
         self._ifdb = get_InfluxDB()
         self._dev_reg = DeviceRegister()
 
+    def get_name(self):
+        registration_record = self._dev_reg.get_record(device_id=self.id)
+        return registration_record['name']
+
     def last_update(self):
         last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
         try:
@@ -119,6 +133,12 @@ class Device():
 
         return last_upd, last_upd_keys
         
+    def register(self, **kwargs):
+        self._dev_reg.register_device(self.id, kwargs.get('name', None))
+        
+    def unregister(self, **kwargs):
+        self._dev_reg.unregister_device(self.id)
+        
 
     def is_registered(self):
         registration_record = self._dev_reg.get_record(device_id=self.id)
@@ -126,7 +146,8 @@ class Device():
             if 'registered' in registration_record.keys():
                 return registration_record['registered']
         return False
-        
+    
+
     def field_names(self, **kwargs):
         return self._dev_reg.get_seen_fields(self.id)
         # q = 'SHOW FIELD KEYS FROM "reading"'

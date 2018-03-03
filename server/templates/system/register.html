@@ -32,7 +32,7 @@
     //     })
     // });
 </script>
-{% if current.id == 'preview' %}
+{% if current == 'preview' %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 <script>
 
@@ -160,7 +160,7 @@
 {% endblock %}
 
 
-{% block title %}Register - {{ current.id|capitalize }}{% endblock %}
+{% block title %}Register - {{ current|capitalize }}{% endblock %}
 
 {% block menu %}
 {% with active = 'devices' %}
@@ -171,7 +171,7 @@
 {% block content %}
 
 
-{% if current.id == 'preview' %}
+{% if current == 'preview' %}
 <canvas id="chart1"></canvas>
 <div class="row">
     <div class="col">
@@ -183,7 +183,7 @@
 </div>
 {% endif %}
 
-{% if current.id == 'configure' %}
+{% if current == 'configure' %}
     <div class="container">
         <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
 
@@ -222,15 +222,5 @@
         </form>
     </div>
 {% endif %}
-
-{% if current.id == 'done' %}
-<div class="container">
-        <div class="jumbotron">
-            <h1>Registration complete</h1>
-        </div>
-    </div>
-{% endif %}
-
-
 
 {% endblock%}
