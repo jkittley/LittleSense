@@ -19,5 +19,9 @@
                 <span data-feather="database"></span>
                 Database Tools
             </a>
+            <a class="nav-link {{ 'active' if active=='backup' else '' }}" href="{{ url_for('sysadmin_backup') }}">
+                <span data-feather="package"></span>
+                Backup / Restore
+            </a>
         </li>
     </ul>

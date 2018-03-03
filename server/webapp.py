@@ -81,10 +81,9 @@ def sysadmin_unreg(device_id):
     unreg_form = AreYouSureForm()
     if unreg_form.validate_on_submit():
         flash('Device {} unregistered'.format(device_id), 'success')
-        devices.unregister(device_id)
+        devices.set_unregistered(device_id)
         return redirect(url_for('sysadmin_devices'))
     return render_template('system/unregister.html', device_id=device_id, unreg_form=unreg_form)
-
 
 # System Admin - Database Functions
 @app.route("/sys/admin/db", methods=['GET','POST'])
@@ -106,6 +105,11 @@ def sysadmin_db():
 @app.route("/sys/admin/logs")
 def sysadmin_logs():
     return render_template('system/logs.html')
+
+# System Admin - Index
+@app.route("/sys/backup/restore")
+def sysadmin_backup():
+    return render_template('system/backup.html')
 
 
 # ------------------------------------------------------------
@@ -166,7 +170,7 @@ class AreYouSureForm(FlaskForm):
 def context_basics():
     # if app.config['IFDB'] == None:
     #     flash('No connection to InfluxDB', 'danger')
-    return dict(config=app.config, devices=devices.get())
+    return dict(config=app.config, devices=devices.get_all())
 
 
 if __name__ == '__main__':

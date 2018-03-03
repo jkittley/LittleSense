@@ -30,13 +30,21 @@ class Devices():
             self.update()
     
     def stats(self):
-        counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
-        last_upd = next(self._ifdb.query('SELECT * FROM "reading" ORDER BY time DESC LIMIT 1').get_points())
-        last_upd = arrow.get(last_upd['time'])
+        try:
+            counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
+        except StopIteration:
+            counts = {}
+        try:
+            last_upd = next(self._ifdb.query('SELECT * FROM "reading" ORDER BY time DESC LIMIT 1').get_points())
+            last_upd = arrow.get(last_upd['time'])
+            humanize = last_upd.humanize()
+        except StopIteration:
+            last_upd = "Never"
+            humanize = "Never"
         return {
             "total_readings": counts,
             "last_update": last_upd.format('YYYY-MM-DD HH:mm:ss ZZ'),
-            "last_update_humanized": last_upd.humanize(),
+            "last_update_humanized": humanize,
             "registered_devices": len(self._registered)
         }
 
@@ -44,15 +52,24 @@ class Devices():
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
 
-        for device_id in ["test_device_0"]:
-            q = 'DROP SERIES FROM "reading" WHERE "device_id"=\'{device_id}\''.format(device_id=device_id)
+        if registered and unregistered:
+            to_process = self.get_all()
+        elif registered:
+            to_process = self.get_registered()
+        elif unregistered:
+            to_process = self.get_unregistered()
+        else:
+            return False
+
+        for device in to_process:
+            q = 'DROP SERIES FROM "reading" WHERE "device_id"=\'{device_id}\''.format(device_id=device.id)
             o = self._ifdb.query(q)
             print(q)
             print(o)
         
         return True
 
-    def get(self, update=False):
+    def get_all(self, update=False):
         if update:
             self.update()
         return self._all
@@ -63,17 +80,17 @@ class Devices():
                 return x
         return None
 
-    def registered(self, update=False):
+    def get_registered(self, update=False):
         if update:
             self.update()
         return self._registered 
 
-    def unregistered(self, update=False):
+    def get_unregistered(self, update=False):
         if update:
             self.update()
         return self._unregistered 
 
-    def unregister(self, device_id):
+    def set_unregistered(self, device_id):
         d = self.get_device(device_id)
         d.unregister()
 
@@ -104,8 +121,7 @@ class Devices():
         return "Devices"
 
    
-  
-
+#  ----------------------------------------------------------------------------
 
 class Device():
 
@@ -124,13 +140,11 @@ class Device():
             last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
         except IndexError:
             last_upd = None
-
         last_upd_keys = []
         if last_upd is not None:
             for k, v in last_upd.items():
                 if v is not None:
                     last_upd_keys.append(k)
-
         return last_upd, last_upd_keys
         
     def register(self, **kwargs):
@@ -139,7 +153,6 @@ class Device():
     def unregister(self, **kwargs):
         self._dev_reg.unregister_device(self.id)
         
-
     def is_registered(self):
         registration_record = self._dev_reg.get_record(device_id=self.id)
         if registration_record is not None:
@@ -147,7 +160,6 @@ class Device():
                 return registration_record['registered']
         return False
     
-
     def field_names(self, **kwargs):
         return self._dev_reg.get_seen_fields(self.id)
         # q = 'SHOW FIELD KEYS FROM "reading"'
@@ -216,8 +228,7 @@ class Device():
                 return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
         except (ValueError, TypeError):
             return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
-        
-            
+         
         # Build Query
         q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
             device_id=self.id, 
@@ -227,10 +238,11 @@ class Device():
             fill=fillmode,
             limit="LIMIT {0}".format(limit)
         )
-        print (q)
+        # print (q)
         readings = self._ifdb.query(q).get_points()
         readings = list(readings)
         
+        # Build list of timestamps  
         timestamps = []
         used_keys = []
         for r in readings:
@@ -239,6 +251,7 @@ class Device():
                 if v is not None:
                     used_keys.append(k)
 
+        # Return
         return True, { 
             "count": len(readings),
             "field_keys": list(filter(lambda x: x['name'] in used_keys, field_keys)), 
