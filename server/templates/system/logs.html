@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% import 'macros.html' as b_wtf %}
 
 {% block title %}System Admin - Logs{% endblock %}
 
@@ -8,8 +9,69 @@
 {% endwith %}
 {% endblock %}
 
-
+{% block style %}
+<style>
+  .cat-funcexec {
+    color: blue;
+  }
+  .cat-interaction {
+    color: green;
+  }
+  .cat-error {
+    color: red;
+  }
+  .cat-debug {
+    color: purple;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-  Logs
+
+<form action="{{ url_for('sysadmin_logs') }}" method="POST">
+
+    {{form.hidden_tag()}}
+    <div class="form-row align-items-center align-items-baseline">
+      <div class="col-sm-2 my-1">
+          {{ b_wtf.bootstrap_field(form.start, label=False) }}    
+      </div>
+      <div class="col-sm-2 my-1">
+          {{ b_wtf.bootstrap_field(form.end, label=False) }}    
+      </div>
+      <div class="col-sm-3 my-1">
+          {{ b_wtf.bootstrap_field(form.cat, label=False) }}    
+      </div>
+      <div class="col-sm-2 my-1">
+          {{ b_wtf.bootstrap_field(form.limit, label=False) }}    
+      </div>
+      <div class="col-auto my-1">
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </div>
+    </div>
+  </form>
+  <BR>
+<table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>Category</th>
+        <th>Message</th>
+        <th>Extra</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for ld in logdata %}
+        <tr>
+            <td>{{ ld.time }}</td>
+            <td class="cat-{{ ld.category }}"><strong>{{ ld.category }}</strong></td>
+            <td>{{ ld.message }}</td>
+            <td>{{ ld.extra }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+  
+     <BR>
+  
 {% endblock %}

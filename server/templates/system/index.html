@@ -14,18 +14,24 @@
         <tr>
           <th scope="row">Total Readings</th>
           <td>
-            {% for key, value in stats.total_readings.items() %}
+            {% for key, value in stats.device.total_readings.items() %}
                 {{ key }}: {{ value }}<br>
             {% endfor %}
             </td>
         </tr>
         <tr>
           <th scope="row">Number of Registered Devices</th>
-          <td>{{ stats.registered_devices }}</td>
+          <td>{{ stats.device.registered_devices }}</td>
         </tr>
         <tr>
           <th scope="row">Last Update</th>
-          <td>{{ stats.last_update }} ({{ stats.last_update_humanized }})</td>
+          <td>{{ stats.device.last_update }} ({{ stats.device.last_update_humanized }})</td>
+        </tr>
+        
+        <tr>
+          <th scope="row">Number of Log records</th>
+          <td>{{ stats.log.count }}
+            </td>
         </tr>
     </tbody>
 </table>

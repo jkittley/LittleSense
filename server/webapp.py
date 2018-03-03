@@ -9,12 +9,13 @@ from collections import namedtuple
 from random import randint
 from flask import render_template, Flask, request, abort, redirect, url_for, flash
 
-from utils import Device, Devices, DeviceRegister
+from utils import Device, Devices, DeviceRegister, Logger
 from flask_wtf import FlaskForm
-from wtforms import StringField, HiddenField, BooleanField, SubmitField
+from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField
 from wtforms.validators import DataRequired, EqualTo
 
 app = Flask(__name__)
+log = Logger()
 
 # ------------------------------------------------------------
 # Setup
@@ -67,7 +68,8 @@ def device_register_config(device_id):
 # System Admin - Index
 @app.route("/sys/admin")
 def sysadmin_index():
-    return render_template('system/index.html', stats=devices.stats())
+    stats = dict(log=log.stats(), device=devices.stats())
+    return render_template('system/index.html', stats=stats)
 
 # System Admin - Index
 @app.route("/sys/devices")
@@ -102,9 +104,22 @@ def sysadmin_db():
     return render_template('system/db.html', purge_form=purge_form)
 
 # System Admin - Logs
-@app.route("/sys/admin/logs")
+@app.route("/sys/admin/logs", methods=['GET','POST'])
 def sysadmin_logs():
-    return render_template('system/logs.html')
+    form = LogFilterForm()
+    if form.validate_on_submit():
+        print("VALID")
+        logdata = log.list_records(
+            cat=form.cat.data, 
+            start=form.start.data,
+            end=form.end.data,
+            limit=form.limit.data
+        )
+    else:
+        print("INVALID")
+        print(form.errors)
+        logdata = log.list_records()
+    return render_template('system/logs.html', logdata=logdata, form=form)
 
 # System Admin - Index
 @app.route("/sys/backup/restore")
@@ -161,6 +176,17 @@ class DBPurgeForm(FlaskForm):
 class AreYouSureForm(FlaskForm):
     confirm = BooleanField('Confirm', validators=[DataRequired()])
 
+class LogFilterForm(FlaskForm):
+    start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
+    end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
+    cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default="all")
+    limit = SelectField('Category', choices=[
+        ('50', 50),
+        ('250', 250),
+        ('500', 500),
+        ('1000', 1000)
+    ], default=500)
+
 
 # ------------------------------------------------------------
 # Other
@@ -170,6 +196,7 @@ class AreYouSureForm(FlaskForm):
 def context_basics():
     # if app.config['IFDB'] == None:
     #     flash('No connection to InfluxDB', 'danger')
+    log.interaction(request.url)
     return dict(config=app.config, devices=devices.get_all())
 
 

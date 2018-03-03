@@ -5,7 +5,10 @@ from influxdb.exceptions import InfluxDBClientError
 from requests.exceptions import RequestException
 from config.general import INFLUX_DBNAME, AUTO_PURGE_UNREG_KEEP
 from .device_register import DeviceRegister
+from .logger import Logger
 import arrow
+
+log = Logger()
 
 def get_InfluxDB():
     try:
@@ -68,14 +71,15 @@ class Devices():
             return False
 
         for device in to_process:
-            q = 'DROP SERIES FROM "reading" WHERE time > {start} AND time < {end} AND "device_id"=\'{device_id}\''.format(
+            q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
                 device_id=device.id,
-                start=start.format(),
-                end=end.format()
+                start=start,
+                end=end
             )
-            # o = self._ifdb.query(q)
+            log.funcexec('Purged', registered=registered, unregistered=unregistered)
             print(q)
-            # print(o)
+            o = self._ifdb.query(q)
+            print(o)
         
         return True
 
