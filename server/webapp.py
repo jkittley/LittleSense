@@ -4,10 +4,9 @@
 # =============================================================================
 
 import config
-import json, os
+import json, os, arrow
 from collections import namedtuple
 from random import randint
-from datetime import datetime
 from flask import render_template, Flask, request, abort, redirect, url_for, flash
 
 from utils import Device, Devices, DeviceRegister
@@ -91,7 +90,8 @@ def sysadmin_db():
     purge_form = DBPurgeForm()
     if purge_form.validate_on_submit():
         # Purge
-        success = devices.purge(datetime.utcnow(), None, 
+        success = devices.purge(
+            end=arrow.utcnow(),  
             unregistered=purge_form.unreg.data,
             registered=purge_form.reged.data
         )

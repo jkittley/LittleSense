@@ -3,7 +3,7 @@ from tinydb import TinyDB, Query
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 from requests.exceptions import RequestException
-from config.general import INFLUX_DBNAME
+from config.general import INFLUX_DBNAME, AUTO_PURGE_UNREG_KEEP
 from .device_register import DeviceRegister
 import arrow
 
@@ -48,9 +48,15 @@ class Devices():
             "registered_devices": len(self._registered)
         }
 
-    def purge(self, start, end, **kwargs):
+    def purge(self, **kwargs):
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
+
+        default_start = arrow.utcnow().shift(years=-10)
+        start = kwargs.get('start', default_start)
+
+        default_end = arrow.utcnow().shift(minutes=-AUTO_PURGE_UNREG_KEEP)
+        end = kwargs.get('end', default_end)
 
         if registered and unregistered:
             to_process = self.get_all()
@@ -62,10 +68,14 @@ class Devices():
             return False
 
         for device in to_process:
-            q = 'DROP SERIES FROM "reading" WHERE "device_id"=\'{device_id}\''.format(device_id=device.id)
-            o = self._ifdb.query(q)
+            q = 'DROP SERIES FROM "reading" WHERE time > {start} AND time < {end} AND "device_id"=\'{device_id}\''.format(
+                device_id=device.id,
+                start=start.format(),
+                end=end.format()
+            )
+            # o = self._ifdb.query(q)
             print(q)
-            print(o)
+            # print(o)
         
         return True
 
