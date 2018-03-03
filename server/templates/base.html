@@ -17,7 +17,10 @@
     <script src="{{ url_for('static', filename='_jquery/jquery-3.3.1.min.js') }}"></script>
     <script src="{{ url_for('static', filename='_bootstrap4/js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment-locals.js') }}"></script>
-    
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+    <script>
+      $(document).ready(function() { feather.replace(); });
+    </script>
 
     {% block script %}
     {% endblock %}
@@ -54,6 +57,9 @@
             <ul class="navbar-nav ml-auto p-1">
                 {% block navmenu %}
                 {% endblock %}
+                <li class="nav-item mr-0">  
+                    <a class="nav-link" href="{{ url_for('sysadmin_index') }}"><span data-feather="sliders"></span></a>
+                </li>
             </ul>
             <!-- <span class="navbar-text">
               Navbar text with an inline element
@@ -61,8 +67,21 @@
           </div>
         </nav>
 
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">   
+            <div class="sidebar-sticky">
+                {% block menu %}{% endblock %}
+            </div>
+        </nav>
+    
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+                <h1 class="h2">{% block title %}{% endblock %}</h1>
+            </div>
+            {% block content %}
+            {% endblock %}
+        </main>
 
-    {% block content %}
-    {% endblock %}
+
+    
   </body>
 </html>

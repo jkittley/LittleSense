@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}System Admin - Stats{% endblock %}
+
+{% block menu %}
+{% with active = 'index' %}
+{% include 'system/menu.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+<table class="table table-bordered">
+    <tbody>
+        <tr>
+          <th scope="row">Total Readings</th>
+          <td>
+            {% for key, value in stats.total_readings.items() %}
+                {{ key }}: {{ value }}<br>
+            {% endfor %}
+            </td>
+        </tr>
+        <tr>
+          <th scope="row">Number of Registered Devices</th>
+          <td>{{ stats.registered_devices }}</td>
+        </tr>
+        <tr>
+          <th scope="row">Last Update</th>
+          <td>{{ stats.last_update }} ({{ stats.last_update_humanized }})</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}

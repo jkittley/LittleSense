@@ -159,28 +159,38 @@
 {% endif %}
 {% endblock %}
 
-{% block navmenu %}
-<li class="nav-item mr-0">  
-    <a class="nav-link" href="/">Exit</a>
-</li>
+
+{% block title %}Register - {{ current.id|capitalize }}{% endblock %}
+
+{% block menu %}
+<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+    <span>Stages</span>
+</h6>
+<ul class="nav flex-column">
+    <li class="nav-item">
+        {% for s in stages %}
+        <a class="nav-link {% if current.id == s.id %}active{% endif %}" href="{% if device_id and s.link %}{{ url_for(s.link, device_id=device_id) }}{% else %}#{% endif %}">
+            <span data-feather="circle"></span>
+            {{ s.title }}
+        </a>
+        {% endfor %}
+    </li>
+</ul>
+<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Options</span>
+    </h6>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="/">
+                <span data-feather="home"></span>
+                Back to home
+            </a>
+        </li>
+    </ul>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-<div class="row stages">
-    {% for s in stages %}
-    <div class="col stage {% if current.id == s.id %}active{% endif %}">
-        {% if device_id and s.link %}<a href="{{ url_for(s.link, device_id=device_id) }}">{% endif %}
-        {{ loop.index }}. {{ s.title }}
-        {% if device_id %}</a>{% endif %}
-    </div>
-    {% endfor %}
-</div>
-</div>
-{% if current.id == 'home' %}
-    <div class="container">
-    <h3>Unregistered devices which have sent data recently.</h3>
-    <hr>
+{% if current.id == 'devices' %}
     <table class="table table-bordered">
             <thead>
               <tr>
@@ -205,25 +215,21 @@
             {% endfor %}
             </tbody>
           </table>
-        </div>
 {% endif %}
 
 {% if current.id == 'preview' %}
-    <div class="container">
-        <canvas id="chart1"></canvas>
-        <div class="row">
-            <div class="col">
-                <a href="{{ url_for('device_register') }}" class="btn btn-block btn-info">Back</a>
-            </div>
-            <div id="option-config" class="col">
-                <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>
-            </div>
-        </div>
+<canvas id="chart1"></canvas>
+<div class="row">
+    <div class="col">
+        <a href="{{ url_for('device_register') }}" class="btn btn-block btn-info">Back</a>
     </div>
-
+    <div id="option-config" class="col">
+        <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>
+    </div>
+</div>
 {% endif %}
 
-{% if current.id == 'config' %}
+{% if current.id == 'configure' %}
     <div class="container">
         <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
 

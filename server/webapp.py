@@ -68,7 +68,6 @@ def device_register_config(device_id):
         form = DeviceSettingsForm(device_id=device_id, name=record['name']) 
     except IndexError:
         form = DeviceSettingsForm(device_id=device_id) 
-
     # Save form data
     if form.is_submitted and form.validate_on_submit():
         # Save to database
@@ -76,24 +75,39 @@ def device_register_config(device_id):
         # Show done page
         flash('Device registered', 'success')
         return redirect(url_for('home'))
-
     # Show config form page 
-    stages, current = get_device_reg_stages("config")
+    stages, current = get_device_reg_stages("configure")
     return render_template('device/register.html', stages=stages, current=current, device_id=device_id, form=form)
 
 # Register - Helper function
-def get_device_reg_stages(stage_id="home"):
+def get_device_reg_stages(stage_id="devices"):
     stages = [
-        dict(id="home", title="Unregistered Devices", link="device_register"),
+        dict(id="devices", title="Unregistered Devices", link="device_register"),
         dict(id="preview", title="Preview", link="device_register_preview"),
-        dict(id="config", title="Configuration", link="device_register_config"),
-        dict(id="done", title="Complete", link=None)
+        dict(id="configure", title="Configuration", link="device_register_config"),
+        dict(id="complete", title="Complete", link=None)
     ]
     current = list(filter(lambda stage: stage['id'] == stage_id, stages))
     if len(current) > 0:
         return stages, current[0]
     else:
         abort(404)
+
+# System Admin - Index
+@app.route("/sys/admin")
+def sysadmin_index():
+    return render_template('system/index.html', stats=devices.stats())
+
+# System Admin - Database Functions
+@app.route("/sys/admin/db")
+def sysadmin_db():
+    return render_template('system/db.html')
+
+# System Admin - Logs
+@app.route("/sys/admin/logs")
+def sysadmin_logs():
+    return render_template('system/logs.html')
+
 
 # ------------------------------------------------------------
 # Web API

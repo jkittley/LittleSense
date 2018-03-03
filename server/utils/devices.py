@@ -28,7 +28,18 @@ class Devices():
         self._ifdb = get_InfluxDB()
         if self._ifdb is not None:
             self.update()
-        
+    
+    def stats(self):
+        counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
+        last_upd = next(self._ifdb.query('SELECT * FROM "reading" ORDER BY time DESC LIMIT 1').get_points())
+        last_upd = arrow.get(last_upd['time'])
+        return {
+            "total_readings": counts,
+            "last_update": last_upd.format('YYYY-MM-DD HH:mm:ss ZZ'),
+            "last_update_humanized": last_upd.humanize(),
+            "registered_devices": len(self._registered)
+        }
+
     def get(self, update=False):
         if update:
             self.update()
