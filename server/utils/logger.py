@@ -8,9 +8,12 @@ import arrow, json
 class Logger():
 
     def __init__(self):
-        self._ifdb = InfluxDBClient('localhost', 8086, 'root', 'root', INFLUX_DBNAME)
-        self._ifdb.create_database(INFLUX_DBNAME)
-    
+        try:
+            self._ifdb = InfluxDBClient('localhost', 8086, 'root', 'root', INFLUX_DBNAME)
+            self._ifdb.create_database(INFLUX_DBNAME)
+        except:
+            self._ifdb = None
+
     def stats(self):
         try:
             counts = next(self._ifdb.query('SELECT count(*) FROM "logger"').get_points())
@@ -35,7 +38,8 @@ class Logger():
             logmsg['fields']['extra'] = json.dumps(data)
 
         # Save Reading
-        self._ifdb.write_points([logmsg])
+        if self._ifdb:
+            self._ifdb.write_points([logmsg])
         
     def get_categories(self):
         return [
@@ -58,6 +62,8 @@ class Logger():
         self._add_to_log('funcexec', msg, **kwargs)
 
     def list_records(self, **kwargs):
+        if self._ifdb is None:
+            return
         cat   = kwargs.get('cat', None)
         limit = kwargs.get('limit', 5000)
         start = kwargs.get('start', arrow.utcnow().shift(years=-10))

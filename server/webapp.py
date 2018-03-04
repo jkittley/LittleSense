@@ -46,7 +46,7 @@ devices = Devices()
 
 @app.route("/")
 def home():
-    return render_template('dashboard/index.html', field_names=devices.field_names())
+    return render_template('dashboard/index.html')
 
 # Register - preview device
 @app.route("/system/register/device/<string:device_id>")
@@ -233,10 +233,14 @@ class BackupForm(FlaskForm):
 # Other
 # ------------------------------------------------------------
 
+@app.before_request
+def handle_missing_db_connection():
+    if not devices.has_db_connection():
+        flash('No connection to InfluxDB', 'danger')
+        return "<h1>No Device Database Connection</h1>"
+
 @app.context_processor
 def context_basics():
-    # if app.config['IFDB'] == None:
-    #     flash('No connection to InfluxDB', 'danger')
     log.interaction(request.url)
     return dict(config=app.config, devices=devices.get_all())
 

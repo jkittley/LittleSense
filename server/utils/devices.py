@@ -32,7 +32,13 @@ class Devices():
         if self._ifdb is not None:
             self.update()
     
+    def has_db_connection(self):
+        self._ifdb = get_InfluxDB()
+        return self._ifdb is not None 
+
     def stats(self):
+        if self._ifdb is None:
+            return
         try:
             counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
         except StopIteration:
@@ -120,12 +126,9 @@ class Devices():
             "unregistered": self.to_dict(self._unregistered)
         }
 
-    def field_names(self, **kwargs):
-        q = 'SHOW FIELD KEYS FROM "reading"'
-        field_names = self._ifdb.query(q).get_points()
-        return [ dict(name=f['fieldKey'], type=f['fieldType']) for f in field_names ]
-        
     def update(self):
+        if self._ifdb is None:
+            return
         devices = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
         self._all=[ Device(device_id=d['value']) for d in devices ]
         self._registered=list(filter(lambda x: x.is_registered(), self._all))
@@ -285,7 +288,6 @@ class Device():
         for f in fields:
             f['id'] = 'mean_' + f['id']
             f['name'] = 'Mean ' + f['name']
-
 
         # Return
         return True, { 
