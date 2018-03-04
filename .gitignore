@@ -4,3 +4,4 @@ old/
 server/config/secure.py
 server/databases/*.json
 server/databases/*.db
+backups/
