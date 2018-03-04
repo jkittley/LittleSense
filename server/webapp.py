@@ -7,9 +7,12 @@ import config
 import json, os, arrow
 from collections import namedtuple
 from random import randint
-from flask import render_template, Flask, request, abort, redirect, url_for, flash
+from flask import render_template, Flask, request, abort, redirect, url_for, flash, send_from_directory
+from unipath import Path
 
-from utils import Device, Devices, DeviceRegister, Logger
+from utils import Device, Devices, DeviceRegister, Logger, Backup
+from utils.backup import BACKUP_MESSUREMENTS
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField
 from wtforms.validators import DataRequired, EqualTo
@@ -122,10 +125,27 @@ def sysadmin_logs():
     return render_template('system/logs.html', logdata=logdata, form=form)
 
 # System Admin - Index
-@app.route("/sys/backup/restore")
+@app.route("/sys/backup/restore", methods=['GET','POST'])
 def sysadmin_backup():
-    return render_template('system/backup.html')
+    download_link=None
+    backup = Backup()
+    backup_form = BackupForm()
+    if backup_form.validate_on_submit():
+        # Create backup 
+        download_file, message = backup.create(
+            backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
+        if download_file is not None:
+            flash('Backup created', 'success')
+            download_link = url_for('sysadmin_backup_download', filename=download_file)
+        else:
+            flash('Backup failed {}'.format(message), 'danger')
+    return render_template('system/backup.html', backup_form=backup_form, download_link=download_link)
 
+@app.route("/sys/backup/download/<string:filename>")
+def sysadmin_backup_download(filename):
+    return send_from_directory(directory=app.config.get('BACKUP_FOLDER'), filename=filename)
+   
+    
 
 # ------------------------------------------------------------
 # Web API
@@ -187,6 +207,11 @@ class LogFilterForm(FlaskForm):
         ('1000', 1000)
     ], default=500)
 
+class BackupForm(FlaskForm):
+    start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
+    end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
+    messurement = SelectField('Dataset',choices=BACKUP_MESSUREMENTS, default=BACKUP_MESSUREMENTS[0][0])
+    
 
 # ------------------------------------------------------------
 # Other

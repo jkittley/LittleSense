@@ -1,6 +1,8 @@
 SITE_NAME = "Sensor Store"
 
 INFLUX_DBNAME = "device_readings"
+INFLUX_HOST = "localhost"
+INFLUX_PORT = ""
 
 DB_DEVICE_REGISTRATION = "databases/devices.json"
 
@@ -8,3 +10,5 @@ DB_DEVICE_REGISTRATION = "databases/devices.json"
 AUTO_PURGE_UNREG_INTERVAL = 15
 # How many minutes of unregistered device data to keep i.e. only purge is older than x mins
 AUTO_PURGE_UNREG_KEEP = 30
+
+BACKUP_FOLDER = "backups/"
