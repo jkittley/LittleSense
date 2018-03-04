@@ -145,6 +145,11 @@ def sysadmin_backup():
 def sysadmin_backup_download(filename):
     return send_from_directory(directory=app.config.get('BACKUP_FOLDER'), filename=filename)
    
+# @app.route("/sys/backup/to/remote/<string:filename>")
+# def sysadmin_backup_remote(filename):
+#     success, message = Backup().sftp(filename)
+#     flash(message), 'success' if success else 'danger')
+#     return redirect('sysadmin_backup')
     
 
 # ------------------------------------------------------------

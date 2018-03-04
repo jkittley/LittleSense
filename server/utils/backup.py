@@ -1,7 +1,9 @@
 import os, arrow
 from config.general import INFLUX_DBNAME, INFLUX_HOST, BACKUP_FOLDER
-from config.secure import INFLUX_USER, INFLUX_PASS
+from config.secure import INFLUX_USER, INFLUX_PASS, BACKUP_REMOTE_HOST, BACKUP_REMOTE_USER, BACKUP_REMOTE_PASS, BACKUP_REMOTE_DIR
 from unipath import Path
+# import pysftp
+
 
 READINGS = "reading"
 LOGS = "logs"
@@ -50,3 +52,11 @@ class Backup():
             return save_name, None
         else:
             return None, message
+
+    # def sftp(self, filename):
+    #     path = '{0}/{1}'.format(BACKUP_FOLDER, filename).replace('//','/')
+    #     with pysftp.Connection(BACKUP_REMOTE_HOST, username=BACKUP_REMOTE_USER, password=BACKUP_REMOTE_PASS) as sftp:
+    #         with sftp.cd(BACKUP_REMOTE_DIR):    # temporarily chdir to public
+    #             sftp.put(path)  # upload file to public/ on remote
+    #             return True, "Uploaded {0} to {1}{2}".format(path, BACKUP_REMOTE_HOST, BACKUP_REMOTE_DIR)
+    #     return False, "Failed to upload"
