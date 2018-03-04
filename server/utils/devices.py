@@ -174,12 +174,30 @@ class Device():
                 return registration_record['registered']
         return False
     
+    def _field_id_to_name(self, field_id):
+        parts = field_id.split('_')
+        print (parts)
+        dtype = parts[0]
+        name = " ".join(parts[1:-1]).capitalize()
+        unit = parts[-1]
+        print(name)
+        return dtype, name, unit
+
     def field_names(self, **kwargs):
         return self._dev_reg.get_seen_fields(self.id)
-        # q = 'SHOW FIELD KEYS FROM "reading"'
-        # field_names = self._ifdb.query(q).get_points()
-        # return [ dict(name=f['fieldKey'], type=f['fieldType']) for f in field_names ]
-    
+
+    def fields(self, **kwargs):
+        out = []
+        for field in self.field_names():
+            dtype, name, unit = self._field_id_to_name(field)
+            out.append({
+                'id': field,
+                'name': name,
+                'dtype': dtype,
+                'unit': unit
+            }) 
+        return out
+
     def add_reading(self, utc, fields):
         # If device has not been seen before then add to register as unregistered
         if not self.is_registered():
@@ -261,14 +279,18 @@ class Device():
         used_keys = []
         for r in readings:
             timestamps.append(r['time'])
-            for k, v in r.items():
-                if v is not None:
-                    used_keys.append(k)
+
+        # Modify fields to to be mean
+        fields = self.fields()
+        for f in fields:
+            f['id'] = 'mean_' + f['id']
+            f['name'] = 'Mean ' + f['name']
+
 
         # Return
         return True, { 
             "count": len(readings),
-            "field_keys": list(filter(lambda x: x['name'] in used_keys, field_keys)), 
+            "fields": fields,
             'readings': readings, 
             'timestamps': timestamps,
         }

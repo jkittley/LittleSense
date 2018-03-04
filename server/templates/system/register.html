@@ -76,13 +76,15 @@
 
   
 
-    function prepData(readings, field_name) {
+    function prepData(readings, field_id) {
+        
         data   = []
         labels = []
         for (i in readings) {
+            console.log(readings[i][field_id]);
             data.push({
                 t: moment(readings[i].time),
-                y: readings[i][field_name]
+                y: readings[i][field_id]
             })
             labels.push(
                 moment(readings[i].time).format()
@@ -92,11 +94,11 @@
     }
 
 
-    function makeDataset(chart, timestamps, field_keys, readings) {
+    function makeDataset(chart, timestamps, fields, readings) {
         datasets = []
-        for (i in field_keys) {
+        for (i in fields) {
             var dataset = {
-                label: field_keys[i].name, 
+                label: fields[i].name, 
                 data: [],
                 type: 'line',
                 pointRadius: 0,
@@ -106,7 +108,7 @@
                 borderColor: colors[i]
             }
 
-            prepped = prepData(readings, field_keys[i].name)
+            prepped = prepData(readings, fields[i].id)
             data = prepped[0];
             labels = prepped[1];
             for (i in data) { 
@@ -145,7 +147,7 @@
                     limit: 30,
                 },
                 success: function(resp) { 
-                    makeDataset(chart, resp.timestamps, resp.field_keys, resp.readings); 
+                    makeDataset(chart, resp.timestamps, resp.fields, resp.readings); 
                 },
                 error: function(jqXHR) {
                     console.log(jqXHR.responseText);

@@ -77,6 +77,7 @@ def sysadmin_index():
 # System Admin - Index
 @app.route("/sys/devices")
 def sysadmin_devices():
+    devices.update()
     return render_template('system/devices.html')
 
 # System Admin - Index
@@ -95,15 +96,26 @@ def sysadmin_db():
     purge_form = DBPurgeForm()
     if purge_form.validate_on_submit():
         # Purge
-        success = devices.purge(
-            end=arrow.utcnow(),  
-            unregistered=purge_form.unreg.data,
-            registered=purge_form.reged.data
-        )
-        if success:
-            flash('Purged devices data', 'success')
-        else:
-            flash('Failed to purge devices data', 'danger')
+
+        if purge_form.reged.data or purge_form.unreg.data:
+            success = devices.purge(
+                end=arrow.utcnow(),  
+                unregistered=purge_form.unreg.data,
+                registered=purge_form.reged.data
+            )
+            if success:
+                flash('Purged devices data', 'success')
+            else:
+                flash('Failed to purge devices data', 'danger')
+
+        if purge_form.logs.data:
+            flash('Log Purge not implemented yet.', 'warning')
+
+        if purge_form.registry.data:
+            flash('Registry Purge not implemented yet.', 'warning')
+    
+    # Always clear verify
+    purge_form.verify.data = ""
     return render_template('system/db.html', purge_form=purge_form)
 
 # System Admin - Logs
@@ -111,7 +123,6 @@ def sysadmin_db():
 def sysadmin_logs():
     form = LogFilterForm()
     if form.validate_on_submit():
-        print("VALID")
         logdata = log.list_records(
             cat=form.cat.data, 
             start=form.start.data,
@@ -119,8 +130,6 @@ def sysadmin_logs():
             limit=form.limit.data
         )
     else:
-        print("INVALID")
-        print(form.errors)
         logdata = log.list_records()
     return render_template('system/logs.html', logdata=logdata, form=form)
 
@@ -192,6 +201,8 @@ class DeviceSettingsForm(FlaskForm):
 class DBPurgeForm(FlaskForm):
     reged = BooleanField('Registered Devices')
     unreg = BooleanField('Unregistered Devices')
+    logs  = BooleanField('Log Files')
+    registry = BooleanField('Device Registry')
     confirm = HiddenField("conf", default="I CONFIRM")
     verify = StringField('Confirm by typing "I CONFIRM"', validators=[
         DataRequired(),

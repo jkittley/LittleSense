@@ -30,7 +30,10 @@
                 <td>{{ loop.index }}</td>
                 <td>{{ device.id }}</th>
                 <td class="time-to-rel">{{ last_update.time }}</td>
-                <td>{% for k in last_upd_keys %}{{ k }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                <td>{% for f in device.fields() %}
+                  {{ f.name }} ({{ f.unit }})
+                  {% if not loop.last %}, {% endif %}
+                  {% endfor %}</td>
                 
                 {% if device.is_registered() %}
                 <td><a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-info">Configure</a></td>
