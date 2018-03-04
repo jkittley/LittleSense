@@ -31,6 +31,7 @@ PUBLIC_SSH_KEY = '/Users/jacob/.ssh/id_rsa.pub'
 def deploy():
     sync_files()
     set_permissions()
+    install_venv_requirements()
     restart_web_services()
 
 @task
