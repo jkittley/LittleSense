@@ -77,11 +77,9 @@
   
 
     function prepData(readings, field_id) {
-        
         data   = []
         labels = []
         for (i in readings) {
-            console.log(readings[i][field_id]);
             data.push({
                 t: moment(readings[i].time),
                 y: readings[i][field_id]
@@ -96,16 +94,18 @@
 
     function makeDataset(chart, timestamps, fields, readings) {
         datasets = []
+        var colors = palette('tol', fields.length);
         for (i in fields) {
             var dataset = {
                 label: fields[i].name, 
                 data: [],
                 type: 'line',
                 pointRadius: 0,
-                fill: false,
+                fill: true,
                 lineTension: 0,
                 borderWidth: 2,
-                borderColor: colors[i]
+                borderColor: '#'+colors[i],
+                fillColor: '#'+colors[i]
             }
 
             prepped = prepData(readings, fields[i].id)
@@ -130,8 +130,7 @@
         $('#chart1').hide();
     }
 
-    var colors = [];
-    for (var i=0; i<100; i++) { colors.push('#'+Math.random().toString(16).slice(-3)); } 
+    
 
     $(document).ready(function() {
         build_charts();
@@ -142,7 +141,7 @@
                 data: {
                     start: moment().utc().subtract(1, 'minutes').format(),
                     end: moment().utc().format(),
-                    fill: "null",
+                    fill: "none",
                     interval: 1,
                     limit: 30,
                 },
@@ -150,7 +149,6 @@
                     makeDataset(chart, resp.timestamps, resp.fields, resp.readings); 
                 },
                 error: function(jqXHR) {
-                    console.log(jqXHR.responseText);
                     show_error(jqXHR.responseText);
                     clearInterval(timer);
                 }
