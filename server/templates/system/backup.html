@@ -13,15 +13,19 @@
 <div class="card">
     <div class="card-header lead">Backup Data</div>
     <div class="card-body">
-{% if download_link %}
-    <a href="{{ download_link }}" class="btn btn-info">Download</a>
-{% else %}
-<form action="{{ url_for('sysadmin_backup') }}" method="POST">
+        {% if download_link %}
+        <a href="{{ download_link }}" class="btn btn-info">Download</a>
+        {% else %}
+        <form action="{{ url_for('sysadmin_backup') }}" method="POST">
             {{ b_wtf.bootstrap_form(backup_form) }}      
             <button type="submit" class="btn btn-primary">Backup</button>
-</form> 
+        </form> 
+        {% endif %}
+    </div>
 </div>
+<BR><BR>
+<div class="card">
+    <div class="card-header lead">Restore Data</div>
+    <div class="card-body">Not yet implemented</div>
 </div>
-{% endif %}
-
 {% endblock %}
