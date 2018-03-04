@@ -18,15 +18,14 @@
     <script src="{{ url_for('static', filename='_bootstrap4/js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/moment-locals.js') }}"></script>
     <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
-    <script>
-      $(document).ready(function() { feather.replace(); });
-    </script>
+    <script defer src="{{ url_for('static', filename='_fontawesome/fontawesome-all.min.js') }}"></script>
+
 
     {% block script %}
     {% endblock %}
 
     <!-- Custom styles for this template -->
-    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
     {% block style %}
     {% endblock %}
   </head>
@@ -58,7 +57,7 @@
                 {% block navmenu %}
                 {% endblock %}
                 <li class="nav-item mr-0">  
-                    <a class="nav-link" href="{{ url_for('sysadmin_index') }}"><span data-feather="sliders"></span></a>
+                    <a class="nav-link" href="{{ url_for('sysadmin_index') }}"><i class="fas fa-cog"></i> Settings</a>
                 </li>
             </ul>
             <!-- <span class="navbar-text">

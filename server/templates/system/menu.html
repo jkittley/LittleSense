@@ -4,23 +4,23 @@
     <ul class="nav flex-column">
         <li class="nav-item">
             <a class="nav-link {{ 'active' if active=='index' else '' }}" href="{{ url_for('sysadmin_index') }}">
-                <span data-feather="activity"></span>
+                <i class="fas fa-stethoscope"></i>
                 System Stats
             </a>
             <a class="nav-link {{ 'active' if active=='devices' else '' }}" href="{{ url_for('sysadmin_devices') }}">
-                    <span data-feather="activity"></span>
-                    Devices
+                <i class="fas fa-cube"></i>
+                Devices
             </a>
             <a class="nav-link {{ 'active' if active=='logs' else '' }}" href="{{ url_for('sysadmin_logs') }}">
-                <span data-feather="file-text"></span>
+                    <i class="fas fa-file-alt"></i>
                 View Logs
             </a>
             <a class="nav-link {{ 'active' if active=='db' else '' }}" href="{{ url_for('sysadmin_db') }}">
-                <span data-feather="database"></span>
+                    <i class="fas fa-database"></i>
                 Database Tools
             </a>
             <a class="nav-link {{ 'active' if active=='backup' else '' }}" href="{{ url_for('sysadmin_backup') }}">
-                <span data-feather="package"></span>
+                <i class="fas fa-save"></i>
                 Backup / Restore
             </a>
         </li>
