@@ -8,13 +8,14 @@ from commlink import RFM69
 from influxdb import InfluxDBClient
 from datetime import datetime
 import time
-from config.general import INFLUX_DBNAME
+from config import settings
+from utils import get_InfluxDB
 from random import randint
 
-ifdb = InfluxDBClient('localhost', 8086, 'root', 'root', INFLUX_DBNAME)
+ifdb = get_InfluxDB()
 comm = RFM69(ifdb)
 
-ifdb.create_database(INFLUX_DBNAME)
+ifdb.create_database(settings.INFLUX['dbname'])
 
 
 # Function needed to delete all readings for unregistered devices older than 24hrs

@@ -1,10 +1,11 @@
 from tinydb import TinyDB, Query
-from config.general import DB_DEVICE_REGISTRATION
+from config import settings
+
 
 class DeviceRegister():
     
     def __init__(self):
-        self._db = TinyDB(DB_DEVICE_REGISTRATION)
+        self._db = TinyDB(settings.TINYDB['db_device_reg'])
 
     def get_record(self, device_id):
         try:

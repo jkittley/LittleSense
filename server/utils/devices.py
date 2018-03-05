@@ -1,23 +1,14 @@
 from collections import namedtuple
 from tinydb import TinyDB, Query
-from influxdb import InfluxDBClient
-from influxdb.exceptions import InfluxDBClientError
-from requests.exceptions import RequestException
-from config.general import INFLUX_DBNAME, AUTO_PURGE_UNREG_KEEP
+from config import settings
 from .device_register import DeviceRegister
 from .logger import Logger
+from .influx import get_InfluxDB
 import arrow
 
 log = Logger()
 
-def get_InfluxDB():
-    try:
-        ifdb = InfluxDBClient('localhost', 8086, 'root', 'root', INFLUX_DBNAME)
-        # Test connection
-        _ = ifdb.query('SHOW FIELD KEYS FROM "reading"')
-        return ifdb
-    except RequestException:
-        return None
+
 
     
 
@@ -64,7 +55,7 @@ class Devices():
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
 
-        default_end = arrow.utcnow().shift(minutes=-AUTO_PURGE_UNREG_KEEP)
+        default_end = arrow.utcnow().shift(minutes=-settings.PURGE['auto_interval'])
         end = kwargs.get('end', default_end)
 
         if registered and unregistered:
@@ -179,11 +170,9 @@ class Device():
     
     def _field_id_to_name(self, field_id):
         parts = field_id.split('_')
-        print (parts)
         dtype = parts[0]
         name = " ".join(parts[1:-1]).capitalize()
         unit = parts[-1]
-        print(name)
         return dtype, name, unit
 
     def field_names(self, **kwargs):

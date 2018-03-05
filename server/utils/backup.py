@@ -1,16 +1,7 @@
 import os, arrow
-from config.general import INFLUX_DBNAME, INFLUX_HOST, BACKUP_FOLDER
-from config.secure import INFLUX_USER, INFLUX_PASS, BACKUP_REMOTE_HOST, BACKUP_REMOTE_USER, BACKUP_REMOTE_PASS, BACKUP_REMOTE_DIR
+from config import settings
 from unipath import Path
 # import pysftp
-
-
-READINGS = "reading"
-LOGS = "logs"
-BACKUP_MESSUREMENTS = [
-    (READINGS, "Readings"),
-    (LOGS, "Logs")
-]
 
 class Backup():
 
@@ -25,21 +16,22 @@ class Backup():
         start = arrow.get(start)
         end = arrow.get(end)
 
-        if not Path(BACKUP_FOLDER).exists():
-            Path(BACKUP_FOLDER).mkdir()
+        if not Path(settings.BACKUP['folder']).exists():
+            Path(settings.BACKUP['folder']).mkdir()
 
         save_name = "{messurement}_{start}_to_{end}.csv".format(
             messurement=messurement,
             start=start.format('YYYY-MM-DD_HH-mm-ss'),
             end=end.format('YYYY-MM-DD_HH-mm-ss')
         )
-        save_path = '{0}/{1}'.format(BACKUP_FOLDER, save_name).replace('//','/')
+        save_path = '{0}/{1}'.format(settings.BACKUP['folder'], save_name).replace('//','/')
 
-        command = "influx -username '{user}' -password '{pswd}' -database '{dbname}' -host '{host}' -execute \"SELECT * FROM \"{dbname}\".\"\".\"{messurement}\" WHERE time > '{start}' and time < '{end}'\" -format 'csv' > {save_path} ".format(
-            user=INFLUX_USER,
-            pswd=INFLUX_PASS,
-            dbname=INFLUX_DBNAME,
-            host=INFLUX_HOST,
+        command = "influx -username '{user}' -password '{pswd}' -database '{dbname}' -host '{host}' -port {port} -execute \"SELECT * FROM \"{dbname}\".\"\".\"{messurement}\" WHERE time > '{start}' and time < '{end}'\" -format 'csv' > {save_path} ".format(
+            user=settings.INFLUX['user'],
+            pswd=settings.INFLUX['pass'],
+            dbname=settings.INFLUX['dbname'],
+            host=settings.INFLUX['host'],
+            port=settings.INFLUX['port'],
             messurement=messurement,
             start=start,
             end=end,

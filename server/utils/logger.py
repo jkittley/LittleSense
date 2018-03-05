@@ -1,6 +1,5 @@
-from config.general import INFLUX_DBNAME
-from influxdb import InfluxDBClient
-from influxdb.exceptions import InfluxDBClientError
+from config import settings
+from .influx import get_InfluxDB
 import arrow, json
 
 
@@ -8,11 +7,7 @@ import arrow, json
 class Logger():
 
     def __init__(self):
-        try:
-            self._ifdb = InfluxDBClient('localhost', 8086, 'root', 'root', INFLUX_DBNAME)
-            self._ifdb.create_database(INFLUX_DBNAME)
-        except:
-            self._ifdb = None
+        self._ifdb = get_InfluxDB()
 
     def stats(self):
         try:

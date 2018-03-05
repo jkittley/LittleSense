@@ -3,15 +3,14 @@
 # inspection and configuration of the sensor network.
 # =============================================================================
 
-import config
 import json, os, arrow
-from collections import namedtuple
+from config import settings
 from random import randint
 from flask import render_template, Flask, request, abort, redirect, url_for, flash, send_from_directory
 from unipath import Path
 
 from utils import Device, Devices, DeviceRegister, Logger, Backup
-from utils.backup import BACKUP_MESSUREMENTS
+from utils.influx import INFLUX_MESSUREMENTS
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField
@@ -24,20 +23,13 @@ log = Logger()
 # Setup
 # ------------------------------------------------------------
 
-app.config.from_object('config.general')
-app.config.from_object('config.secure')
-LOCAL = True if 'LOCAL' in os.environ and os.environ['LOCAL'] == '1' else False
-if LOCAL:
-    print('---> LOCAL MODE <----')
-    app.config.from_object('config.local')
-else:
-    app.config.from_object('config.remote')
+# Settings
+app.config.from_object(settings)
 
-    
 #  Setup the Web API manager
 from commlink import WebAPI
 webapi = WebAPI(app.config.get('IFDB'))
-
+# Device managment
 devices = Devices()
 
 # ------------------------------------------------------------
@@ -226,7 +218,7 @@ class LogFilterForm(FlaskForm):
 class BackupForm(FlaskForm):
     start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
     end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
-    messurement = SelectField('Dataset',choices=BACKUP_MESSUREMENTS, default=BACKUP_MESSUREMENTS[0][0])
+    messurement = SelectField('Dataset',choices=INFLUX_MESSUREMENTS, default=INFLUX_MESSUREMENTS[0][0])
     
 
 # ------------------------------------------------------------
@@ -246,7 +238,7 @@ def context_basics():
 
 
 if __name__ == '__main__':
-    if LOCAL:
+    if settings.LOCAL:
         app.run()
     else:
         app.run(host='0.0.0.0')
