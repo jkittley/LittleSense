@@ -29,8 +29,8 @@ env.user = settings.DEPLOY_USER
 def deploy():
     sync_files()
     set_permissions()
-    # install_venv_requirements()
-    # restart_web_services()
+    install_venv_requirements()
+    restart_web_services()
     update_crontab()
 
 @task
@@ -40,31 +40,32 @@ def init():
         user.add_ssh_public_key(env.user, settings.PUBLIC_SSH_KEY)
 
     ## Basic
-    # sudo('apt-get update')
-    # sudo('apt-get upgrade')
-    # deb.install('nginx uwsgi python3-pip python3-dev python3-psycopg2')
-    # add_grp_to_user()
-    # install_python_35()
-    
+    sudo('apt-get update')
+    sudo('apt-get upgrade')
+    deb.install('nginx uwsgi python3-pip python3-dev python3-psycopg2')
+    add_grp_to_user()
+    install_python_35()
+    setup_dot_local()
+
     ## Setup Project
-    # make_dirs()
-    # sync_files()
-    # set_permissions()
-    # create_virtualenv()
-    # install_venv_requirements()
-    # set_permissions()
+    make_dirs()
+    sync_files()
+    set_permissions()
+    create_virtualenv()
+    install_venv_requirements()
+    set_permissions()
 
     ## Web server
-    # setup_nginx()
-    # setup_gunicorn()
-    # restart_web_services()
+    setup_nginx()
+    setup_gunicorn()
+    restart_web_services()
 
     ## Database & Requirements
-    # install_influx()
-    # restart_db_services()
+    install_influx()
+    restart_db_services()
 
     # Initialise cron jobs
-    # update_crontab()
+    update_crontab()
 
 # ----------------------------------------------------------------------------------------
 # Helper functions below
@@ -87,6 +88,8 @@ def update_crontab():
     script = '{}cronjobs.py'.format(settings.DIR_CODE)
     sudo('{venv}bin/python {script}'.format(venv=settings.DIR_VENV, script=script))
 
+def setup_dot_local():
+    sudo('apt-get install avahi-daemon')
 
 #  Users and Groups
 
@@ -152,20 +155,18 @@ def install_influx():
     sudo('wget http://ftp.us.debian.org/debian/pool/main/i/influxdb/influxdb_1.0.2+dfsg1-1+b2_armhf.deb')
     sudo('dpkg -i influxdb_1.0.2+dfsg1-1+b2_armhf.deb')
 
-    sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana-data_2.6.0+dfsg-3_all.deb') 
-    sudo('apt-get install -f')
-    sudo('dpkg -i grafana-data_2.6.0+dfsg-3_all.deb')
-    sudo('apt-get install -f')
+    # sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana-data_2.6.0+dfsg-3_all.deb') 
+    # sudo('apt-get install -f')
+    # sudo('dpkg -i grafana-data_2.6.0+dfsg-3_all.deb')
+    # sudo('apt-get install -f')
 
-    sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana_2.6.0+dfsg-3_armhf.deb')
-    sudo('dpkg -i grafana_2.6.0+dfsg-3_armhf.deb')
-    sudo('apt-get install -f')
-
-    
+    # sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana_2.6.0+dfsg-3_armhf.deb')
+    # sudo('dpkg -i grafana_2.6.0+dfsg-3_armhf.deb')
+    # sudo('apt-get install -f')
 
     # Enable and start grafana
-    sudo('systemctl enable grafana')
-    sudo('systemctl start grafana')
+    # sudo('systemctl enable grafana')
+    # sudo('systemctl start grafana')
 
 def restart_db_services():
     sudo('systemctl restart influxdb')
@@ -210,8 +211,8 @@ def setup_nginx():
                 proxy_pass http://unix:{SOCKET_FILES_PATH}{PROJECT_NAME}.sock;
         }}
     }}'''.format(
-        SERVER_NAMES=env.hosts[0],
-        PROJECT_NAME=remote.ROOT_NAME,
+        SERVER_NAMES="{0}|{1}.local|raspberrypi.local".format(env.hosts[0], settings.ROOT_NAME),
+        PROJECT_NAME=settings.ROOT_NAME,
         PROJECT_PATH=settings.DIR_CODE,
         STATIC_FILES_PATH=settings.DIR_CODE,
         VIRTUALENV_PATH=settings.DIR_VENV,
