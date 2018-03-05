@@ -1,8 +1,8 @@
-import os, arrow
+import os, arrow, csv
 from config import settings
 from unipath import Path
-from utils import Logger
-# import pysftp
+from .logger import Logger
+from .influx import get_InfluxDB
 
 class BackupManager():
 
@@ -47,27 +47,37 @@ class BackupManager():
         )
         save_path = '{0}/{1}'.format(settings.BACKUP['folder'], save_name).replace('//','/')
 
-        command = "influx -username '{user}' -password '{pswd}' -database '{dbname}' -host '{host}' -port {port} -execute \"SELECT * FROM \"{dbname}\".\"\".\"{messurement}\" WHERE time > '{start}' and time < '{end}'\" -format 'csv' > {save_path} ".format(
-            user=settings.INFLUX['user'],
-            pswd=settings.INFLUX['pass'],
-            dbname=settings.INFLUX['dbname'],
-            host=settings.INFLUX['host'],
-            port=settings.INFLUX['port'],
-            messurement=messurement,
-            start=start,
-            end=end,
-            save_path=save_path
+        # Build Query
+        q = 'SELECT * FROM "{messurement}" WHERE {timespan}'.format(
+            timespan="time > '{start}' AND time <= '{end}'".format(start=start, end=end),
+            messurement=messurement
         )
-        # print (command)
-        message = os.system(command)
-        # print (message)
-        if message == 0:
-            self.log.funcexec('Backup created for {0}'.format(messurement), savedas=save_name)
-            return save_name, None
+        # print (q)
+        ifdb = get_InfluxDB()
+        readings = ifdb.query(q).get_points()
+        readings = list(readings)
+
+        if len(readings) > 0:        
+            with open(save_path, 'w') as csvfile:
+                csvwriter = csv.DictWriter(csvfile, 
+                    fieldnames=list(readings[0].keys()),
+                    delimiter=',',
+                    quotechar='"', 
+                    quoting=csv.QUOTE_MINIMAL
+                )
+                csvwriter.writeheader()
+                for reading in readings:
+                    csvwriter.writerow(dict(reading))
+
+                self.log.funcexec('Backup created for {0}'.format(messurement), savedas=save_name)
+                return save_name, None
         else:
+            message = "No data to backup"
             self.log.funcexec('Backup failed for {0}'.format(messurement), error=message)
             return None, message
 
+
+    
     # def sftp(self, filename):
     #     path = '{0}/{1}'.format(BACKUP_FOLDER, filename).replace('//','/')
     #     with pysftp.Connection(BACKUP_REMOTE_HOST, username=BACKUP_REMOTE_USER, password=BACKUP_REMOTE_PASS) as sftp:
