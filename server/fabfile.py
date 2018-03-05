@@ -22,7 +22,7 @@ from fabtools.python import virtualenv, install_requirements, install
 
 from config import settings
 
-
+env.user = settings.DEPLOY_USER
 
 
 @task

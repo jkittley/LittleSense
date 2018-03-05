@@ -28,6 +28,7 @@ class DefaultSetting():
     PUBLIC_SSH_KEY = ""
 
     # Deply settings
+    DEPLOY_USER  = 'pi'
     USER_GRP = 'www-data'
     ROOT_NAME = "noise"
     ROOT_PATH = "/srv/projects/noise"
