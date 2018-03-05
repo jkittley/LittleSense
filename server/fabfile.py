@@ -20,11 +20,9 @@ from fabric.contrib.project import rsync_project
 from fabtools import user, group, require, deb
 from fabtools.python import virtualenv, install_requirements, install
 
-from config import remote
-from config import general
-from config import secure
+from config import settings
 
-PUBLIC_SSH_KEY = '/Users/jacob/.ssh/id_rsa.pub'
+
 
 
 @task
@@ -37,8 +35,8 @@ def deploy():
 @task
 def init():
 
-    if PUBLIC_SSH_KEY != "":
-        user.add_ssh_public_key(env.user, PUBLIC_SSH_KEY)
+    if settings.PUBLIC_SSH_KEY != "":
+        user.add_ssh_public_key(env.user, settings.PUBLIC_SSH_KEY)
 
     ## Basic
     # sudo('apt-get update')
@@ -68,28 +66,14 @@ def init():
 # Helper functions below
 # ----------------------------------------------------------------------------------------
 
-USER_GRP = 'www-data'
-
-DIR_PROJ = "/srv/{0}/".format(remote.ROOT_NAME)
-DIR_CODE = "{0}src/".format(DIR_PROJ)
-DIR_LOGS = "{0}logs/".format(DIR_PROJ)
-DIR_ENVS = "{0}envs/".format(DIR_PROJ)
-DIR_VENV = "{0}{1}/".format(DIR_ENVS, remote.ROOT_NAME)
-DIR_SOCK = "{0}sockets/".format(DIR_PROJ)
-
-PYVERSION = (3,5,3)
-PYVFULL = ".".join([str(x) for x in PYVERSION])
-PYVMM = ".".join([str(x) for x in PYVERSION[:2]])
-
-
 # OS
 
 def install_python_35():
     sudo('apt install build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev')
     with cd('/srv'):
-        sudo('wget https://www.python.org/ftp/python/{0}/Python-{0}.tgz'.format(PYVERSION))
-        sudo('tar -xvf Python-{0}.tgz'.format(PYVERSION))
-        with cd('/srv/Python-{0}'.format(PYVERSION)):
+        sudo('wget https://www.python.org/ftp/python/{0}/Python-{0}.tgz'.format(settings.PYVERSION))
+        sudo('tar -xvf Python-{0}.tgz'.format(settings.PYVERSION))
+        with cd('/srv/Python-{0}'.format(settings.PYVERSION)):
             sudo('./configure')
             sudo('make')
             sudo('make altinstall')
@@ -97,55 +81,56 @@ def install_python_35():
 #  Users and Groups
 
 def add_grp_to_user():
-    if not group.exists(USER_GRP):
-        group.create(USER_GRP)
-    sudo('adduser {username} {group}'.format(username=env.user, group=USER_GRP))
+    if not group.exists(settings.USER_GRP):
+        group.create(settings.USER_GRP)
+    sudo('adduser {username} {group}'.format(username=env.user, group=settings.USER_GRP))
     # user.modify(env.user, group=USER_GRP)
 
 # Files and folders
 
 def make_dirs():
-    for d in [DIR_PROJ, DIR_CODE, DIR_LOGS, DIR_ENVS, DIR_SOCK]:
+    for d in [settings.DIR_PROJ, settings.DIR_CODE, settings.DIR_LOGS, settings.DIR_ENVS, settings.DIR_SOCK]:
         exists = files.exists(d)
         print("File", d, "exists?", exists)
         if not exists:
             sudo('mkdir -p {}'.format(d))
             sudo('chown -R %s %s' % (env.user, d))
-            sudo('chgrp -R %s %s' % (USER_GRP, d))
+            sudo('chgrp -R %s %s' % (settings.USER_GRP, d))
 
     set_permissions()
     
 def set_permissions():
     # src
-    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", DIR_CODE))
+    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_CODE))
     # Logs
-    sudo('chmod -R %s %s' % ("u=rwx,g=rw,o=r", DIR_LOGS))
+    sudo('chmod -R %s %s' % ("u=rwx,g=rw,o=r", settings.DIR_LOGS))
     # Envs
-    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", DIR_ENVS))
+    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_ENVS))
 
 def sync_files():
     rsync_project(   
-        remote_dir=DIR_CODE,
+        remote_dir=settings.DIR_CODE,
         local_dir='./',
-        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log" '__pychache__', '*.md','*.DS_Store'),
+        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log", "*.csv" '__pychache__', '*.md','*.DS_Store'),
+        extra_opts="--filter 'protect *.csv' --filter 'protect *.json' --filter 'protect *.db'",
         delete=True
     )
 
 # Virtual environments
 
 def create_virtualenv():
-    if files.exists(DIR_VENV):
+    if files.exists(settings.DIR_VENV):
         print("Virtual Environment already exists")
         return
-    run('virtualenv -p python{0} {1}'.format(PYVMM, DIR_VENV))
-    sudo('chgrp -R %s %s' % (USER_GRP, DIR_VENV))
+    run('virtualenv -p python{0} {1}'.format(settings.PYVMM, settings.DIR_VENV))
+    sudo('chgrp -R %s %s' % (settings.USER_GRP, settings.DIR_VENV))
 
 def install_venv_requirements():
-    with virtualenv(DIR_VENV):
-        install_requirements('{0}requirements/remote.txt'.format(DIR_CODE), use_sudo=False)
+    with virtualenv(settings.DIR_VENV):
+        install_requirements('{0}requirements/remote.txt'.format(settings.DIR_CODE), use_sudo=False)
 
 def set_env_vars():
-    with virtualenv(DIR_VENV):
+    with virtualenv(settings.DIR_VENV):
         run('export LOCAL=0')
 
 # Databases
@@ -217,15 +202,15 @@ def setup_nginx():
     }}'''.format(
         SERVER_NAMES=env.hosts[0],
         PROJECT_NAME=remote.ROOT_NAME,
-        PROJECT_PATH=DIR_CODE,
-        STATIC_FILES_PATH=DIR_CODE,
-        VIRTUALENV_PATH=DIR_VENV,
-        SOCKET_FILES_PATH=DIR_SOCK
+        PROJECT_PATH=settings.DIR_CODE,
+        STATIC_FILES_PATH=settings.DIR_CODE,
+        VIRTUALENV_PATH=settings.DIR_VENV,
+        SOCKET_FILES_PATH=settings.DIR_SOCK
     )
 
     print(nginx_conf)    
-    sites_available = "/etc/nginx/sites-available/%s" % remote.ROOT_NAME
-    sites_enabled = "/etc/nginx/sites-enabled/%s" % remote.ROOT_NAME
+    sites_available = "/etc/nginx/sites-available/%s" % settings.ROOT_NAME
+    sites_enabled = "/etc/nginx/sites-enabled/%s" % settings.ROOT_NAME
     files.append(sites_available, nginx_conf, use_sudo=True)
     
     if not files.exists(sites_available):
@@ -239,7 +224,7 @@ def setup_nginx():
 
 
 def setup_gunicorn():
-    with virtualenv(DIR_VENV):
+    with virtualenv(settings.DIR_VENV):
         install('gunicorn', use_sudo=False)
 
     gunicorn_conf = '''[Unit]
@@ -255,13 +240,13 @@ def setup_gunicorn():
         [Install]
         WantedBy=multi-user.target
         '''.format(
-            APP_NAME=remote.ROOT_NAME,
-            PROJECT_NAME=remote.ROOT_NAME,
-            PATH=DIR_CODE,
+            APP_NAME=settings.ROOT_NAME,
+            PROJECT_NAME=settings.ROOT_NAME,
+            PATH=settings.DIR_CODE,
             USER=env.user,
-            GRP=USER_GRP,
-            VIRTUALENV_PATH=DIR_VENV,
-            SOCKET_FILES_PATH=DIR_SOCK
+            GRP=settings.USER_GRP,
+            VIRTUALENV_PATH=settings.DIR_VENV,
+            SOCKET_FILES_PATH=settings.DIR_SOCK
         )
     gunicorn_service = "/etc/systemd/system/gunicorn.service"
     files.append(gunicorn_service, gunicorn_conf, use_sudo=True)
