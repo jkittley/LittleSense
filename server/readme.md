@@ -30,8 +30,19 @@ To deploy the project to a remote host you must first have created a local virtu
 
 2. Navigate to the server folder (where this file is stored).
 
-3. Run `fab -H 192.168.0.106 -u pi -pMyPassword deploy`
-to deploy the project to the host located at 192.168.0.101 using the username 'pi' and the password 'MyPassword'. Change these details as needed.
+3. Run `fab -H 192.168.0.106 -pMyPassword deploy`
+to deploy the project to the host located at 192.168.0.101 using the password 'MyPassword'. Change these details as needed.
+
+#### Additional - Set .local domain name
+Rather than entering the IP Address to access the Raspberry pi you can use a `http://raspberrypi.local/`. If you want to change this name then:
+
+1. Connect to the Pi and run `sudo nano /etc/hosts`. 
+2. Change the last entry for `127.0.1.1` to the name of your choice
+3. Open `sudo nano /etc/nginx/sites-enabled/ROOT_NAME` (replace ROOT_NAME with the value in the settings file)
+4. Change raspberrypi.local to match the name you chose.
+4. Save and reboot the Pi. 
+
+Now you can access the site with ROOT_NAME.local in your browser.
 
 ## 2. System Design
 In this section we outline some of the most important files and folders in the project.
