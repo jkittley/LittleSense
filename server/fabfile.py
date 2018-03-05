@@ -29,8 +29,9 @@ env.user = settings.DEPLOY_USER
 def deploy():
     sync_files()
     set_permissions()
-    install_venv_requirements()
-    restart_web_services()
+    # install_venv_requirements()
+    # restart_web_services()
+    update_crontab()
 
 @task
 def init():
@@ -62,6 +63,9 @@ def init():
     # install_influx()
     # restart_db_services()
 
+    # Initialise cron jobs
+    # update_crontab()
+
 # ----------------------------------------------------------------------------------------
 # Helper functions below
 # ----------------------------------------------------------------------------------------
@@ -77,6 +81,12 @@ def install_python_35():
             sudo('./configure')
             sudo('make')
             sudo('make altinstall')
+
+
+def update_crontab():
+    script = '{}cronjobs.py'.format(settings.DIR_CODE)
+    sudo('{venv}bin/python {script}'.format(venv=settings.DIR_VENV, script=script))
+
 
 #  Users and Groups
 

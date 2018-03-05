@@ -15,14 +15,16 @@ class DefaultSetting():
         "db_device_reg": "databases/devices.json"
     }
     PURGE = {
-        "auto_interval": 15, # How many minutes between purging the database of unregistered device data
-        "keep_unreg_for": 30 # How many minutes of unregistered device data to keep i.e. only purge is older than x mins
+        "unreg_interval": 30, # How many minutes between purging the database of unregistered device data
+        "unreg_keep_for": 30, # How many minutes of unregistered device data to keep i.e. only purge is older than x mins
+        "days_to_keep_log": 7 # Number of days to keep log
     }
 
     SECRET_KEY = "AVeryPrivateSecret"
     SECURITY_PASSWORD_SALT = "jdsfhbasdjkfhasldjkfhasiuy324783y58934"
     BACKUP = {
-        "folder" : "backups/"
+        "folder" : "backups/",
+        "frequency": 'weekly',  # Backups frquency can be: 'weekly', 'daily', 'hourly' or 'never'
     }
     REMOTE_BACKUP = None
     PUBLIC_SSH_KEY = ""

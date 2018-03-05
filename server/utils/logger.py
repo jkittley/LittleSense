@@ -82,6 +82,21 @@ class Logger():
         
         return self._ifdb.query(query).get_points()
     
+
+    def purge(self, **kwargs):
+        default_start = arrow.utcnow().shift(years=-10)
+        start = kwargs.get('start', default_start)
+        default_end = arrow.utcnow().shift(minutes=-settings.PURGE['auto_interval'])
+        end = kwargs.get('end', default_end)
+        q = 'DELETE FROM "logger" WHERE time > \'{start}\' AND time < \'{end}\''.format(
+            start=start,
+            end=end
+        )
+        self.funcexec('Purged logs', start=start.format(), end=end.format())
+        self._ifdb.query(q)
+        return True
+
+
     def __iter__(self):
         for x in self.list_records():
             yield x
