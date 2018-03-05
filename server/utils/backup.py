@@ -1,15 +1,36 @@
 import os, arrow
 from config import settings
 from unipath import Path
+from utils import Logger
 # import pysftp
 
-class Backup():
+class BackupManager():
 
     def __init__(self):
+        self.log = Logger()
         pass
 
-    def get_messurement(self):
-        return 
+    def delete_backup(self, filename):
+        delpath = Path(settings.BACKUP['folder']).child(filename)
+        if delpath.exists():
+            delpath.remove()
+            return True, "'{}' deleted".format(filename)
+        return False, "Failed to delete: '{}'".format(filename)
+
+    def get_backups(self):
+        out = []
+        for p in Path(settings.BACKUP['folder']).listdir(pattern="*.csv"):
+            parts = p.stem.split('_')
+            out.append({
+                'filename': p.name,
+                'stem': p.stem,
+                'dataset': parts[0],
+                'start': "{} {}".format(parts[1], parts[2].replace('-',':')),
+                'end': "{} {}".format(parts[4], parts[5].replace('-',':'))
+            })
+            out = sorted(out, key=lambda k: k['start'], reverse=True) 
+        return out
+         
 
     def create(self, messurement, start=arrow.utcnow().shift(days=-1), end=arrow.utcnow()):
         # If datetime passed rather than arrow
@@ -41,8 +62,10 @@ class Backup():
         message = os.system(command)
         # print (message)
         if message == 0:
+            self.log.funcexec('Backup created for {0}'.format(messurement), savedas=save_name)
             return save_name, None
         else:
+            self.log.funcexec('Backup failed for {0}'.format(messurement), error=message)
             return None, message
 
     # def sftp(self, filename):

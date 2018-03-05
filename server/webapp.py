@@ -9,7 +9,7 @@ from random import randint
 from flask import render_template, Flask, request, abort, redirect, url_for, flash, send_from_directory
 from unipath import Path
 
-from utils import Device, Devices, DeviceRegister, Logger, Backup
+from utils import Device, Devices, DeviceRegister, Logger, BackupManager
 from utils.influx import INFLUX_MESSUREMENTS
 
 from flask_wtf import FlaskForm
@@ -25,7 +25,6 @@ log = Logger()
 
 # Settings
 app.config.from_object(settings)
-
 #  Setup the Web API manager
 from commlink import WebAPI
 webapi = WebAPI(app.config.get('IFDB'))
@@ -125,26 +124,54 @@ def sysadmin_logs():
         logdata = log.list_records()
     return render_template('system/logs.html', logdata=logdata, form=form)
 
-# System Admin - Index
+
+# System Admin - Backup index
 @app.route("/sys/backup/restore", methods=['GET','POST'])
-def sysadmin_backup():
-    download_link=None
-    backup = Backup()
+def sysadmin_backup(del_file=None):
+    backup_manager = BackupManager()
     backup_form = BackupForm()
+    return render_template('system/backup.html', backup_form=backup_form, restore_form='NOT YET', backups_list=backup_manager.get_backups())
+
+# System Admin - Backup index
+@app.route("/sys/backup/delete/<string:filename>", methods=['GET','POST'])
+def sysadmin_backup_delete(filename):
+    delete_form = AreYouSureForm()
+    if delete_form.validate_on_submit():
+        backup_manager = BackupManager()
+        success, msg = backup_manager.delete_backup(filename+".csv")
+        if success:
+            flash(msg, 'success')
+            return redirect(url_for('sysadmin_backup'))
+        else:
+            flash(msg, 'danger')
+    return render_template('system/backup.html', delete_form=delete_form, delete_file=filename)
+
+# System Admin - Backup create
+@app.route("/sys/backup/create", methods=['POST']) 
+def sysadmin_backup_create(): 
+    backup_form = BackupForm()
+    # Create Backup
     if backup_form.validate_on_submit():
         # Create backup 
-        download_file, message = backup.create(
+        backup_manager = BackupManager()
+        download_file, message = backup_manager.create(
             backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
         if download_file is not None:
             flash('Backup created', 'success')
-            download_link = url_for('sysadmin_backup_download', filename=download_file)
         else:
             flash('Backup failed {}'.format(message), 'danger')
-    return render_template('system/backup.html', backup_form=backup_form, download_link=download_link)
+    return redirect(url_for('sysadmin_backup'))
+
+# System Admin - Backup create
+@app.route("/sys/backup/upload/<string:filename>/to/remote", methods=['GET']) 
+def sysadmin_backup_upload(filename): 
+    flash('Not implemented yet', 'warning')
+    return redirect(url_for('sysadmin_backup'))
+
 
 @app.route("/sys/backup/download/<string:filename>")
 def sysadmin_backup_download(filename):
-    return send_from_directory(directory=app.config.get('BACKUP_FOLDER'), filename=filename)
+    return send_from_directory(directory=app.config.get('BACKUP')['folder'], filename=filename+".csv")
    
 # @app.route("/sys/backup/to/remote/<string:filename>")
 # def sysadmin_backup_remote(filename):
