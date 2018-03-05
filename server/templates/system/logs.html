@@ -28,27 +28,30 @@
 
 {% block content %}
 
-<form action="{{ url_for('sysadmin_logs') }}" method="POST">
+<nav class="navbar navbar-light bg-light">
+
+<form  class="form-inline" action="{{ url_for('sysadmin_logs') }}" method="POST">
 
     {{form.hidden_tag()}}
-    <div class="form-row align-items-center align-items-baseline">
-      <div class="col-sm-2 my-1">
-          {{ b_wtf.bootstrap_field(form.start, label=False) }}    
+    <div class="form-row align-items-baseline">
+      <div class="">
+          {{ b_wtf.bootstrap_field(form.start, label=True, horizontal=True) }}    
       </div>
-      <div class="col-sm-2 my-1">
-          {{ b_wtf.bootstrap_field(form.end, label=False) }}    
+      <div class="">
+          {{ b_wtf.bootstrap_field(form.end, label=True, horizontal=True) }}    
       </div>
-      <div class="col-sm-3 my-1">
-          {{ b_wtf.bootstrap_field(form.cat, label=False) }}    
+      <div class="">
+          {{ b_wtf.bootstrap_field(form.cat, label=True, horizontal=True) }}    
       </div>
-      <div class="col-sm-2 my-1">
-          {{ b_wtf.bootstrap_field(form.limit, label=False) }}    
+      <div class="">
+          {{ b_wtf.bootstrap_field(form.limit, label=True, horizontal=True) }}    
       </div>
-      <div class="col-auto my-1">
+      
         <button type="submit" class="btn btn-primary">Filter</button>
-      </div>
+      
     </div>
   </form>
+  </nav>
   <BR>
 <table class="table table-bordered">
     <thead>

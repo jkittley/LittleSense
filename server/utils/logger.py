@@ -63,7 +63,7 @@ class Logger():
     def list_records(self, **kwargs):
         if self._ifdb is None:
             return
-        cat   = kwargs.get('cat', None)
+        cat   = kwargs.get('cat', '')
         limit = kwargs.get('limit', 5000)
         start = kwargs.get('start', arrow.utcnow().shift(years=-10))
         end   = kwargs.get('end', arrow.utcnow())
@@ -72,7 +72,7 @@ class Logger():
 
         query = 'SELECT * FROM "logger" WHERE time > \'{0}\' and time < \'{1}\''.format(start, end)
 
-        if cat is not None:
+        if cat is not None and cat is not '':
             query += ' AND "category"=\'{0}\''.format(cat)
         
         query += ' ORDER BY DESC'

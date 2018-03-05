@@ -232,10 +232,10 @@ class AreYouSureForm(FlaskForm):
     confirm = BooleanField('Confirm', validators=[DataRequired()])
 
 class LogFilterForm(FlaskForm):
-    start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
-    end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
+    start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
+    end = DateTimeField('End', default=arrow.utcnow(), validators=[])
     cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default="all")
-    limit = SelectField('Category', choices=[
+    limit = SelectField('Limit', choices=[
         ('50', 50),
         ('250', 250),
         ('500', 500),
