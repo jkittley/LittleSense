@@ -13,6 +13,8 @@ INFLUX_MESSUREMENTS = [
 def get_InfluxDB():
     try:
         ifdb = InfluxDBClient(settings.INFLUX['host'], settings.INFLUX['port'], settings.INFLUX['user'], settings.INFLUX['pass'], settings.INFLUX['dbname'])
+        ifdb.create_database(settings.INFLUX['dbname'])
+
         # Test connection
         _ = ifdb.query('SHOW FIELD KEYS FROM "reading"')
         return ifdb
