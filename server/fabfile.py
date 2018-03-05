@@ -124,7 +124,7 @@ def sync_files():
     rsync_project(   
         remote_dir=settings.DIR_CODE,
         local_dir='./',
-        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log", "*.csv" '__pychache__', '*.md','*.DS_Store'),
+        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log", "*.csv" '__pychache__', '*.md','*.DS_Store',"backups/"),
         extra_opts="--filter 'protect *.csv' --filter 'protect *.json' --filter 'protect *.db'",
         delete=True
     )
