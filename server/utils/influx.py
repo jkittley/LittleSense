@@ -1,4 +1,4 @@
-from influxdb import InfluxDBClient, DataFrameClient
+from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 from requests.exceptions import RequestException
 from config import settings
@@ -22,7 +22,3 @@ def get_InfluxDB():
     except RequestException as e:
         print(e)
         return None
-
-def get_DataframeClient():
-    return DataFrameClient(settings.INFLUX['host'], settings.INFLUX['port'], settings.INFLUX['user'], settings.INFLUX['pass'], settings.INFLUX['dbname'])
-   
