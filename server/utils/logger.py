@@ -41,7 +41,8 @@ class Logger():
             ('debug', 'Debug'),
             ('error', 'Error'),
             ('interaction', 'Interaction'),
-            ('funcexec', 'Function Execution')
+            ('funcexec', 'Function Execution'),
+            ('device', 'Sensor Device'),
         ]
 
     def debug(self, msg, **kwargs):
@@ -55,6 +56,9 @@ class Logger():
 
     def funcexec(self, msg, **kwargs):
         self._add_to_log('funcexec', msg, **kwargs)
+
+    def device(self, msg, **kwargs):
+        self._add_to_log('device', msg, **kwargs)
 
     def list_records(self, **kwargs):
         if self._ifdb is None:

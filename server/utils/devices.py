@@ -168,7 +168,7 @@ class Device():
                 return registration_record['registered']
         return False
     
-    def _field_id_to_name(self, field_id):
+    def _field_id_components(self, field_id):
         parts = field_id.split('_')
         dtype = parts[0]
         name = " ".join(parts[1:-1]).capitalize()
@@ -181,7 +181,7 @@ class Device():
     def fields(self, **kwargs):
         out = []
         for field in self.field_names():
-            dtype, name, unit = self._field_id_to_name(field)
+            dtype, name, unit = self._field_id_components(field)
             out.append({
                 'id': field,
                 'name': name,
@@ -189,6 +189,33 @@ class Device():
                 'unit': unit
             }) 
         return out
+
+    def clean_fields(self, fields, device_id=None):
+        if fields is None:
+            log.device('Clean fields exception', exception="No fields")
+
+        remove_list = []
+        for field_name, value in fields.items():
+            try:
+                dtype, name, unit = self._field_id_components(field_name)
+                if dtype == 'float' or dtype == 'int':
+                    fields[field_name] = float(value)
+                elif dtype == 'bool':
+                    fields[field_name] = bool(value)
+                elif dtype == 'string' or dtype == 'str':
+                    fields[field_name] = str(value)
+                elif dtype == 'precent':
+                    fields[field_name] = min(100, max(0, int(value)))
+                else:
+                    raise Exception('Invalid data type for {}'.format(field_name))
+            except Exception as e:
+                log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
+                remove_list.append(field_name)
+
+        for fn in remove_list:
+            fields.pop(fn) 
+
+        return fields
 
     def add_reading(self, utc, fields):
         # If device has not been seen before then add to register as unregistered
@@ -203,7 +230,7 @@ class Device():
                 "device_id": self.id
             },
             "time": utc.strftime("%c"),
-            "fields": fields
+            "fields": self.clean_fields(fields, self.id)
         }
         # Save Reading
         self._ifdb.write_points([reading])
