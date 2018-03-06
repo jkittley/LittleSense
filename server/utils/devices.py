@@ -186,14 +186,14 @@ class Device():
                 'id': field,
                 'name': name,
                 'dtype': dtype,
-                'unit': unit
+                'unit': unit,
+                'is_numeric': dtype in ['float','int','pecent']
             }) 
         return out
 
     def clean_fields(self, fields, device_id=None):
         if fields is None:
             log.device('Clean fields exception', exception="No fields")
-
         remove_list = []
         for field_name, value in fields.items():
             try:
@@ -211,10 +211,9 @@ class Device():
             except Exception as e:
                 log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
                 remove_list.append(field_name)
-
+        # Remove bad fields
         for fn in remove_list:
             fields.pop(fn) 
-
         return fields
 
     def add_reading(self, utc, fields):
@@ -250,9 +249,12 @@ class Device():
 
         # Fields
         fields, field_keys = "", []
-        for fk in self.field_names():
-            fields += 'mean("{0}") AS "mean_{0}", '.format(fk)
-            field_keys.append(dict(name="mean_{0}".format(fk), type="TODO"))
+        for f in self.fields():
+
+            if f['is_numeric']:
+                fields += 'mean("{0}") AS "mean_{0}", '.format(f['id'])
+                field_keys.append(dict(name="mean_{0}".format(f['id']), type="TODO"))
+
         if len(field_keys) == 0:
             return False, { "error" : "Device has no fields" }
 
@@ -321,6 +323,7 @@ class Device():
         return { 
             "device_id": self.id,
             "registered": self.is_registered(),
+            "fields": self.fields(),
             "last_update": last_update,
             "last_upd_keys": last_upd_keys
         }
