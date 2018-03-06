@@ -1,9 +1,18 @@
 import os
+from .secure import SecureSettings
 
-class DefaultSetting():
-    DEBUG = False
+class DefaultSetting(SecureSettings):
+    # Enable debuging reports. This should only be true when running locally 
+    # as it makes the system vunerable to attach.
+    LOCAL = False
+    DEBUG = LOCAL
+    # The public facing name of the web interface
     SITE_NAME = "Sensor Store"
-    
+    # A system friendly version of the SITE_NAME. Only use aplphanumeric 
+    # characters and underscores (no spaces). This is used for a nubmer of 
+    # thing including the root folder name.
+    ROOT_NAME = "noise"
+    # Details of the Influx database
     INFLUX = {
         "dbname": "device_readings",
         "host": "localhost",
@@ -11,29 +20,41 @@ class DefaultSetting():
         "user": "root",
         "pass": "root"
     } 
+    # Details of the TinyDB databases
     TINYDB = {
         "db_device_reg": "databases/devices.json"
     }
+    # Settings for how best to purge (remove old) data from the databases. 
+    # Unregistered sensor data is cleaned every 'unreg_interval' minutes and 
+    # and anything older than 'unreg_keep_for' minutes is removed. The Log data
+    # is purged at midnight everyday and records 'days_to_keep_log' days kept.
     PURGE = {
-        "unreg_interval": 30, # How many minutes between purging the database of unregistered device data
-        "unreg_keep_for": 30, # How many minutes of unregistered device data to keep i.e. only purge is older than x mins
-        "days_to_keep_log": 7 # Number of days to keep log
+        "unreg_interval": 30, 
+        "unreg_keep_for": 30, 
+        "days_to_keep_log": 7 
     }
-
-    SECRET_KEY = "AVeryPrivateSecret"
-    SECURITY_PASSWORD_SALT = "jdsfhbasdjkfhasldjkfhasiuy324783y58934"
+    # Automatic and Manual backup settings.
+    # folder - relative path to backup folder location
+    # frequency - 'weekly', 'daily', 'hourly' or 'never'
     BACKUP = {
         "folder" : "backups/",
-        "frequency": 'weekly',  # Backups frquency can be: 'weekly', 'daily', 'hourly' or 'never'
+        "frequency": 'weekly'
     }
-    REMOTE_BACKUP = None
-    PUBLIC_SSH_KEY = ""
-
-    # Deply settings
+    # BACKUP_SERVER - if is not None then these details are used to upload 
+    # backups to another server for safe keeping. 
+    BACKUP_SERVER = {
+        "host": None,
+        "user": None,
+        "pass": None,
+        "dir": None
+    }
+    # Path to a public SSH key for the machine doing the deployment. Set to
+    # None if not required, but it will save a lot of usename and password
+    # inputting.
+    PUBLIC_SSH_KEY = '/Users/jacob/.ssh/id_rsa.pub'
+    # Deployment (remote) server settings
     DEPLOY_USER  = 'pi'
-    USER_GRP = 'www-data'
-    ROOT_NAME = "noise"
-    ROOT_PATH = "/srv/projects/noise"
+    DEPLOY_GRP   = 'www-data'
     DIR_PROJ = "/srv/{0}/".format(ROOT_NAME)
     DIR_CODE = "{0}src/".format(DIR_PROJ)
     DIR_LOGS = "{0}logs/".format(DIR_PROJ)
@@ -53,17 +74,21 @@ class LocalSetting(DefaultSetting):
 class RemotelSetting(DefaultSetting):
     LOCAL = False
     DEBUG = False
+    BACKUP_SERVER =  {
+            "host": '192.168.1.188',
+            "user": 'pi',
+            "pass": 'firebird30',
+            "dir": 'srv/test_backup'
+        }
 
-    REMOTE_BACKUP = {
-        "host": '192.168.1.188',
-        "user": 'pi',
-        "pass": 'firebird30',
-        "dir": 'srv/test_backup'
-    }
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# DO NOT EDIF BELOW THIS LINE
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-    PUBLIC_SSH_KEY = '/Users/jacob/.ssh/id_rsa.pub'
-
-
-settings = RemotelSetting()
+settings = None
 if 'LOCAL' in os.environ and os.environ['LOCAL'] == '1':
     settings = LocalSetting()
+else:
+    settings = RemotelSetting()

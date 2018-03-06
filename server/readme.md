@@ -6,17 +6,13 @@ The code in this folder can be run locally on your machine for testing and deplo
 To run the project locally and to use Fabric to deploy the code to a Raspberry PI on the local network, you fill first need to setup the local environment.
 
 1. Create a Python 3.5+ virtual environment (we recommend using [Anaconda](https://www.anaconda.com/download/)) e.g. `conda create --name myenv` and launch it e.g. `conda activate myenv`
-
 2. Navigate to the directory where you downloaded this file e.g `cd /Users/me/sensorStore/server`
-
 3. Install the local requirements: `pip install -r requirements/local.txt`
-
 4. Edit the "config/settings.py" as the comments instruct.
 
 That's all you need to do if you don't want to run the InfluxDB database locally.
 
 5. To tell the webapp that this is a local deployment set an environment variable: `export LOCAL=1`. This will tell the webapp to run in Debug mode.
-
 6. To test the system run: `python webapp.py` and the Flask debug server should start. Now you can navigating to http://localhost:5000/ in your browser.
 
 #### Additional - Local Influx Setup
@@ -27,9 +23,7 @@ To install InfluxDB follow the instructions relativant to your operating system 
 To deploy the project to a remote host you must first have created a local virtual environment (Local Setup above). 
 
 1. If you have not already activated the environment then do so e.g. `conda activate myenv`
-
 2. Navigate to the server folder (where this file is stored).
-
 3. Run `fab -H 192.168.0.106 -pMyPassword deploy`
 to deploy the project to the host located at 192.168.0.101 using the password 'MyPassword'. Change these details as needed.
 
@@ -39,8 +33,9 @@ Rather than entering the IP Address to access the Raspberry pi you can use a `ht
 1. Connect to the Pi and run `sudo nano /etc/hosts`. 
 2. Change the last entry for `127.0.1.1` to the name of your choice
 3. Open `sudo nano /etc/nginx/sites-enabled/ROOT_NAME` (replace ROOT_NAME with the value in the settings file)
-4. Change raspberrypi.local to match the name you chose.
-4. Save and reboot the Pi. 
+4. Run `sudo /etc/init.d/hostname.sh` to update the PI
+5. Change raspberrypi.local to match the name you chose.
+6. Save and reboot the Pi using `shutdown -r now`. 
 
 Now you can access the site with ROOT_NAME.local in your browser.
 
