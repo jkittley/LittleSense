@@ -1,0 +1,105 @@
+{% extends 'dashboard/base.html' %}
+
+{% block style %}
+{{ super() }}
+<style>
+    .time-series-outer {
+        height: 50px;
+        background-color: blanchedalmond;
+        margin-bottom: 10px;
+    }
+    canvas {
+        width: 100%;
+        height: 100%;
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/chart.js' )}}"></script>
+<script>
+    function initPlot(fields) {
+        console.log('Initialising plot');
+        devices = getDevices();
+        for (d in devices) {
+            var elem = $('#time-series-master').clone()
+                .attr('id', 'master-'+devices[d].id)
+                .appendTo('#plots')
+                .removeClass('d-none');
+                            
+            elem.find('.title').html(devices[d].name);
+            buildTSPlot(elem.find('canvas'));
+        }
+    }
+
+    function updatePlot() {
+        devices = getDevices();
+        $.each(devices, function(key, device) {
+            console.log(device);
+            
+            if (device.active==true) {
+                $('#master-'+device.id).removeClass('d-none');
+                console.log('Show');
+            } else {
+                $('#master-'+device.id).addClass('d-none');
+                console.log('HIDE');
+            }
+        });
+    }
+
+    function buildTSPlot(canvas) {
+         // Build Chart
+        var ctx = canvas[0].getContext("2d");
+        ctx.canvas.width = canvas.width();
+        ctx.canvas.height = canvas.height();
+        var cfg = {
+            type: 'bar',
+            labels: [],
+            data: {
+                datasets: []
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        distribution: 'series',
+                        ticks: {
+                            source: 'labels'
+                        }
+                    }],
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Value'
+                        }
+                    }]
+                },
+                legend: {
+                    onClick: function (e) {
+                        e.stopPropagation();
+                    }
+                }
+            }
+        };
+        chart = new Chart(ctx, cfg);
+    }
+
+    
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="plots"></div>
+
+<div id="time-series-master" class="d-none">
+    <div class="card">
+        <div class="card-header title"></div>
+        <div class="card-body">
+            <canvas></canvas>
+        </div>
+    </div>
+    <BR>
+</div>
+{% endblock %}

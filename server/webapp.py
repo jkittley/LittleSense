@@ -37,7 +37,7 @@ devices = Devices()
 
 @app.route("/")
 def home():
-    return render_template('dashboard/index.html')
+    return render_template('dashboard/individual-time.html')
 
 # Register - preview device
 @app.route("/system/register/device/<string:device_id>")

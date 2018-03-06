@@ -33,7 +33,7 @@
     // });
 </script>
 {% if current == 'preview' %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/chart.js' )}}"></script>
 <script>
 
     var chart = null;
@@ -60,7 +60,7 @@
                     yAxes: [{
                         scaleLabel: {
                             display: true,
-                            labelString: 'Closing price ($)'
+                            labelString: 'Value'
                         }
                     }]
                 },
