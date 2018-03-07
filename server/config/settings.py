@@ -12,6 +12,8 @@ class DefaultSetting(SecureSettings):
     # characters and underscores (no spaces). This is used for a nubmer of 
     # thing including the root folder name.
     ROOT_NAME = "noise"
+    # Show link to settings page on dashbaord
+    SHOW_SETTINGS_LINK = True
     # Details of the Influx database
     INFLUX = {
         "dbname": "device_readings",

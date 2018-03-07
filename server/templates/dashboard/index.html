@@ -4,45 +4,6 @@
 
 {% block style %}
 <style>
-    .grid {
-        width: 100%;
-    }
-    /* clear fix */
-    .grid:after {
-        content: '';
-        display: block;
-        clear: both;
-    }
-    .grid-item {
-    }
-    .grid-item-w-100 {
-        width: 100%;
-    }
-    .grid-item-w-50 {
-        width: 50%;
-    }
-    .grid-item-w-25 {
-        width: 25%;
-    }
-    .grid-item {
-        
-    }
-    .grid-item-inner {
-        padding: 10px;
-        width: 100%;
-    }
-    /* Draggabilly adds is-dragging */
-    .grid-item.is-dragging, .grid-item.is-positioning-post-drag {
-        background: #C90;
-        z-index: 2; /* keep dragged item on top */
-    }
-    .packery-drop-placeholder {
-        outline: 3px dashed #444;
-        outline-offset: -6px;
-        /* transition position changing */
-        -webkit-transition: -webkit-transform 0.2s;
-                transition: transform 0.2s;
-    }
     .info-icon {
         margin-top: 6px;
         margin-left: 6px;
@@ -50,30 +11,30 @@
         color: black;
         font-size: 16px;
     }
+    .jumbotron {
+        background-color: white;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    .jumbotron.footer {
+        margin-bottom: 0px;
+    }
 </style>
 {% endblock %}
 
 {% block script %}
-<script src="{{ url_for('static', filename='js/packery.min.js' )}}"></script>
 <script src="{{ url_for('static', filename='js/plotly-latest.min.js' )}}"></script>
-
 <script>
     $(document).ready(function() { 
-        $grid = $('.grid').packery({
-            // options
-            itemSelector: '.grid-item',
-            gutter: 0,
-            
-        });
         $('[data-toggle="popover"]').popover()
     });
 </script>
 {% endblock %}
 
-{% block navmenu %}
+{% block menu %}
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        {{ dash.title }}
+        <i class="fas fa-desktop"></i> {{ dash.title }}
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
         {% for d in dashes %}
@@ -92,10 +53,10 @@
     {% if dash.header.text %}<p class="lead">{{ dash.header.text }}</p>{% endif %}
 </div>
 {% endif %}
-<div class="grid">
+<div class="container-fluid">
+<div class="row">
     {% for plot in dash.plots %}
-    <div class="grid-item grid-item-w-{{ plot.width }}">
-        <div class="grid-item-inner">
+    <div class="col-xl-{{ plot.width }}">
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -114,13 +75,13 @@
                     </div>
                 </div>
                 <div class="card-body">
-                        <div id="plot-{{ plot.id }}"></div>
+                    <div id="plot-{{ plot.id }}"></div>
                 </div>            
             </div>
             {% include 'dashboard/plots/' + plot.type + '.html' %}
-        </div>
     </div>
     {% endfor %}
+</div>
 </div>
 {% if dash.footer %}
 <div class="jumbotron footer">

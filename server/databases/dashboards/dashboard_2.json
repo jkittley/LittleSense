@@ -3,7 +3,7 @@
         {
             "id": 45,
             "pos": 2,
-            "width": 25,
+            "width": 12,
             "title": "Plot 2",
             "help": "Some help message",
             "device_fields": [{

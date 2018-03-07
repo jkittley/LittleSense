@@ -12,7 +12,7 @@
             "id": 1,
             "pos": 1,
             "title": "Plot 1",
-            "width": 50,
+            "width": 6,
             "help": "Some help text for the viewer",
             "device_fields": [{
                 "name": "Device 0: Temp (C)",
@@ -41,7 +41,7 @@
         ,{
             "id": 45,
             "pos": 2,
-            "width": 25,
+            "width": 6,
             "title": "Plot 2",
             "help": "",
             "device_fields": [{
