@@ -24,6 +24,9 @@ class DefaultSetting(SecureSettings):
     TINYDB = {
         "db_device_reg": "databases/devices.json"
     }
+    # Saved Dashboard locations
+    DASHBOARDS_PATH = "databases/dashboards"    
+
     # Settings for how best to purge (remove old) data from the databases. 
     # Unregistered sensor data is cleaned every 'unreg_interval' minutes and 
     # and anything older than 'unreg_keep_for' minutes is removed. The Log data

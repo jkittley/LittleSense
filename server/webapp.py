@@ -35,9 +35,21 @@ devices = Devices()
 # Pages
 # ------------------------------------------------------------
 
+@app.route("/<string:dash_selected>")
 @app.route("/")
-def home():
-    return render_template('dashboard/individual-time.html')
+def home(dash_selected=None):
+    dashes = [ (str(x.stem).capitalize().replace('_',' '), x.stem) for x in Path(settings.DASHBOARDS_PATH).listdir(pattern="*.json")]
+    dash = None
+    if dash_selected is None:
+        dash_selected = dashes[0][1]
+    p = Path(settings.DASHBOARDS_PATH).child(dash_selected+'.json')
+    if p.exists():
+        with open(p.absolute(), "r") as dashfile:
+            print (dashfile)
+            dash = json.load(dashfile)
+            dash['title'] = str(p.stem).capitalize().replace('_',' ')
+    return render_template('dashboard/index.html', dash=dash, dashes=dashes)
+
 
 # Register - preview device
 @app.route("/system/register/device/<string:device_id>")
@@ -195,19 +207,54 @@ def api_get_devices():
     return json.dumps(devices.as_dict())
 
 # WebAPI - readings get
+@app.route("/api/readings/get")
 @app.route("/api/readings/get/<string:device_id>")
-def api_get(device_id):
-    fillmode = request.args.get('fill', 'none')
-    interval = request.args.get('interval',5)
-    start    = request.args.get('start', None)
-    end      = request.args.get('end', None)
-    limit    = request.args.get('limit', None)
-    device   = Device(device_id)
-    success, readings = device.get_readings(fill=fillmode, interval=interval, start=start, end=end, limit=limit)
-    if success:
-        return json.dumps(readings), 200 , {'ContentType':'application/json'} 
+def api_get(device_id=None):
+    if device_id is None:
+        device_fields = group_fields_by_device(request.args.getlist('device_fields'))
     else:
-        return readings['error'], 400
+        device = Device(device_id)
+        device_fields = {}
+        device_fields[device_id] = [ x['id'] for x in device.fields() ]
+ 
+    settings = {
+        'device_fields': device_fields,
+        'fillmode' : request.args.get('fill', 'none'),
+        'interval' : request.args.get('interval',5),
+        'start'    : request.args.get('start', None),
+        'end'      : request.args.get('end', None),
+        'limit'    : request.args.get('limit', None)
+    }
+    
+    return_data = {}
+    for device_id, fields_ids in settings['device_fields'].items():
+        device   = Device(device_id)
+        success, readings = device.get_readings(
+            fields   = fields_ids,
+            fill     = settings['fillmode'], 
+            interval = settings['interval'], 
+            start    = settings['start'], 
+            end      = settings['end'], 
+            limit    = settings['limit']
+        )
+        
+        if success:
+            return_data[device_id] = readings
+        else:
+            return_data[device_id] = None
+    
+    return json.dumps(return_data), 200 , {'ContentType':'application/json'} 
+
+
+def group_fields_by_device(fields):
+    devices = {}
+    for field in fields:
+        part = field.split('|')
+        if part[0] not in devices:
+            devices[part[0]] = []
+        devices[part[0]].append(part[1])
+    return devices
+
 
 # ------------------------------------------------------------
 # Forms

@@ -1,0 +1,41 @@
+{
+    "header": "Some header text",
+    "footer": "Some footer text",
+    "plots": [
+        {
+            "id": 45,
+            "pos": 2,
+            "width": 25,
+            "title": "Plot 2",
+            "help": "Some help message",
+            "device_fields": [{
+                "name": "Device 10: Temp (C)",
+                "field_id": "float_temp_c",
+                "device_id": "test_device_10",
+                "agrfunc": "mean"
+            },{
+                "name": "Device 10: Switch (State)",
+                "field_id": "bool_switch_state",
+                "device_id": "test_device_10",
+                "agrfunc": "count"
+            },{
+                "name": "Device 10: Light Level (Lux)",
+                "field_id": "int_light_level_lux",
+                "device_id": "test_device_4",
+                "agrfunc": "max"
+            }],
+            "time": {
+                "start": null,
+                "end": null,
+                "period": {
+                    "days": 2,
+                    "weeks": 1
+                },
+                "interval": 1
+            },
+            "type": "timeseries",
+            "config": {},
+            "update_interval": 1000
+        }
+        ]
+}

@@ -180,7 +180,11 @@ class Device():
 
     def fields(self, **kwargs):
         out = []
+        requested_fields = kwargs.get('only', None)
+       
         for field in self.field_names():
+            if requested_fields is not None and field not in requested_fields:
+                continue
             dtype, name, unit = self._field_id_components(field)
             out.append({
                 'id': field,
@@ -277,8 +281,12 @@ class Device():
         if interval is None:
             return False, { "error" : "Invalid interval. Must be in second (integer) and > 0" }
 
+        # Fieldnames to get - defaults to all
+        requested_fields = kwargs.get('fields', None)
+       
         # Fields
-        qfields = self._fields_to_query(self.fields())
+        fields = self.fields(only=requested_fields)
+        qfields = self._fields_to_query(fields)
         if len(qfields) == 0:
             return False, { "error" : "Device has no fields" }
 
@@ -303,19 +311,17 @@ class Device():
             fill=fillmode,
             limit="LIMIT {0}".format(limit)
         )
-        print (q)
         # print (q)
-        readings = self._ifdb.query(q).get_points()
-        readings = list(readings)
-        
+        readings = self._ifdb.query(q)
+        readings = sorted(list(readings.get_points()), key=lambda k: k['time']) 
+    
         # Build list of timestamps  
         timestamps = []
         used_keys = []
         for r in readings:
             timestamps.append(r['time'])
-
+       
         # Modify fields to to be mean
-        fields = self.fields()
         for f in fields:
             f['id'] = 'mean_' + f['id']
             f['name'] = 'Mean ' + f['name']
