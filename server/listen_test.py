@@ -2,8 +2,9 @@ import time
 from datetime import datetime
 from commlink import RFM69
 from config import settings
-from random import randint
+from random import randint, choice
 from utils import get_InfluxDB
+import string
 
 ifdb = get_InfluxDB()
 comm = RFM69(ifdb)
@@ -24,7 +25,8 @@ while True:
         data = dict(
             float_temp_c=randint(180,350) / 10.0, 
             int_signal_percent=randint(0,100),
-            bool_switch_state=randint(0,1)
+            bool_switch_state=randint(0,1),
+            string_messages_text=''.join(choice(string.ascii_uppercase + string.digits) for _ in range(5))
         )
         print (data)
         comm.rx(datetime.utcnow(), 'test_device_{}'.format(i), data)
