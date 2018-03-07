@@ -135,6 +135,7 @@
     $(document).ready(function() {
         build_charts();
         var timer = setInterval(function() {
+            var device_id = "{{device_id}}";
             $.ajax({
                 dataType: "json",
                 url: "{{ url_for('api_get', device_id=device_id) }}",
@@ -146,7 +147,7 @@
                     limit: 30,
                 },
                 success: function(resp) { 
-                    makeDataset(chart, resp.timestamps, resp.fields, resp.readings); 
+                    makeDataset(chart, resp[device_id].timestamps, resp[device_id].fields, resp[device_id].readings); 
                 },
                 error: function(jqXHR) {
                     show_error(jqXHR.responseText);
