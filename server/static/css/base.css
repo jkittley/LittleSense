@@ -12,7 +12,7 @@ body {
   }
 
   
-  .flash-messages {
+.flash-messages {
     position: fixed;
     z-index: 10000;
     left:100px;
@@ -25,7 +25,14 @@ body {
     margin-bottom: 0px;
 }
 
+.jumbotron {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
 
+.jumbotron.footer {
+  margin-bottom: 0px;
+}
   /*
    * Sidebar
    */

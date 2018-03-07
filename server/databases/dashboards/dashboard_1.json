@@ -1,6 +1,12 @@
 {
-    "header": "Some header text",
-    "footer": "Some footer text",
+    "header": {
+        "title": "Some header title",
+        "text": "Some header text"
+    },
+    "footer": {
+        "title": "Some footer title",
+        "text": "Some footer text"
+    },
     "plots": [
         {
             "id": 1,

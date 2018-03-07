@@ -1,6 +1,4 @@
 {
-    "header": "Some header text",
-    "footer": "Some footer text",
     "plots": [
         {
             "id": 45,
@@ -9,20 +7,10 @@
             "title": "Plot 2",
             "help": "Some help message",
             "device_fields": [{
-                "name": "Device 10: Temp (C)",
-                "field_id": "float_temp_c",
+                "name": "Messages text",
+                "field_id": "string_messages_text",
                 "device_id": "test_device_10",
                 "agrfunc": "mean"
-            },{
-                "name": "Device 10: Switch (State)",
-                "field_id": "bool_switch_state",
-                "device_id": "test_device_10",
-                "agrfunc": "count"
-            },{
-                "name": "Device 10: Light Level (Lux)",
-                "field_id": "int_light_level_lux",
-                "device_id": "test_device_4",
-                "agrfunc": "max"
             }],
             "time": {
                 "start": null,

@@ -86,6 +86,12 @@
 {% block body %}
 
 {% if dash %}
+{% if dash.header %}
+<div class="jumbotron">
+    {% if dash.header.title %}<h1 class="display-4">{{ dash.header.title }}</h1>{% endif %}
+    {% if dash.header.text %}<p class="lead">{{ dash.header.text }}</p>{% endif %}
+</div>
+{% endif %}
 <div class="grid">
     {% for plot in dash.plots %}
     <div class="grid-item grid-item-w-{{ plot.width }}">
@@ -116,11 +122,17 @@
     </div>
     {% endfor %}
 </div>
+{% if dash.footer %}
+<div class="jumbotron footer">
+    {% if dash.footer.title %}<h1 class="display-4">{{ dash.footer.title }}</h1>{% endif %}
+    {% if dash.footer.text %}<p class="lead">{{ dash.footer.text }}</p>{% endif %}
+</div>
+{% endif %}
 {% else %}
-<div class="jumbotron">
-    <h1 class="display-4">No Dashboards configured</h1>
-    <p class="lead">To create a dashboad check out the readme file in the '{{ config.DASHBOARDS_PATH }}' directory</p>
-    </div>
+<div class="jumbotron ">
+<h1 class="display-4">No Dashboards configured</h1>
+<p class="lead">To create a dashboad check out the readme file in the '{{ config.DASHBOARDS_PATH }}' directory</p>
+</div>
 {% endif %}
 {% endblock %}
 
