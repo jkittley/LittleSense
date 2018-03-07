@@ -111,7 +111,7 @@
             
 
         }, function() {
-            alert("Failed to get data. Terminating auto update");
+            showAlert("Failed to fetch data from the server. Now terminating automatic refreshing.", 'danger');
             {% if plot.update_interval %}
             clearInterval(interval);
             {% endif %}

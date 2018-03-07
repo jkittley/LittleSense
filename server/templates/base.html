@@ -61,6 +61,7 @@
           .addClass('close');
         var alert = $('<div></div>')
           .html(message)
+          .attr('data-dismiss', 'alert')
           .append(close)
           .addClass('alert alert-'+style+' alert-dismissible fade show flash-alert')
           .attr('role', 'alert');
