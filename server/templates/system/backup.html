@@ -11,8 +11,10 @@
 
 {% block content %}
 
-<div class="card">
-        <div class="card-header lead">Existing Manual Backups (excluding remote)</div>
+<div class="row">
+  <div class="col">
+    <div class="card">
+    <div class="card-header lead">Existing Manual Backups (excluding remote)</div>
         
         {% if delete_form %}
         <div class="card-body">
@@ -54,11 +56,12 @@
         {% endif %}
     </div>
     <BR><BR>
+  </div>
 
-
-{% if backup_form %}
-<div class="card">
-    <div class="card-header lead">Backup Data</div>
+  <div class="col-4">
+ {% if backup_form %}
+ <div class="card">
+    <div class="card-header lead">Create Backup</div>
     <div class="card-body">
         <form action="{{ url_for('sysadmin_backup_create') }}" method="POST">
             {{ b_wtf.bootstrap_form(backup_form) }}      
@@ -71,9 +74,9 @@
 {% if restore_form %}
 <BR><BR>
 <div class="card">
-    <div class="card-header lead">Restore Data</div>
+    <div class="card-header lead">Restore From Backup</div>
     <div class="card-body">Not yet implemented</div>
 </div>
 {% endif %}
-
+</div>
 {% endblock %}
