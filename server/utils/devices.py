@@ -187,7 +187,9 @@ class Device():
                 'name': name,
                 'dtype': dtype,
                 'unit': unit,
-                'is_numeric': dtype in ['float','int','pecent']
+                'is_numeric': dtype in ['float','int','pecent'],
+                'is_boolean': dtype in ['bool'],
+                'is_string': dtype in ['string', 'str']
             }) 
         return out
 
@@ -235,51 +237,61 @@ class Device():
         self._ifdb.write_points([reading])
         return True
 
+    @staticmethod
+    def _clean_interval(interval):
+        try:
+            interval = int(interval)
+            if interval < 1:
+                raise ValueError()
+            return interval
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _fields_to_query(fields, agrfunc="mean"):
+        qfields = ""
+        for f in fields:
+            if f['is_numeric']:
+                qfields += '{agrfunc}("{fid}") AS "{agrfunc}_{fid}", '.format(fid=f['id'], agrfunc=agrfunc)
+            elif f['is_boolean']:
+                qfields += 'count("{0}") AS "count_{0}", '.format(f['id'])
+            # elif f['is_string']:
+            #     qfields += 'distinct("{0}") AS "distinct_{0}", '.format(f['id'])
+        return qfields[:-2]
+        
+    @staticmethod
+    def _clean_limit(limit, min_results, max_results):
+        if limit is None:
+            return max_results
+        try:
+            return max(min(int(limit), max_results), min_results)
+        except (ValueError, TypeError):
+            return None
+
     def get_readings(self, **kwargs):
         # Fill gabs in period none=dont fill, null=fill intervals with null readings
         fillmode = kwargs.get('fill','none')
 
-        # interval
-        try:
-            interval = int(kwargs.get('interval',5))
-            if interval < 1:
-                raise ValueError()
-        except ValueError:
+        # Interval
+        interval = self._clean_interval(kwargs.get('interval',5))
+        if interval is None:
             return False, { "error" : "Invalid interval. Must be in second (integer) and > 0" }
 
         # Fields
-        fields, field_keys = "", []
-        for f in self.fields():
-
-            if f['is_numeric']:
-                fields += 'mean("{0}") AS "mean_{0}", '.format(f['id'])
-                field_keys.append(dict(name="mean_{0}".format(f['id']), type="TODO"))
-
-        if len(field_keys) == 0:
+        qfields = self._fields_to_query(self.fields())
+        if len(qfields) == 0:
             return False, { "error" : "Device has no fields" }
 
-        # Timespan
-        s = arrow.utcnow().shift(hours=-1)
-        e = arrow.utcnow()
+        # Time span
         try:
-            if kwargs.get('start', None) is not None:
-                s = arrow.get(kwargs.get('start'))
-            if kwargs.get('end', None) is not None:
-                e = arrow.get(kwargs.get('end'))
+            s = arrow.get(kwargs.get('start', arrow.utcnow().shift(hours=-1)))
+            e = arrow.get(kwargs.get('end', arrow.utcnow()))
         except arrow.parser.ParserError:
             return False, { "error" : "Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z" }
-
+        
         # Limit
-        MAX_RESULTS = 5000
-        MIN_RESULTS = 1
-        limit = kwargs.get('limit', MAX_RESULTS)
+        limit = self._clean_limit(kwargs.get('limit'), 1, 5000)
         if limit is None:
-            limit = MAX_RESULTS
-        try:
-            limit = int(limit)
-            if limit > MAX_RESULTS or limit < MIN_RESULTS:
-                return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
-        except (ValueError, TypeError):
             return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
          
         # Build Query
@@ -287,10 +299,11 @@ class Device():
             device_id=self.id, 
             interval="{}s".format(interval),
             timespan="time > '{start}' AND time <= '{end}'".format(start=s, end=e),
-            fields=fields[:-2],
+            fields=qfields,
             fill=fillmode,
             limit="LIMIT {0}".format(limit)
         )
+        print (q)
         # print (q)
         readings = self._ifdb.query(q).get_points()
         readings = list(readings)
