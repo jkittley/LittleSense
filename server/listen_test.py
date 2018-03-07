@@ -40,4 +40,4 @@ while True:
     #     print (data)
     #     comm.rx(datetime.utcnow(), 'test_device_{}'.format(i), data)
 
-    time.sleep(1)
+    time.sleep(0.5)
