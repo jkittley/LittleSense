@@ -31,7 +31,9 @@
 {% endblock %}
 
 {% block menu %}
+
 <li class="nav-item dropdown">
+    {% if dashes|length > 1 %}
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <i class="fas fa-desktop"></i> {{ dash.title }}
     </a>
@@ -40,7 +42,11 @@
         <a class="dropdown-item" href="{{ url_for('home', dash_selected=d.1) }}"><i class="{{ 'fas' if d.0 == dash.title else 'far' }} fa-circle" data-fa-transform="shrink-4"></i> {{ d.0 }}</a>
         {% endfor %}
     </div>
+    {% else %}
+        <span class="navbar-text"><i class="fas fa-desktop"></i> {{ dash.title }}</span>
+    {% endif %}
 </li>
+
 {% endblock %}
 
 {% block body %}
