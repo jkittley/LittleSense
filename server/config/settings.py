@@ -24,7 +24,7 @@ class DefaultSetting(SecureSettings):
     } 
     # Details of the TinyDB databases
     TINYDB = {
-        "db_device_reg": "databases/devices.json"
+        "db_device_reg": "databases/tinydb/devices.json"
     }
     # Saved Dashboard locations
     DASHBOARDS_PATH = "databases/dashboards"    
