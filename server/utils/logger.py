@@ -1,7 +1,7 @@
 from config import settings
 from .influx import get_InfluxDB
 import arrow, json
-
+from functools import wraps
 
 
 class Logger():
@@ -9,9 +9,16 @@ class Logger():
     def __init__(self):
         self._ifdb = get_InfluxDB()
 
+    def get_ifdb(self):
+        if self._ifdb is not None:
+            return self._ifdb
+        else:
+            self._ifdb = get_InfluxDB()
+            return self._ifdb
+
     def stats(self):
         try:
-            counts = next(self._ifdb.query('SELECT count(*) FROM "logger"').get_points())
+            counts = next(self.get_ifdb().query('SELECT count(*) FROM "logger"').get_points())
         except StopIteration:
             counts = { 'count_message': 'No logs' } 
         return { "count": counts['count_message'] }
@@ -31,8 +38,8 @@ class Logger():
             logmsg['fields']['extra'] = json.dumps(data)
 
         # Save Reading
-        if self._ifdb:
-            self._ifdb.write_points([logmsg])
+        if self.get_ifdb():
+            self.get_ifdb().write_points([logmsg])
         
     def get_categories(self):
         return [
@@ -59,7 +66,7 @@ class Logger():
         self._add_to_log('device', msg, **kwargs)
 
     def list_records(self, **kwargs):
-        if self._ifdb is None:
+        if self.get_ifdb() is None:
             return
         cat   = kwargs.get('cat', '')
         limit = kwargs.get('limit', 5000)
@@ -78,7 +85,7 @@ class Logger():
         if limit is not None:
             query += ' LIMIT {}'.format(limit)
         
-        return self._ifdb.query(query).get_points()
+        return self.get_ifdb().query(query).get_points()
     
 
     def purge(self, **kwargs):
@@ -91,7 +98,7 @@ class Logger():
             end=end
         )
         self.funcexec('Purged logs', start=start.format(), end=end.format())
-        self._ifdb.query(q)
+        self.get_ifdb().query(q)
         return True
 
 

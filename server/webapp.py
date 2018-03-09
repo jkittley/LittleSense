@@ -313,8 +313,8 @@ class AreYouSureForm(FlaskForm):
     confirm = BooleanField('Confirm', validators=[DataRequired()])
 
 class LogFilterForm(FlaskForm):
-    start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
-    end = DateTimeField('End', default=arrow.utcnow(), validators=[])
+    start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1).datetime, validators=[])
+    end = DateTimeField('End', default=arrow.utcnow().datetime, validators=[])
     cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default="all")
     limit = SelectField('Limit', choices=[
         ('50', 50),
@@ -335,6 +335,7 @@ class BackupForm(FlaskForm):
 
 @app.before_request
 def handle_missing_db_connection():
+    log = Logger()
     if not devices.has_db_connection():
         return "<h1>No Device Database Connection</h1>"
 
