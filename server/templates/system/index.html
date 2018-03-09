@@ -9,7 +9,8 @@
 {% endblock %}
 
 {% block content %}
-<table class="table table-bordered">
+<div class="container">
+  <table class="table table-bordered">
     <tbody>
         <tr>
           <th scope="row">Total Readings</th>
@@ -35,4 +36,31 @@
         </tr>
     </tbody>
 </table>
+
+{% if recent_errors %}
+
+<div class="card ">
+  <div class="card-header bg-warning ">Recent Errors</div>
+  <table class="table">
+    <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Message</th>
+          <th>Extra</th>
+        </tr>
+      </thead>
+      <tbody>
+          {% for error in recent_errors %}
+          <tr>
+              <td>{{ error.time }}</td>
+              <td>{{ error.message }}</td>
+              <td>{{ error.extra }}</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+</div>
+{% endif %}
+</div>
+<BR>
 {% endblock %}

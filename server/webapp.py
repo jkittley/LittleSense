@@ -50,14 +50,26 @@ def home(dash_selected=None):
             dash['title'] = str(p.stem).capitalize().replace('_',' ')
     return render_template('dashboard/index.html', dash=dash, dashes=dashes)
 
+# ------------------------------------------------------------
+
+# System Admin - Index
+@app.route("/sys/admin")
+def sysadmin_index():
+    stats = dict(log=log.stats(), device=devices.stats())
+    recent_errors = log.list_records(
+        cat = 'error',
+        start = arrow.utcnow().shift(days=-7),
+        limit = 10
+    )
+    return render_template('system/index.html', stats=stats, recent_errors=recent_errors)
 
 # Register - preview device
-@app.route("/system/register/device/<string:device_id>")
+@app.route("/sys/register/device/<string:device_id>")
 def device_register_preview(device_id):
     return render_template('system/preview.html', device_id=device_id)
 
 # Register - configure device
-@app.route("/system/configure/device/<string:device_id>", methods=['GET','POST'])
+@app.route("/sys/configure/device/<string:device_id>", methods=['GET','POST'])
 def device_register_config(device_id):
     device = devices.get_device(device_id)
     form = DeviceSettingsForm(device_id=device_id, name=device.get_name()) 
@@ -70,12 +82,6 @@ def device_register_config(device_id):
         return redirect(url_for('sysadmin_devices'))
     # Show config form page 
     return render_template('system/configure.html', device_id=device_id, device=device, form=form)
-
-# System Admin - Index
-@app.route("/sys/admin")
-def sysadmin_index():
-    stats = dict(log=log.stats(), device=devices.stats())
-    return render_template('system/index.html', stats=stats)
 
 # System Admin - Index
 @app.route("/sys/devices")
