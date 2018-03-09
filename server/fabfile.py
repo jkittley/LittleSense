@@ -31,11 +31,12 @@ def deploy():
     set_permissions()
     install_venv_requirements()
     restart_web_services()
+    restart_bg_services()
     update_crontab()
 
 @task
 def init():
-    ## OS
+    # OS
     add_ssh_key()
     update_server()
     install_os_packages()
@@ -59,6 +60,8 @@ def init():
     ## Initialise cron jobs to run background tasks
     update_crontab()
     set_env_vars()
+    setup_receiver()
+    restart_bg_services()
 
 # ----------------------------------------------------------------------------------------
 # Helper functions below
@@ -143,7 +146,7 @@ def sync_files():
     rsync_project(   
         remote_dir=settings.DIR_CODE,
         local_dir='./',
-        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log", "*.csv" '__pychache__', '*.md','*.DS_Store',"backups/"),
+        exclude=("fabfile.py","*.pyc",".git","*.db", "*.log", "*.csv" '__pychache__', '*.md','*.DS_Store',"backups/", "databases/tinydb/*.json"),
         extra_opts="--filter 'protect *.csv' --filter 'protect *.json' --filter 'protect *.db'",
         delete=True
     )
@@ -264,8 +267,9 @@ def setup_gunicorn():
     
     gunicorn_service = "/etc/systemd/system/gunicorn.service"
     files.append(gunicorn_service, gunicorn_conf, use_sudo=True)
-    sudo('systemctl start gunicorn')
     sudo('systemctl enable gunicorn')
+    sudo('systemctl start gunicorn')
+   
 
 
 # Restart webservices
@@ -313,4 +317,38 @@ def set_env_vars():
     with virtualenv(settings.DIR_VENV):
         run('export LOCAL=0')
 
+# Setup listing
+def setup_receiver():
+    print_title('Setting up receiver script - for radios')
+    conf = '''[Unit]
+        Description=Radio receiver daemon
+        After=network.target
+
+        [Service]
+        User={USER}
+        Group={GRP}
+        WorkingDirectory={PATH}
+        ExecStart={VIRTUALENV_PATH}/bin/python receiver.py
+
+        [Install]
+        WantedBy=multi-user.target
+        '''.format(
+            APP_NAME=settings.ROOT_NAME,
+            PROJECT_NAME=settings.ROOT_NAME,
+            PATH=settings.DIR_CODE,
+            USER=env.user,
+            GRP=settings.DEPLOY_GRP,
+            VIRTUALENV_PATH=settings.DIR_VENV,
+            SOCKET_FILES_PATH=settings.DIR_SOCK
+        )
+    
+    service = "/etc/systemd/system/receiver.service"
+    files.append(service, conf, use_sudo=True)
+    sudo('systemctl enable receiver')
+    sudo('systemctl start receiver')
+
+def restart_bg_services():
+    print_title('Restarting background services i.e. receiver script')
+    sudo('systemctl daemon-reload')
+    sudo('systemctl restart receiver')
 

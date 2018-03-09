@@ -4,6 +4,12 @@
 # (tx) to the sensors via a communication link.
 # =============================================================================
 
+import time
+import arrow
+from utils import Logger
+
+log = Logger()
+
 # import asyncio
 # from commlink import RFM69
 # from config import settings
@@ -29,6 +35,10 @@
 
 # except Exception as e:
 #     loop.close()
+
+while True:
+    log.debug("BG Service Receiving...")
+    time.sleep(5)
 
 
 
