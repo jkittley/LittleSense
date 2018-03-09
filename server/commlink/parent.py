@@ -6,18 +6,18 @@ import json
 from tinydb import TinyDB, Query
 from utils import Device
 
+class InvaidPacketFormatter(Exception):
+    pass
+
 class CommLink:
     
     def __init__(self, influx_instance):
         self.db = influx_instance
         self.commlink_name = "NONE"
         
-
-    # def rx(self, **kwargs):
-    #     raise NotImplementedError()
-
-    # def tx(self):
-    #     raise NotImplementedError()
+    def validate_formatter(self, func):
+        return func
+        # raise InvaidPacketFormatter()
 
     def _build_response(self, **kwargs):
         respose = {

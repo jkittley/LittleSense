@@ -1,6 +1,11 @@
 # =============================================================================
-# RFM 69 RADIO
+# TEST RADIO
+# 
+# !!! You should NOT need to edit this file !!!
+# Please use the formatter function to process packet data.
+# 
 # =============================================================================
+
 import arrow
 import time
 import string
@@ -13,9 +18,10 @@ log = Logger()
 
 class RadioTest(CommLink):
 
-    def __init__(self):
+    def __init__(self, packet_formatter_func):
         self.MAC_ADDRESS = get_mac_address()
         self.commlink_name = "RadioTest"
+        self.packet_formatter = self.validate_formatter(packet_formatter_func)
 
     def initialise(self):
         print("Initialised")
@@ -23,39 +29,22 @@ class RadioTest(CommLink):
     def receive(self):
         log.debug("Rfm69 receive started")
         while True:
-        
-            for i in range(0,5):
-                data = dict(
-                    float_signal_db=randint(0,100) / 10.0,
-                    float_audio_level_db=randint(1,110) / 10.0,
-                    int_light_level_lux=randint(100,200),
-                    float_temp_f=randint(180,350) / 10.0,
-                )
-                print (data)
-                self._save_reading(arrow.utcnow(), 'test_device_{}'.format(i), data)
-    
-            for i in range(10,15):
-                data = dict(
-                    float_temp_c=randint(180,350) / 10.0, 
-                    int_signal_percent=randint(0,100),
-                    bool_switch_state=randint(0,1),
-                    string_messages_text=''.join(choice(string.ascii_uppercase + string.digits) for _ in range(5))
-                )
-                print (data)
-                self._save_reading(arrow.utcnow(), 'test_device_{}'.format(i), data)
+ 
+            # |Pretend to take ime receiving
+            time.sleep(2)
 
-            # for i in range(10,15):
-            #     data = dict(
-            #         float_temp_c="HELLO", 
-            #         int_signal_percent=True,
-            #         bool_switch_state=10.0
-            #     )
-            #     print (data)
-            #     self._save_reading(arrow.utcnow(), 'test_device_{}'.format(i), data)
+            # Prep data from packets
+            try:
+                utc, device_id, formatted = self.packet_formatter({})
+                log.debug("Test Radio Packet receieved", **formatted)
+                self._save_reading(utc, device_id, formatted)
+                print('Test packet saved', utc, device_id, formatted)
+            except:
+                log.error("Test Radio failed to format and save packet")
+                print('Test packet failed to save')
 
-            time.sleep(0.5)
-   
-    
+            
+
     def shutdown(self):
         log.debug("RadioTest shutting down")
         

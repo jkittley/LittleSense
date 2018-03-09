@@ -1,6 +1,11 @@
 # =============================================================================
 # RFM 69 RADIO
+# 
+# !!! You should NOT need to edit this file !!!
+# Please use the formatter function to process packet data.
+# 
 # =============================================================================
+
 import arrow
 import time
 from commlink import CommLink
@@ -13,9 +18,10 @@ log = Logger()
 
 class RadioRFM69(CommLink):
 
-    def __init__(self):
+    def __init__(self, packet_formatter_func):
         self.MAC_ADDRESS = get_mac_address()
         self.commlink_name = "RadioRFM69"
+        self.packet_formatter = self.validate_formatter(packet_formatter_func)
 
     def initialise(self):
         # freqBand, nodeID, networkID, isRFM69HW = False, intPin = 18, rstPin = 29, spiBus = 0, spiDevice = 0
@@ -43,16 +49,18 @@ class RadioRFM69(CommLink):
                 # continue
 
             # Prep data from packets
-            data = dict(
-                sound_pressure = self.radio.DATA[0] + self.radio.DATA[1]<<8,
-                battery_level  = self.radio.DATA[2] + self.radio.DATA[3]<<8,
-                mode           = self.radio.DATA[4] + self.radio.DATA[5]<<8,
-                node_id   = self.radio.SENDERID,
-                rssi      = self.radio.RSSI
-            )
-            log.debug("Rfm69 Packet receieved", **data)
-            device_id = "node_{}".format(data['node_id'])
-            self._save_reading(arrow.utcnow(), device_id, data)
+            try:
+                unformatted = dict(
+                    data=self.radio.DATA, 
+                    sender_id=self.radio.SENDERID,
+                    rssi=self.radio.RSSI
+                )
+                utc, device_id, formatted = self.packet_formatter(unformatted)
+                log.debug("Rfm69 Packet receieved", **formatted)
+                self._save_reading(utc, device_id, formatted)
+            except:
+                log.error("Rfm69 Failed to format and save packet", **unformatted)
+            
    
     
     def shutdown(self):
