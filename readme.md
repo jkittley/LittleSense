@@ -16,4 +16,4 @@ Currently the project supports:
 - GPIO - Direct manipulation of the servers GPIO pins (coming soon)
 - BLE - Bluetooth Low Energy (coming soon)
 
-You can easily add your own, please see [these instructions](commlink/). If you do create a new Commlink then please share it with usso we can add it to the project.
+You can easily add your own, please see [these instructions](server/commlink/). If you do create a new Commlink then please share it with usso we can add it to the project.
