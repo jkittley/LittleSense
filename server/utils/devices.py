@@ -222,7 +222,7 @@ class Device():
             fields.pop(fn) 
         return fields
 
-    def add_reading(self, utc, fields):
+    def add_reading(self, utc, fields, commlink_name):
         # If device has not been seen before then add to register as unregistered
         if not self.is_registered():
             self._dev_reg.add_as_unregistered(self.id)
@@ -232,7 +232,8 @@ class Device():
         reading = {
             "measurement": "reading",
             "tags": {
-                "device_id": self.id
+                "device_id": self.id,
+                "commlink": commlink_name
             },
             "time": utc.strftime("%c"),
             "fields": self.clean_fields(fields, self.id)
