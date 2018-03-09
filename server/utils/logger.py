@@ -69,11 +69,9 @@ class Logger():
         if self.get_ifdb() is None:
             return
         cat   = kwargs.get('cat', '')
-        limit = kwargs.get('limit', 5000)
-        start = kwargs.get('start', arrow.utcnow().shift(years=-10))
+        limit = kwargs.get('limit', 50)
+        start = kwargs.get('start', arrow.utcnow().shift(days=-1))
         end   = kwargs.get('end', arrow.utcnow())
-
-        print(kwargs)
 
         query = 'SELECT * FROM "logger" WHERE time > \'{0}\' and time < \'{1}\''.format(start, end)
 

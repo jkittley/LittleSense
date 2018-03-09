@@ -125,15 +125,16 @@ def sysadmin_db():
 @app.route("/sys/admin/logs", methods=['GET','POST'])
 def sysadmin_logs():
     form = LogFilterForm()
-    if form.validate_on_submit():
+    form.validate_on_submit()
+    try:
         logdata = log.list_records(
             cat=form.cat.data, 
             start=form.start.data,
             end=form.end.data,
             limit=form.limit.data
         )
-    else:
-        logdata = log.list_records()
+    except:
+        logdata = []
     return render_template('system/logs.html', logdata=logdata, form=form)
 
 
@@ -313,9 +314,9 @@ class AreYouSureForm(FlaskForm):
     confirm = BooleanField('Confirm', validators=[DataRequired()])
 
 class LogFilterForm(FlaskForm):
-    start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1).datetime, validators=[])
-    end = DateTimeField('End', default=arrow.utcnow().datetime, validators=[])
-    cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default="all")
+    start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
+    end = DateTimeField('End', default=arrow.utcnow(), validators=[])
+    cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default='')
     limit = SelectField('Limit', choices=[
         ('50', 50),
         ('250', 250),
