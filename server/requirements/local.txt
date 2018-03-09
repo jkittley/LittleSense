@@ -11,3 +11,4 @@ Unipath==1.1
 tinydb==3.8.0
 python-crontab==2.2.8
 click==6.7
+termcolor==1.1.0

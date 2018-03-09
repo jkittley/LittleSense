@@ -21,9 +21,9 @@ from fabtools import user, group, require, deb
 from fabtools.python import virtualenv, install_requirements, install
 
 from config import settings
+from termcolor import colored
 
 env.user = settings.DEPLOY_USER
-
 
 @task
 def deploy():
@@ -35,13 +35,10 @@ def deploy():
 
 @task
 def init():
-    # If there is an SSH Key then upload to remote
-    if settings.PUBLIC_SSH_KEY != "":
-        user.add_ssh_public_key(env.user, settings.PUBLIC_SSH_KEY)
-    ## OS updates, config and user setup
-    sudo('apt-get update')
-    # sudo('apt-get upgrade')
-    deb.install('nginx uwsgi python3-pip python3-dev python3-psycopg2')
+    ## OS
+    add_ssh_key()
+    update_server()
+    install_os_packages()
     add_grp_to_user()
     install_python_35()
     setup_dot_local()
@@ -59,43 +56,78 @@ def init():
     ## Database & Requirements
     install_influx()
     restart_db_services()
-    # Initialise cron jobs to run background tasks
+    ## Initialise cron jobs to run background tasks
     update_crontab()
-
+    set_env_vars()
 
 # ----------------------------------------------------------------------------------------
 # Helper functions below
 # ----------------------------------------------------------------------------------------
 
-# Install Python 3.5
-def install_python_35():
-    sudo('apt install build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev')
-    with cd('/srv'):
-        sudo('wget https://www.python.org/ftp/python/{0}/Python-{0}.tgz'.format(settings.PYVERSION))
-        sudo('tar -xvf Python-{0}.tgz'.format(settings.PYVERSION))
-        with cd('/srv/Python-{0}'.format(settings.PYVERSION)):
-            sudo('./configure')
-            sudo('make')
-            sudo('make altinstall')
+def print_title(title):
+    pad = "-" * (80 - len(title) - 4)
+    print (colored("-- {} {}".format(title,pad), 'blue', 'on_yellow'))
 
-# Update the crontab
-def update_crontab():
-    script = '{}cronjobs.py'.format(settings.DIR_CODE)
-    sudo('{venv}bin/python {script}'.format(venv=settings.DIR_VENV, script=script))
+def print_error(message):
+    print (colored(message, 'red'))
 
-# Setup .local address for machine
-def setup_dot_local():
-    sudo('apt-get install avahi-daemon')
+def print_success(message):
+    print (colored(message, 'green'))
+
+# ----------------------------------------------------------------------------------------
+# Sub Tasks - OS
+# ----------------------------------------------------------------------------------------
+
+def add_ssh_key():
+    print_title('Adding SSH Key to remote')
+    if settings.PUBLIC_SSH_KEY != "":
+        user.add_ssh_public_key(env.user, settings.PUBLIC_SSH_KEY)
+        print_success("Done")
+    else:
+        print_error("No SSH KEY DEFINED IN SETTINGS")
+
+def update_server():
+    print_title('Updating server')
+    sudo('apt-get update -y')
+    sudo('apt-get upgrade -y')
+
+def install_os_packages():
+    print_title('Installing OS packages')
+    deb.install('nginx uwsgi python3-pip python3-dev python3-psycopg2')
 
 #  Users and Groups
 def add_grp_to_user():
+    print_title('Adding {} to {}'.format(settings.DEPLOY_GRP, env.user))
     if not group.exists(settings.DEPLOY_GRP):
         group.create(settings.DEPLOY_GRP)
     sudo('adduser {username} {group}'.format(username=env.user, group=settings.DEPLOY_GRP))
     # user.modify(env.user, group=DEPLOY_GRP)
 
+# Install Python 3.5
+def install_python_35():
+    print_title('Installing Python 3.5')
+    sudo('apt install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev')
+    with cd('/srv'):
+        pyvstr = ".".join([ str(x) for x in settings.PYVERSION ])
+        sudo('wget https://www.python.org/ftp/python/{0}/Python-{0}.tgz'.format(pyvstr))
+        sudo('tar -xvf Python-{0}.tgz'.format(pyvstr))
+        with cd('/srv/Python-{0}'.format(pyvstr)):
+            sudo('./configure')
+            sudo('make')
+            sudo('make altinstall')
+
+# Setup .local address for machine
+def setup_dot_local():
+    print_title('Setting up .local address')
+    sudo('apt-get install -y avahi-daemon')
+
+# ----------------------------------------------------------------------------------------
+# Sub Tasks - Project
+# ----------------------------------------------------------------------------------------
+
 # Make project folders
 def make_dirs():
+    print_title('Making folders')
     for d in [settings.DIR_PROJ, settings.DIR_CODE, settings.DIR_LOGS, settings.DIR_ENVS, settings.DIR_SOCK]:
         exists = files.exists(d)
         print("File", d, "exists?", exists)
@@ -105,17 +137,9 @@ def make_dirs():
             sudo('chgrp -R %s %s' % (settings.DEPLOY_GRP, d))
     set_permissions()
 
-# Set folder permissions
-def set_permissions():
-    # src
-    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_CODE))
-    # Logs
-    sudo('chmod -R %s %s' % ("u=rwx,g=rw,o=r", settings.DIR_LOGS))
-    # Envs
-    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_ENVS))
-
 # Sync project fioles to server
 def sync_files():
+    print_title('Synchronising project code')
     rsync_project(   
         remote_dir=settings.DIR_CODE,
         local_dir='./',
@@ -124,8 +148,17 @@ def sync_files():
         delete=True
     )
 
+# Set folder permissions
+def set_permissions():
+    print_title('Setting folder and file permissions')
+    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_CODE))
+    sudo('chmod -R %s %s' % ("u=rwx,g=rw,o=r", settings.DIR_LOGS))
+    sudo('chmod -R %s %s' % ("u=rwx,g=rwx,o=r", settings.DIR_ENVS))
+
 # Create a new environments
 def create_virtualenv():
+    print_title('Creating Python {} virtual environment'.format(settings.PYVMM))
+    sudo('pip3 install virtualenv')
     if files.exists(settings.DIR_VENV):
         print("Virtual Environment already exists")
         return
@@ -134,42 +167,18 @@ def create_virtualenv():
 
 # Install Python requirments
 def install_venv_requirements():
+    print_title('Installing remote virtual env requirements')
     with virtualenv(settings.DIR_VENV):
         install_requirements('{0}requirements/remote.txt'.format(settings.DIR_CODE), use_sudo=False)
 
-# Set environmental variables
-def set_env_vars():
-    with virtualenv(settings.DIR_VENV):
-        run('export LOCAL=0')
 
-# Install influx DB database and Grafana inspection tools.
-def install_influx():
-    # sudo('wget http://ftp.us.debian.org/debian/pool/main/i/influxdb/influxdb_1.1.1+dfsg1-4+b2_armhf.deb')
-    # sudo('dpkg -i influxdb_1.1.1+dfsg1-4+b2_armhf.deb')
-
-    sudo('wget http://ftp.us.debian.org/debian/pool/main/i/influxdb/influxdb_1.0.2+dfsg1-1+b2_armhf.deb')
-    sudo('dpkg -i influxdb_1.0.2+dfsg1-1+b2_armhf.deb')
-
-    # sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana-data_2.6.0+dfsg-3_all.deb') 
-    # sudo('apt-get install -f')
-    # sudo('dpkg -i grafana-data_2.6.0+dfsg-3_all.deb')
-    # sudo('apt-get install -f')
-
-    # sudo('wget http://ftp.us.debian.org/debian/pool/main/g/grafana/grafana_2.6.0+dfsg-3_armhf.deb')
-    # sudo('dpkg -i grafana_2.6.0+dfsg-3_armhf.deb')
-    # sudo('apt-get install -f')
-
-    # Enable and start grafana
-    # sudo('systemctl enable grafana')
-    # sudo('systemctl start grafana')
-
-# Restart database services
-def restart_db_services():
-    sudo('systemctl restart influxdb')
-    # sudo('systemctl restart grafana')
+# ----------------------------------------------------------------------------------------
+# Sub Tasks - Web Server
+# ----------------------------------------------------------------------------------------
 
 # Seup Nginx web service routing
 def setup_nginx():
+    print_title('Installing Nginx')
     deb.install('nginx')
     nginx_conf = '''
         # the upstream component nginx needs to connect to
@@ -216,7 +225,7 @@ def setup_nginx():
     sites_enabled = "/etc/nginx/sites-enabled/%s" % settings.ROOT_NAME
     files.append(sites_available, nginx_conf, use_sudo=True)
     # Link to sites enabled
-    if not files.exists(sites_available):
+    if not files.exists(sites_enabled):
         sudo('ln -s %s %s' % (sites_available, sites_enabled))
     # This removes the default configuration profile for Nginx
     if files.exists('/etc/nginx/sites-enabled/default'):
@@ -224,8 +233,10 @@ def setup_nginx():
     # Firewall settings
     # sudo("ufw allow 'Nginx Full'")
 
+
 # Setup Gunicorn to serve web application
 def setup_gunicorn():
+    print_title('Installing Gunicorn')
     with virtualenv(settings.DIR_VENV):
         install('gunicorn', use_sudo=False)
 
@@ -256,12 +267,50 @@ def setup_gunicorn():
     sudo('systemctl start gunicorn')
     sudo('systemctl enable gunicorn')
 
+
 # Restart webservices
 @task
 def restart_web_services():
+    print_title('Restarting Web Service - nginx and gunicorn')
     sudo('systemctl daemon-reload')
     sudo('systemctl restart nginx')
     sudo('systemctl restart gunicorn')
 
+# ----------------------------------------------------------------------------------------
+# Sub Tasks - Database
+# ----------------------------------------------------------------------------------------
+
+# Install influx DB database and Grafana inspection tools.
+def install_influx():
+    print_title('Setting up InfluxDB')
+    sudo('apt-get update -y')
+    sudo('apt install apt-transport-https curl')
+    sudo('curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -')
+    sudo('echo "deb https://repos.influxdata.com/debian jessie stable" | sudo tee /etc/apt/sources.list.d/influxdb.list')
+    sudo('apt-get update -y')
+    sudo('apt-get install -y influxdb')
+
+# Restart database services
+def restart_db_services():
+    print_title('Restarting Influxdb')
+    sudo('systemctl restart influxdb')
+    # sudo('systemctl restart grafana')
+
+
+# ----------------------------------------------------------------------------------------
+# Sub Tasks - Init Project
+# ----------------------------------------------------------------------------------------
+
+# Update the crontab
+def update_crontab():
+    print_title('Updating Crontab')
+    script = '{}cronjobs.py'.format(settings.DIR_CODE)
+    sudo('{venv}bin/python {script}'.format(venv=settings.DIR_VENV, script=script))
+
+# Set environmental variables
+def set_env_vars():
+    print_title('Updating ENV variables')
+    with virtualenv(settings.DIR_VENV):
+        run('export LOCAL=0')
 
 
