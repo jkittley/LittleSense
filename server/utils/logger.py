@@ -83,7 +83,7 @@ class Logger():
         if limit is not None:
             query += ' LIMIT {}'.format(limit)
         
-        return self.get_ifdb().query(query).get_points()
+        return list(self.get_ifdb().query(query).get_points())
     
 
     def purge(self, **kwargs):
