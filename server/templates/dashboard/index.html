@@ -67,8 +67,9 @@
                                     <i class="fas fa-question-circle" data-fa-transform="grow-2"></i>
                                 </a>
                                 {% endif %}
-                                {% if plot.refresh_interval %}
-                                <i class="fas fa-sync info-icon" alt="Refreshing every"></i> {{ plot.refresh_interval }}ms {% endif %}
+                                {% if plot.refresh_interval and end == None %}
+                                <i class="fas fa-sync info-icon" alt="Refreshing every"></i> {{ plot.refresh_interval }}ms 
+                                {% endif %}
                             </div>
                         </div>
                     </div>

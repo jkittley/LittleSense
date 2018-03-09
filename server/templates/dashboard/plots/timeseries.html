@@ -5,13 +5,48 @@
     var chart = null;
     var intervalTimer = null;
     var api_url = "{{ url_for('api_get') }}"
-    var reading_interval = parseInt('{{ plot.time.reading_interval }}');
-    var refresh_interval = parseInt('{{ plot.refresh_interval }}');
+    var reading_interval = parseInt('{{ plot.time.reading_interval_seconds }}');
+    var refresh_interval = 1000 * parseInt('{{ plot.refresh_interval_seconds }}');
     var metrics = JSON.parse('{ "metrics": {{ plot.metrics|tojson|safe }} }');
         metrics = metrics['metrics'];
     var units = JSON.parse('{ "units": {{ plot.units|default("[]")|tojson|safe }} }');
         units = units['units'];
     var colors = palette('tol', metrics.length);
+
+    var time_init = JSON.parse('{{ plot.time|default("{}")|tojson|safe }}');
+    var start_time = null;
+    var end_time = null;
+
+    function update_times() {
+        console.log(time_init);
+        start_time = null;
+        end_time = null;
+        if (time_init.end == null) {
+            // If there is no end time then set to now
+            end_time = moment().utc()
+        } else{
+            // If there is an end time then cancel the refresh
+            end_time = moment(time_init.end, 'YYYY-MM-DD, h:mm:ss');
+            refresh_interval = 0;
+            clearInterval(intervalTimer);
+        }
+        if (time_init.start == null) {
+            if (time_init.period != undefined) {
+            // If there is no start time then use the period settings
+            start_time = moment(end_time).subtract(time_init.period.days, 'days')
+                                 .subtract(time_init.period.hours, 'hours')
+                                 .subtract(time_init.period.minutes, 'minutes')
+            } else {
+                showAlert('No start time or period', 'danger')
+            }
+        } else {
+            start_time = moment(time_init.start, 'YYYY-MM-DD, h:mm:ss');
+        }
+
+        if (start_time === null || end_time === null) showAlert('Failed to calculate start and end times', 'danger');
+        console.log([start_time.format(), end_time.format()]);
+    }
+   
 
     function initPlot() {       
         chart = c3.generate({
@@ -29,7 +64,9 @@
                 x: {
                     type: 'timeseries',
                     tick: {
-                        format: '%Y-%m-%d %H:%M:%S'
+                        format: '%Y-%m-%d %H:%M:%S',
+                        rotate: 75,
+                        multiline: true
                     }
                 }
             },
@@ -43,13 +80,14 @@
     }
     
     function getData(callback_success, callback_error) {
+        update_times();
         $.ajax({
             dataType: "json",
             method: "POST",
             url: api_url,
             data: {
-                start: moment().utc().subtract(refresh_interval, 'milliseconds').format(),
-                end: moment().utc().format(),
+                start: start_time.format(),
+                end: end_time.format(),
                 fill: "null",
                 interval: reading_interval,
                 metrics:  JSON.stringify(metrics),

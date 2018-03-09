@@ -20,12 +20,17 @@
                 "agrfunc": "max"
             }],
             "time": {
-                "start": null,
-                "end": null,
-                "reading_interval": 1
+                "start": "2018-03-09 12:30",
+                "end": "2018-03-09 14:30",
+                "reading_interval_seconds": 600,
+                "period": {
+                    "days": 0,
+                    "hours": 0,
+                    "minutes": 5
+                }
             },
             "type": "timeseries",
-            "refresh_interval": 5000
+            "refresh_interval_seconds": 5
         }
         ,{
             "id": 45,
@@ -45,13 +50,18 @@
                 "agrfunc": "max"
             }],
             "time": {
-                "start": "2017-03-01",
-                "end": "2017-03-09",
-                "reading_interval": 1
+                "start": null,
+                "end": null,
+                "reading_interval_seconds": 60,
+                "period": {
+                    "days": 0,
+                    "hours": 0,
+                    "minutes": 15
+                }
             },
             "type": "timeseries",
             "config": {},
-            "refresh_interval": 5000
+            "refresh_interval_seconds": 5
         }
         ]
 }
