@@ -43,10 +43,10 @@
             method: "POST",
             url: "{{ url_for('api_get') }}",
             data: {
-                start: moment().utc().subtract(1, 'minutes').format(),
+                start: moment().utc().subtract(2, 'minutes').format(),
                 end: moment().utc().format(),
                 fill: "null",
-                interval: 1,
+                interval: 3,
                 device_id: '{{ device_id }}'
             },
             success: callback_success,

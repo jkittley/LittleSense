@@ -35,11 +35,11 @@
                   {% if not loop.last %}, {% endif %}
                   {% endfor %}</td>
                 
+                <td><a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-info">Preview</a></td>
                 {% if device.is_registered() %}
-                <td><a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-info">Configure</a></td>
                 <td><a href="{{ url_for('sysadmin_unreg', device_id=device.id) }}" class="btn btn-block btn-danger">Unregister</a></td>
                 {% else %}
-                <td colspan="2"><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Register</a></td>
+                <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Register</a></td>
                 {% endif %}
             
             </tr>

@@ -55,7 +55,7 @@ class Devices():
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
 
-        default_end = arrow.utcnow().shift(minutes=-settings.PURGE['auto_interval'])
+        default_end = arrow.utcnow().shift(minutes=-settings.PURGE['unreg_interval'])
         end = kwargs.get('end', default_end)
 
         if registered and unregistered:
@@ -138,6 +138,7 @@ class Device():
         self._ifdb = get_InfluxDB()
         self._dev_reg = DeviceRegister()
 
+        
     def get_name(self):
         registration_record = self._dev_reg.get_record(device_id=self.id)
         return registration_record['name']
