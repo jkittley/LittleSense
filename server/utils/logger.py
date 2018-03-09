@@ -13,10 +13,8 @@ class Logger():
         try:
             counts = next(self._ifdb.query('SELECT count(*) FROM "logger"').get_points())
         except StopIteration:
-            counts = {} 
-        return {
-            "count": counts['count_message']
-        }
+            counts = { 'count_message': 'No logs' } 
+        return { "count": counts['count_message'] }
 
     def _add_to_log(self, cat, message, **data):
         logmsg = {

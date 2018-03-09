@@ -10,8 +10,14 @@ class BackupManager():
         self.log = Logger()
         pass
 
+    def get_backups_folder(self):
+        backup_folder = Path(settings.BACKUP['folder'])
+        if not backup_folder.exists():
+            backup_folder.mkdir()
+        return backup_folder
+
     def delete_backup(self, filename):
-        delpath = Path(settings.BACKUP['folder']).child(filename)
+        delpath = self.get_backups_folder().child(filename)
         if delpath.exists():
             delpath.remove()
             return True, "'{}' deleted".format(filename)
@@ -19,7 +25,7 @@ class BackupManager():
 
     def get_backups(self):
         out = []
-        for p in Path(settings.BACKUP['folder']).listdir(pattern="*.csv"):
+        for p in self.get_backups_folder().listdir(pattern="*.csv"):
             parts = p.stem.split('_')
             out.append({
                 'filename': p.name,
@@ -37,15 +43,13 @@ class BackupManager():
         start = arrow.get(start)
         end = arrow.get(end)
 
-        if not Path(settings.BACKUP['folder']).exists():
-            Path(settings.BACKUP['folder']).mkdir()
-
         save_name = "{messurement}_{start}_to_{end}.csv".format(
             messurement=messurement,
             start=start.format('YYYY-MM-DD_HH-mm-ss'),
             end=end.format('YYYY-MM-DD_HH-mm-ss')
         )
-        save_path = '{0}/{1}'.format(settings.BACKUP['folder'], save_name).replace('//','/')
+        backup_folder = self.get_backups_folder()
+        save_path = backup_folder.child(save_name)
 
         # Build Query
         q = 'SELECT * FROM "{messurement}" WHERE {timespan}'.format(
@@ -58,7 +62,7 @@ class BackupManager():
         readings = list(readings)
 
         if len(readings) > 0:        
-            with open(save_path, 'w') as csvfile:
+            with open(save_path.absolute(), 'w') as csvfile:
                 csvwriter = csv.DictWriter(csvfile, 
                     fieldnames=list(readings[0].keys()),
                     delimiter=',',
