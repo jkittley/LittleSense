@@ -336,7 +336,6 @@ class BackupForm(FlaskForm):
 @app.before_request
 def handle_missing_db_connection():
     if not devices.has_db_connection():
-        flash('No connection to InfluxDB', 'danger')
         return "<h1>No Device Database Connection</h1>"
 
 @app.context_processor
