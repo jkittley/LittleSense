@@ -10,7 +10,7 @@ class CommLink:
     
     def __init__(self, influx_instance):
         self.db = influx_instance
-        print (influx_instance)
+        self.commlink_name = "NONE"
         
 
     # def rx(self, **kwargs):
@@ -32,7 +32,7 @@ class CommLink:
 
     def _save_reading(self, utc, device_id, sensor_readings):
         dev = Device(device_id=device_id)
-        return dev.add_reading(utc, sensor_readings)
+        return dev.add_reading(utc, sensor_readings, self.commlink_name)
 
     
     def _ping(self):

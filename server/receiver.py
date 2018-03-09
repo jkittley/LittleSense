@@ -6,39 +6,53 @@
 
 import time
 import arrow
+import signal, sys
 from utils import Logger
+import click
 
 log = Logger()
+radios = []
 
-# import asyncio
-# from commlink import RFM69
-# from config import settings
-# from random import randint
-# from utils import get_InfluxDB
+#this should properly shutdown the rfm69 instance
+def signal_handler(signal, frame):
+    print ('Stopping process...')
+    for radio in radios:
+        radio.shutdown()
+    sys.exit(0)
 
-# ifdb = get_InfluxDB()
-# comm = RFM69(ifdb)
+@click.command()
+@click.option('--test/--no-test', default=False)
+def launch(test=False):
 
-# async def rx(number, n):
-#     while n > 0:
-#         print('T-minus', n, '({})'.format(number))
-#         await asyncio.sleep(1)
-#         n -= 1
+    if test:
+        from commlink.test import RadioTest
+        radio = RadioTest()
+        log.debug("Radio TEST Starting...")
+    else:
+        # Initialise
+        from commlink.rfm69 import RadioRFM69
+        radio = RadioRFM69()
+        log.debug("Radio RFM69 Starting...")
+    
+    # Add radio to pool
+    radios.append(radio)
+    radio.initialise()
+    
+    # This loop tries repeatedly to make receive work.
+    while True:
+        try:
+            radio.receive()
+        except Exception as e:
+            log.error("BG Service Receiving...", error=e)
+        time.sleep(15)
 
-# loop = asyncio.get_event_loop()
-# try:
-#     tasks = [
-#         asyncio.ensure_future(rx("A", 2)),
-#         asyncio.ensure_future(rx("B", 3))
-#     ]
-#     loop.run_forever(asyncio.wait(tasks)
+if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    launch()
 
-# except Exception as e:
-#     loop.close()
 
-while True:
-    log.debug("BG Service Receiving...")
-    time.sleep(5)
+
 
 
 
