@@ -1,0 +1,83 @@
+{% extends 'system/base.html' %}
+
+{% block style %}
+{% endblock%}
+
+{% block script %}
+{% endblock %}
+
+{% block title %}Device - Settings &nbsp;&nbsp;
+<div class="float-right"><a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-sm btn-info">Preview Data</a></div>
+{% endblock %}
+
+{% block menu %}
+{% with active = 'devices' %}
+{% include 'system/menu.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">Known fields</div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Unit</th>
+                                <th scope="col">Data Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for field in device.fields() %}
+                                <tr>
+                                    <td>{{ field.id }}</td>
+                                    <td>{{ field.name }}</td>
+                                    <td>{{ field.unit }}</td>
+                                    <td>{{ field.dtype }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                </div>
+            </div>
+            <div class="col">
+                <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
+                        {% for field in form.errors %}
+                        {% for error in form.errors[field] %}
+                            <div class="alert alert-danger">
+                                <strong>{{ form[field].label }}</strong> {{error}}
+                            </div>
+                        {% endfor %}
+                        {% endfor %}
+                    <div class="card">
+                        <div class="card-header">Settings</div>
+                        <div class="card-body">
+                            {{ form.csrf_token }}
+                            <div class="form-group">
+                                <label>{{ form.device_id.label }}
+                                {{ form.device_id(size=40, class="form-control") }} 
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ form.name.label }}
+                                {{ form.name(size=40, class="form-control") }}
+                                </label>
+                            </div>
+                            <hr>
+                            <input type="submit" class="btn btn-block btn-success float-right" value="Save">
+                        </div>
+                        <div class="card-footer">Note: On save the device will be registered is not already.</div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+       
+    </div>
+{% endblock%}

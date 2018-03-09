@@ -44,7 +44,7 @@
         }
 
         if (start_time === null || end_time === null) showAlert('Failed to calculate start and end times', 'danger');
-        console.log([start_time.format(), end_time.format()]);
+        // console.log([start_time.format(), end_time.format()]);
     }
    
 
@@ -100,7 +100,7 @@
     function updatePlot() {
 
         getData(function(data) {
-            console.log(data);
+            // console.log(data);
             var names = {};
             $.each(data.fields, function(field_id, field_info) {
                 names[field_id] = field_info.name;

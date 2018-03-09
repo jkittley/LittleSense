@@ -1,29 +1,9 @@
 {% extends 'system/base.html' %}
 
 {% block style %}
-<style>
-    .stage {
-        padding-top: 10px;
-        padding-bottom: 10px;
-        text-align: center;
-        background-color: #eee;
-        border-width: 1px;
-        border-top: 0;
-        border-color: #ccc;
-        border-style: solid;
-        font-size: 16px;
-    }
-    .stage.active {
-        background-color:skyblue;
-    }
-    .stages {
-        margin-bottom: 25px;
-    }
-</style>
 {% endblock%}
 
 {% block script %}
-{% if current == 'preview' %}
 <script>
     var intervalTimer = null;
     var refresh_interval = 2000;
@@ -103,11 +83,10 @@
         intervalTimer = setInterval(updatePlot, refresh_interval);
     });
 </script>
-{% endif %}
 {% endblock %}
 
 
-{% block title %}Register - {{ current|capitalize }}{% endblock %}
+{% block title %}Device - Data Preview{% endblock %}
 
 {% block menu %}
 {% with active = 'devices' %}
@@ -116,9 +95,6 @@
 {% endblock %}
 
 {% block content %}
-
-
-{% if current == 'preview' %}
 <div id="chart"></div>
 <hr>
 <div class="row">
@@ -126,49 +102,7 @@
         <a href="{{ url_for('sysadmin_devices') }}" class="btn btn-block btn-info">Back</a>
     </div>
     <div id="option-config" class="col">
-        <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure</a>
+        <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure / Register</a>
     </div>
 </div>
-{% endif %}
-
-{% if current == 'configure' %}
-    <div class="container">
-        <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
-
-                {% for field in form.errors %}
-                {% for error in form.errors[field] %}
-                    <div class="alert alert-danger">
-                        <strong>{{ form[field].label }}</strong> {{error}}
-                    </div>
-                {% endfor %}
-                {% endfor %}
-
-            <div class="card">
-                <div class="card-body">
-                    {{ form.csrf_token }}
-                    <div class="form-group">
-                        <label>{{ form.device_id.label }}
-                        {{ form.device_id(size=40, class="form-control") }} 
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ form.name.label }}
-                        {{ form.name(size=40, class="form-control") }}
-                        </label>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col">
-                            <a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-block btn-info">Back</a>
-                        </div>
-                        <div class="col">
-                            <input type="submit" class="btn btn-block btn-success float-right" value="Save">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-{% endif %}
-
 {% endblock%}

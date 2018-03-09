@@ -54,7 +54,7 @@ def home(dash_selected=None):
 # Register - preview device
 @app.route("/system/register/device/<string:device_id>")
 def device_register_preview(device_id):
-    return render_template('system/register.html', current="preview", device_id=device_id)
+    return render_template('system/preview.html', device_id=device_id)
 
 # Register - configure device
 @app.route("/system/configure/device/<string:device_id>", methods=['GET','POST'])
@@ -69,7 +69,7 @@ def device_register_config(device_id):
         flash('Device registered', 'success')
         return redirect(url_for('sysadmin_devices'))
     # Show config form page 
-    return render_template('system/register.html', current="configure", device_id=device_id, form=form)
+    return render_template('system/configure.html', device_id=device_id, device=device, form=form)
 
 # System Admin - Index
 @app.route("/sys/admin")
