@@ -1,0 +1,2 @@
+# Sensor Store
+The two files ('local.txt' and 'remote.txt') contain a list of the required Python libraries for local and remote deployment i.e. on your machine and on the Raspberry PI server. If you add a library using `pip install` then you should add a line to these files. Anything added to remote.txt will get installed automatically on the server when you use the `fab deploy` command.

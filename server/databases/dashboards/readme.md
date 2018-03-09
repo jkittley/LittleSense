@@ -1,2 +1,2 @@
-# Dashboards
-Read me coming soon
+# Sensor Store
+Dashboards documentation coming soon.

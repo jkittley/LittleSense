@@ -1,0 +1,2 @@
+# Sensor Store
+All bespoke HTML, CSS and Javascript is contained withing these documents. Imported libraries and images are held in the 'static' folder. We specifically chose to defy convention and have the CSS and JS in the HTML to make it as clear as possible what code effects what.
