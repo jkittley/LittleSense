@@ -1,0 +1,139 @@
+<script>
+(function(){ 
+
+    var elem_id = "plot-{{ plot.id }}";
+    var api_url = "{{ url_for('api_get') }}"
+    var reading_interval = parseInt('{{ plot.time.interval }}');
+    var refresh_interval = parseInt('{{ plot.update_interval }}');
+    var device_fields = JSON.parse('{ "device_fields": {{ plot.device_fields|tojson|safe }} }');
+        device_fields = device_fields['device_fields'];
+    var units = JSON.parse('{ "units": {{ plot.units|default("[]")|tojson|safe }} }');
+        units = units['units'];
+    var colors = palette('tol', device_fields.length);
+
+    var trace_index = {};
+    var traces = [];
+    $.each(device_fields, function(i, df) { 
+        var axis_name = 'y' + String((df.unit_id > 1) ? df.unit_id : '');
+        traces.push({
+            name: df.name,
+            x: [], 
+            y: [],
+            mode: 'lines',
+            yaxis: axis_name,
+            line: { color: '#'+colors[i] }
+        })
+        trace_index[df.ref] = traces.length - 1;
+    });
+  
+    function getData(callback_success, callback_error) {
+        $.ajax({
+            dataType: "json",
+            method: "POST",
+            url: api_url,
+            data: {
+                start: moment().utc().subtract(refresh_interval, 'milliseconds').format(),
+                end: moment().utc().format(),
+                fill: "none",
+                interval: reading_interval,
+                format: 'series',
+                device_fields:  JSON.stringify(device_fields),
+            },
+            success: callback_success,
+            error: callback_error
+        }); 
+    }
+
+    function initPlot() {        
+        var layout = {
+            showlegend: true,
+            legend: {"orientation": "h"}
+        };
+        if (units.length > 0) {
+            // layout['xaxis'] = { domain: [units.length * 0.05, 1]};
+            for (var i=0; i<units.length; i++) {
+                var unit = units[i];
+                var axis_name = 'yaxis' + String((i > 0) ? i+1 : '');
+                layout[axis_name] = {
+                    title: unit.title,
+                    side: 'left',
+                    anchor: 'free',
+                    position: i * 0.06,
+                    titlefont: { color: '#'+colors[i]},
+                    tickfont: { color: '#'+colors[i]},
+                }
+            }
+        } else {
+            layout['yaxis'] = {
+                title: 'Unknown scale (no',
+            }
+        }
+        console.log(traces);
+        console.log(layout);
+        Plotly.newPlot(elem_id, traces, layout);
+    }
+    
+    function updatePlot() {
+
+        getData(function(data) {
+            // console.log(data);
+            // Convert timestamp array as JS Date objects
+            var times_slots  = null;
+            var trace_slots = null;
+            // For each device
+            $.each(data, function(device_id, device_data) { 
+                if (device_data.count > 0) {
+                    if (times_slots==null)  times_slots = Array(device_fields.length);
+                    if (trace_slots==null)  trace_slots = Array(device_fields.length);
+                    // For all fields   
+                    $.each(device_data.readings, function(field_id, reading) {
+                        if (field_id != 'time') {
+                            var ref = device_data.fields[field_id].ref;
+                            trace_slots[trace_index[ref]] = reading;
+                            times_slots[trace_index[ref]] = device_data.timestamps.map(x => new Date(x));
+                        }
+                    });
+                }
+            });
+
+            var ids = []
+            for (x in trace_slots) ids.push(parseInt(x));
+            
+            // console.log(trace_slots);
+            // console.log(times_slots);
+            if (trace_slots != null) {
+                var update = {
+                    x: times_slots,
+                    y: trace_slots
+                }
+                Plotly.extendTraces(elem_id, update, ids);
+            }
+            
+            
+
+            // var olderTime = time.setMinutes(time.getMinutes() - 1);
+            // var futureTime = time.setMinutes(time.getMinutes() + 1);
+            // var minuteView = {
+            //         xaxis: {
+            //         type: 'date',
+            //         range: [olderTime,futureTime]
+            //         }
+            //     };
+
+            // Plotly.relayout(elem_id, minuteView);
+            
+
+        }, function() {
+            showAlert("Failed to fetch data from the server. Now terminating automatic refreshing.", 'danger');
+            if (refresh_interval >0) clearInterval(intervalTimer);
+        });
+    }
+
+    initPlot();
+    updatePlot();
+    if (refresh_interval >0) {
+        var intervalTimer = setInterval(updatePlot, refresh_interval);
+    }
+
+})();
+</script>

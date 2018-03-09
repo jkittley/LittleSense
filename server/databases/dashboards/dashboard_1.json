@@ -1,12 +1,6 @@
 {
-    "header": {
-        "title": "Some header title",
-        "text": "Some header text"
-    },
-    "footer": {
-        "title": "Some footer title",
-        "text": "Some footer text"
-    },
+    "header": null,
+    "footer": null,
     "plots": [
         {
             "id": 1,
@@ -14,13 +8,13 @@
             "title": "Plot 1",
             "width": 6,
             "help": "Some help text for the viewer",
-            "device_fields": [{
-                "name": "Device 0: Temp (C)",
+            "metrics": [{
+                "name": "Device 10: Mean Temp (C)",
                 "field_id": "float_temp_c",
                 "device_id": "test_device_10",
-                "agrfunc": "mean"
+                "agrfunc": "mean"             
             },{
-                "name": "Device 0: Light Level (Lux)",
+                "name": "Device 4: Max Light Level (Lux)",
                 "field_id": "int_light_level_lux",
                 "device_id": "test_device_4",
                 "agrfunc": "max"
@@ -28,15 +22,10 @@
             "time": {
                 "start": null,
                 "end": null,
-                "period": {
-                    "days": 2,
-                    "weeks": 1
-                },
-                "interval": 1
+                "reading_interval": 1
             },
             "type": "timeseries",
-            "config": {},
-            "update_interval": 2500
+            "refresh_interval": 5000
         }
         ,{
             "id": 45,
@@ -44,16 +33,11 @@
             "width": 6,
             "title": "Plot 2",
             "help": "",
-            "device_fields": [{
+            "metrics": [{
                 "name": "Device 10: Temp (C)",
                 "field_id": "float_temp_c",
                 "device_id": "test_device_10",
                 "agrfunc": "mean"
-            },{
-                "name": "Device 10: Switch (State)",
-                "field_id": "bool_switch_state",
-                "device_id": "test_device_10",
-                "agrfunc": "count"
             },{
                 "name": "Device 10: Light Level (Lux)",
                 "field_id": "int_light_level_lux",
@@ -61,17 +45,13 @@
                 "agrfunc": "max"
             }],
             "time": {
-                "start": null,
-                "end": null,
-                "period": {
-                    "days": 2,
-                    "weeks": 1
-                },
-                "interval": 1
+                "start": "2017-03-01",
+                "end": "2017-03-09",
+                "reading_interval": 1
             },
             "type": "timeseries",
             "config": {},
-            "update_interval": 1000
+            "refresh_interval": 5000
         }
         ]
 }

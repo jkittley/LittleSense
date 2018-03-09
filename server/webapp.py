@@ -207,53 +207,87 @@ def api_get_devices():
     return json.dumps(devices.as_dict())
 
 # WebAPI - readings get
-@app.route("/api/readings/get")
-@app.route("/api/readings/get/<string:device_id>")
+@app.route("/api/readings/get", methods=['POST'])
 def api_get(device_id=None):
-    if device_id is None:
-        device_fields = group_fields_by_device(request.args.getlist('device_fields'))
+    # A metric is a dict(device_id=,field_id,agrfunc=)
+    metrics_str = request.values.get('metrics', None)
+    device_id = request.values.get('device_id', None)
+
+    if metrics_str is not None:
+        metrics = metrics_string_to_dict(metrics_str)
+    elif device_id is not None:
+        metrics = get_device_metrics(device_id)
     else:
+        return json.dumps({ 'error': 'you must specify either a device_id of a set of metrics' })
+      
+    joined_data = {} 
+    joined_fields = {}
+    count_field_readings = 0
+    for device_id, fields_data in metrics.items():
         device = Device(device_id)
-        device_fields = {}
-        device_fields[device_id] = [ x['id'] for x in device.fields() ]
- 
-    settings = {
-        'device_fields': device_fields,
-        'fillmode' : request.args.get('fill', 'none'),
-        'interval' : request.args.get('interval',5),
-        'start'    : request.args.get('start', None),
-        'end'      : request.args.get('end', None),
-        'limit'    : request.args.get('limit', None)
-    }
-    
-    return_data = {}
-    for device_id, fields_ids in settings['device_fields'].items():
-        device   = Device(device_id)
-        success, readings = device.get_readings(
-            fields   = fields_ids,
-            fill     = settings['fillmode'], 
-            interval = settings['interval'], 
-            start    = settings['start'], 
-            end      = settings['end'], 
-            limit    = settings['limit']
+        success, device_results = device.get_readings(
+            fields   = fields_data,
+            fill     = request.values.get('fill', 'none'), 
+            interval = request.values.get('interval', 5), 
+            start    = request.values.get('start', None),
+            end      = request.values.get('end', None),
+            limit    = request.values.get('limit', None)
         )
-        
+        # HERE we need to merge all device data into on stack by time
+        # request.values.get('format', None)
         if success:
-            return_data[device_id] = readings
-        else:
-            return_data[device_id] = None
-    
-    return json.dumps(return_data), 200 , {'ContentType':'application/json'} 
+            for time, field_readings in device_results['readings'].items():
+                count_field_readings += len(field_readings.keys())
+                joined_data.setdefault(time, {}).update(field_readings)
+                joined_fields.update(device_results['fields'])
 
 
-def group_fields_by_device(fields):
-    devices = {}
-    for field in fields:
-        part = field.split('|')
-        if part[0] not in devices:
-            devices[part[0]] = []
-        devices[part[0]].append(part[1])
-    return devices
+    joined_data_as_list = joined_data.values()
+
+    # Return a dict where the key is time and the value is a dict of field value pairs
+    return json.dumps({
+        "count_timestamps": len(joined_data_as_list),
+        "count_field_readings": count_field_readings,
+        "fields": joined_fields,
+        "field_ids": list(joined_fields.keys()),
+        "timestamps": list(joined_data.keys()),
+        "readings": list(joined_data_as_list)
+    }), 200 , {'ContentType':'application/json'} 
+
+
+# Convert device_id|field_id|agrfunc to dict
+def metrics_string_to_dict(metrics_str):
+    by_devices = {}
+    for metrics in json.loads(metrics_str):
+        by_devices.setdefault(metrics['device_id'], []).append(
+            dict(field_id=metrics['field_id'], 
+                 agrfunc=metrics['agrfunc'], 
+                 ref=metrics.get('ref', None))
+        )
+    return by_devices
+
+def get_device_metrics(device_id):
+    device = Device(device_id)
+    by_devices = {}
+    by_devices[device_id] = []
+    for field_data in device.fields():
+        by_devices[device_id].append(dict(
+            field_id=field_data['id']
+        ))
+    return by_devices
+
+
+    # devices = {}
+    # for df in device_fields:
+    #     parts = df.split('|')
+    #     if len(parts) < 1:
+    #         log.error('WebAPI - Invalid device field', device_field=df)
+    #         continue
+    #     device_id = parts[0]
+    #     field_id = parts[1]
+    #     agrfunc = None if len(parts) <= 2 else parts[2]
+    #     devices.setdefault(device_id, []).append(dict(field_id=field_id, agrfunc=agrfunc))
+    # return devices
 
 
 # ------------------------------------------------------------

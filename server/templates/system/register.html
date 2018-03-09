@@ -23,138 +23,85 @@
 {% endblock%}
 
 {% block script %}
-<script>
-    // Convert timestamps to local
-    // $(document).ready(function() {
-    //     $('.time-to-rel').each(function(k,v) {
-    //         var m = moment($(this).html()); 
-    //         $(this).html(m.format('llll') + " (" + m.fromNow() + ")");
-    //     })
-    // });
-</script>
 {% if current == 'preview' %}
 <script src="{{ url_for('static', filename='js/chart.js' )}}"></script>
 <script>
+    var intervalTimer = null;
+    var refresh_interval = 2000;
 
-    var chart = null;
-    
-    var build_charts = function() {
-        var ctx = document.getElementById("chart1").getContext("2d");
-        ctx.canvas.width = 1000;
-        ctx.canvas.height = 300;
-        var cfg = {
-            type: 'bar',
-            labels: [],
+    function initPlot() {       
+        chart = c3.generate({
+            bindto: '#chart',
             data: {
-                datasets: []
+                x: 'x',
+                xFormat: '%Y-%m-%dT%H:%M:%SZ',
+                json: [],
+                keys: {
+                    x: 'time',
+                    value: []
+                }
             },
-            options: {
-                scales: {
-                    xAxes: [{
-                        type: 'time',
-                        distribution: 'series',
-                        ticks: {
-                            source: 'labels'
-                        }
-                    }],
-                    yAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Value'
-                        }
-                    }]
-                },
-                legend: {
-                    onClick: function (e) {
-                        e.stopPropagation();
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%Y-%m-%d %H:%M:%S'
                     }
                 }
+            },
+            zoom: {
+                enabled: true
+            },
+            transition: {
+                duration: null
             }
-        };
-        chart = new Chart(ctx, cfg);
-    };
-
-  
-
-    function prepData(readings, field_id) {
-        data   = []
-        labels = []
-        for (i in readings) {
-            data.push({
-                t: moment(readings[i].time),
-                y: readings[i][field_id]
-            })
-            labels.push(
-                moment(readings[i].time).format()
-            );
-        }
-        return [data, labels]
+        });
     }
 
+    function getData(callback_success, callback_error) {
+        $.ajax({
+            dataType: "json",
+            method: "POST",
+            url: "{{ url_for('api_get') }}",
+            data: {
+                start: moment().utc().subtract(1, 'minutes').format(),
+                end: moment().utc().format(),
+                fill: "null",
+                interval: 1,
+                device_id: '{{ device_id }}'
+            },
+            success: callback_success,
+            error: callback_error
+        }); 
+    }
 
-    function makeDataset(chart, timestamps, fields, readings) {
-        datasets = []
-        var colors = palette('tol', fields.length);
-        for (i in fields) {
-            var dataset = {
-                label: fields[i].name, 
-                data: [],
-                type: 'line',
-                pointRadius: 0,
-                fill: true,
-                lineTension: 0,
-                borderWidth: 2,
-                borderColor: '#'+colors[i],
-                fillColor: '#'+colors[i]
-            }
+    function updatePlot() {
+        getData(function(data) {
+            console.log(data);
+            var names = {};
+            $.each(data.fields, function(field_id, field_info) {
+                names[field_id] = field_info.name;
+            });
 
-            prepped = prepData(readings, fields[i].id)
-            data = prepped[0];
-            labels = prepped[1];
-            for (i in data) { 
-                // dataset.labels.push(labels[i]);
-                dataset.data.push(data[i]);
-            }
-            
-            datasets.push(dataset);
-        }
+            chart.load({
+                json: data.readings,
+                keys: {
+                    x: 'time',
+                    value: data.field_ids,
+                },
+                names: names
+            });
 
-        chart.data.labels = timestamps;
-        chart.data.datasets = datasets;
-        chart.update(0);
+        }, function() {
+            showAlert("Failed to fetch data from the server. Now terminating automatic refreshing.", 'danger');
+            clearInterval(intervalTimer);
+        });
     }
     
-    function show_error(msg) {
-        $('#chart1').before('<div class="alert alert-danger">'+msg+'</div>');
-        $('#option-config').hide();
-        $('#chart1').hide();
-    }
-
-    
-
     $(document).ready(function() {
-        build_charts();
-        var timer = setInterval(function() {
-            var device_id = "{{device_id}}";
-            $.ajax({
-                dataType: "json",
-                url: "{{ url_for('api_get', device_id=device_id) }}",
-                data: {
-                    start: moment().utc().subtract(1, 'minutes').format(),
-                    end: moment().utc().format(),
-                    fill: "none",
-                    interval: 1,
-                    limit: 30,
-                },
-                success: function(resp) { 
-                    makeDataset(chart, resp[device_id].timestamps, resp[device_id].fields, resp[device_id].readings); 
-                },
-                error: function(jqXHR) {
-                    show_error(jqXHR.responseText);
-                    clearInterval(timer);
-                }
-            }); 
-        }, 500);
+        initPlot();
+        updatePlot();
+        intervalTimer = setInterval(updatePlot, refresh_interval);
     });
 </script>
 {% endif %}
@@ -173,7 +120,8 @@
 
 
 {% if current == 'preview' %}
-<canvas id="chart1"></canvas>
+<div id="chart"></div>
+<hr>
 <div class="row">
     <div class="col">
         <a href="{{ url_for('sysadmin_devices') }}" class="btn btn-block btn-info">Back</a>

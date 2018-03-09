@@ -74,9 +74,9 @@ class Devices():
                 end=end
             )
             log.funcexec('Purged', registered=registered, unregistered=unregistered)
-            print(q)
+            # print(q)
             o = self._ifdb.query(q)
-            print(o)
+            # print(o)
         
         return True
 
@@ -175,19 +175,19 @@ class Device():
         unit = parts[-1]
         return dtype, name, unit
 
-    def field_names(self, **kwargs):
+    def field_ids(self, **kwargs):
         return self._dev_reg.get_seen_fields(self.id)
 
     def fields(self, **kwargs):
         out = []
-        requested_fields = kwargs.get('only', None)
-       
-        for field in self.field_names():
-            if requested_fields is not None and field not in requested_fields:
+        requested_field_ids = kwargs.get('only', None)
+     
+        for field_id in self.field_ids():
+            if requested_field_ids is not None and field_id not in requested_field_ids:
                 continue
-            dtype, name, unit = self._field_id_components(field)
+            dtype, name, unit = self._field_id_components(field_id)
             out.append({
-                'id': field,
+                'id': field_id,
                 'name': name,
                 'dtype': dtype,
                 'unit': unit,
@@ -203,7 +203,7 @@ class Device():
         remove_list = []
         for field_name, value in fields.items():
             try:
-                dtype, name, unit = self._field_id_components(field_name)
+                dtype, _, _ = self._field_id_components(field_name)
                 if dtype == 'float' or dtype == 'int':
                     fields[field_name] = float(value)
                 elif dtype == 'bool':
@@ -251,17 +251,52 @@ class Device():
         except ValueError:
             return None
 
-    @staticmethod
-    def _fields_to_query(fields, agrfunc="mean"):
+    
+    def _fields_to_query(self, requested_fields):
+        fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
+        fields_out = {}
+
         qfields = ""
-        for f in fields:
-            if f['is_numeric']:
-                qfields += '{agrfunc}("{fid}") AS "{agrfunc}_{fid}", '.format(fid=f['id'], agrfunc=agrfunc)
-            elif f['is_boolean']:
-                qfields += 'count("{0}") AS "count_{0}", '.format(f['id'])
-            # elif f['is_string']:
-            #     qfields += 'distinct("{0}") AS "distinct_{0}", '.format(f['id'])
-        return qfields[:-2]
+        for rf in requested_fields:
+            field_id = rf.get('field_id', None)
+            agrfunc  = rf.get('agrfunc', None)
+            field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
+   
+            if field_id is None:
+                log.error('_fields_to_query missing field_id', **rf)
+                continue
+            if field_data['is_numeric']:
+                if agrfunc is None:
+                    agrfunc = "mean"
+                if agrfunc in ['count', 'mean', 'mode', 'median', 'sum', 'max', 'min', 'first', 'last']:
+                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+                else:
+                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    continue
+            elif field_data['is_boolean']:
+                if agrfunc is None:
+                    agrfunc = "count"
+                if agrfunc in ['count', 'first', 'last', 'max', 'min']:
+                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+                else:
+                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    continue
+            elif field_data['is_string']:
+                log.debug('_fields_to_query dtype string not yet implemented', **rf)
+                continue
+            else:
+                log.error('_fields_to_query unknown dtype', **rf)
+                continue
+
+            # Make new_fields data with correct names
+            new_field_id = '{did}__{agrfunc}__{fid}'.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+            fields_out[new_field_id] = field_data
+            fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.get_name())
+            
+            # Ref provides a trace from requested device-&-field-&-agrfunc right through the system
+            fields_out[new_field_id]['ref'] = rf.get('ref', None)
+
+        return qfields[:-2], fields_out
         
     @staticmethod
     def _clean_limit(limit, min_results, max_results):
@@ -285,8 +320,7 @@ class Device():
         requested_fields = kwargs.get('fields', None)
        
         # Fields
-        fields = self.fields(only=requested_fields)
-        qfields = self._fields_to_query(fields)
+        qfields, fields_data = self._fields_to_query(requested_fields)
         if len(qfields) == 0:
             return False, { "error" : "Device has no fields" }
 
@@ -298,9 +332,10 @@ class Device():
             return False, { "error" : "Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z" }
         
         # Limit
-        limit = self._clean_limit(kwargs.get('limit'), 1, 5000)
+        min_results, max_results = 1, 5000
+        limit = self._clean_limit(kwargs.get('limit'), min_results, max_results)
         if limit is None:
-            return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(MIN_RESULTS,MAX_RESULTS) }
+            return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(min_results, max_results) }
          
         # Build Query
         q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
@@ -317,21 +352,17 @@ class Device():
     
         # Build list of timestamps  
         timestamps = []
-        used_keys = []
+        by_time = {}
         for r in readings:
             timestamps.append(r['time'])
-       
-        # Modify fields to to be mean
-        for f in fields:
-            f['id'] = 'mean_' + f['id']
-            f['name'] = 'Mean ' + f['name']
+            by_time[r['time']] = r
 
         # Return
         return True, { 
             "count": len(readings),
-            "fields": fields,
-            'readings': readings, 
-            'timestamps': timestamps,
+            "fields": fields_data,
+            'readings': by_time, 
+            'timestamps': timestamps
         }
 
     def __eq__(self, other):

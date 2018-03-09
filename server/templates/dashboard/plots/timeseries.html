@@ -2,128 +2,91 @@
 (function(){ 
 
     var elem_id = "plot-{{ plot.id }}";
+    var chart = null;
+    var intervalTimer = null;
+    var api_url = "{{ url_for('api_get') }}"
+    var reading_interval = parseInt('{{ plot.time.reading_interval }}');
+    var refresh_interval = parseInt('{{ plot.refresh_interval }}');
+    var metrics = JSON.parse('{ "metrics": {{ plot.metrics|tojson|safe }} }');
+        metrics = metrics['metrics'];
+    var units = JSON.parse('{ "units": {{ plot.units|default("[]")|tojson|safe }} }');
+        units = units['units'];
+    var colors = palette('tol', metrics.length);
 
-    function fieldString(device_fields) {
-        toString = "";
-        $.each(device_fields, function(k, v) {
-            toString += "&device_fields="+v.device_id+"|"+v.field_id 
+    function initPlot() {       
+        chart = c3.generate({
+            bindto: '#'+elem_id,
+            data: {
+                x: 'x',
+                xFormat: '%Y-%m-%dT%H:%M:%SZ',
+                json: [],
+                keys: {
+                    x: 'time',
+                    value: []
+                }
+            },
+            axis: {
+                x: {
+                    type: 'timeseries',
+                    tick: {
+                        format: '%Y-%m-%d %H:%M:%S'
+                    }
+                }
+            },
+            zoom: {
+                enabled: true
+            },
+            transition: {
+                duration: null
+            }
         });
-        return toString;
     }
-
+    
     function getData(callback_success, callback_error) {
-        var device_fields = {{ plot.device_fields|safe }};
-        var apiUrl = "{{ url_for('api_get') }}?b=1"+fieldString(device_fields);
         $.ajax({
-                dataType: "json",
-                url: apiUrl,
-                data: {
-                    start: moment().utc().subtract({{ plot.update_interval }}, 'milliseconds').format(),
-                    end: moment().utc().format(),
-                    fill: "none",
-                    interval: {{ plot.time.interval }}
-                },
-                success: callback_success,
-                error: callback_error
+            dataType: "json",
+            method: "POST",
+            url: api_url,
+            data: {
+                start: moment().utc().subtract(refresh_interval, 'milliseconds').format(),
+                end: moment().utc().format(),
+                fill: "null",
+                interval: reading_interval,
+                metrics:  JSON.stringify(metrics),
+            },
+            success: callback_success,
+            error: callback_error
         }); 
     }
 
-    function initPlot() {
-        var colors = palette('tol', {{ plot|length }});
-        var data = [
-        {% for x in plot.device_fields %}
-        {
-            name: '{{ x.device_id }} {{ x.field_id }}',
-            x: [], 
-            y: [],
-            mode: 'lines',
-            line: { color: '#'+colors[{{ loop.index }}] }
-        }
-        {% if loop.last == false %},{% endif%}{% endfor %}
-        ];
-        var layout = {
-            showlegend: true,
-            legend: {"orientation": "h"}
-        };
-        Plotly.newPlot(elem_id, data, layout);
-    }
-    
     function updatePlot() {
+
         getData(function(data) {
-            var times_data = []
-            var field_data = {}
             console.log(data);
-
-            // Got through every device
-            $.each(data, function(device_id, device_data) { 
-                
-                // and every reading   
-                $.each(device_data.readings, function(idr, reading) {
-
-                    // Build ime data
-                    var tmp = []
-                    for (x in device_data.timestamps) tmp.push(new Date(device_data.timestamps[x]));
-
-                    // and every field name in that reading
-                    $.each(reading, function(field_name, value) {
-                        
-                        if (field_name !== 'time') {
-                            var device_field_name = device_id+"|"+field_name;
-                            if (!(device_field_name in field_data)) {
-                                times_data.push(tmp);
-                                field_data[device_field_name] = [];
-                            }
-                            field_data[device_field_name].push(value);                         
-                        }
-
-                    });
-
-                });
+            var names = {};
+            $.each(data.fields, function(field_id, field_info) {
+                names[field_id] = field_info.name;
             });
-            
-            var counter =0;
-            var ids = []
-            var field_data_list = []
-            for (device_field_name in field_data) {
-                field_data_list.push(field_data[device_field_name]);
-                ids.push(counter);
-                counter++;
-            }
 
-            if (ids.length > 0) {
-                var update = {
-                    x: times_data,
-                    y: field_data_list
-                }
-                Plotly.extendTraces(elem_id, update, ids);
-            }
-
-            // var olderTime = time.setMinutes(time.getMinutes() - 1);
-            // var futureTime = time.setMinutes(time.getMinutes() + 1);
-            // var minuteView = {
-            //         xaxis: {
-            //         type: 'date',
-            //         range: [olderTime,futureTime]
-            //         }
-            //     };
-
-            // Plotly.relayout(elem_id, minuteView);
-            
+            chart.load({
+                json: data.readings,
+                keys: {
+                    x: 'time',
+                    value: data.field_ids,
+                },
+                names: names
+            });
 
         }, function() {
             showAlert("Failed to fetch data from the server. Now terminating automatic refreshing.", 'danger');
-            {% if plot.update_interval %}
-            clearInterval(interval);
-            {% endif %}
+            clearInterval(intervalTimer);
         });
     }
 
+    // Startup and set refresh
     initPlot();
     updatePlot();
-
-    {% if plot.update_interval %}
-    var interval = setInterval(updatePlot, {{ plot.update_interval }});
-    {% endif %}
+    if (refresh_interval >0) intervalTimer = setInterval(updatePlot, refresh_interval); 
 
 })();
 </script>
