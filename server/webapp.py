@@ -285,20 +285,6 @@ def get_device_metrics(device_id):
         ))
     return by_devices
 
-
-    # devices = {}
-    # for df in device_fields:
-    #     parts = df.split('|')
-    #     if len(parts) < 1:
-    #         log.error('WebAPI - Invalid device field', device_field=df)
-    #         continue
-    #     device_id = parts[0]
-    #     field_id = parts[1]
-    #     agrfunc = None if len(parts) <= 2 else parts[2]
-    #     devices.setdefault(device_id, []).append(dict(field_id=field_id, agrfunc=agrfunc))
-    # return devices
-
-
 # ------------------------------------------------------------
 # Forms
 # ------------------------------------------------------------
