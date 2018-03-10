@@ -24,8 +24,9 @@ To deploy the project to a remote host you must first have created a local virtu
 
 1. If you have not already activated the environment then do so e.g. `conda activate myenv`
 2. Navigate to the server folder (where this file is stored).
-3. Run `fab -H 192.168.0.106 -pMyPassword deploy`
-to deploy the project to the host located at 192.168.0.101 using the password 'MyPassword'. Change these details as needed.
+3. Run `fab -H 192.168.0.106 init` if you specify a SSH Key file in the settings then it will only ask you for a password the first time you connect to the device. 
+
+If you make changes to the code locally and want to redeploy it to the server use the `fab -H 192.168.0.106 deploy` command. If you don't specify a SSH Key you can add `-p` followed by your password to speed things up.
 
 #### Additional - Set .local domain name
 Rather than entering the IP Address to access the Raspberry pi you can use a `http://raspberrypi.local/`. If you want to change this name then:
