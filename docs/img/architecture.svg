@@ -132,8 +132,8 @@
     <g transform="matrix(1.07857,0,0,1,-23.5714,0)">
         <path d="M160,80L300,120" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
     </g>
-    <g transform="matrix(-0.00154859,0,0,0.512171,350.356,36.7255)">
-        <path d="M160,80L300,120" style="fill:none;stroke:rgb(137,137,137);stroke-width:6.9px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:13.81,20.71,0,0;"/>
+    <g transform="matrix(1,0,0,1,-9,1)">
+        <path d="M359,94L359,74" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
     </g>
     <path d="M300,140L120,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
     <g transform="matrix(-2.41709e-05,-0.0443513,0.0443513,-2.41709e-05,443.911,124.018)">
@@ -151,9 +151,6 @@
         <path d="M300,160L160,200" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
     </g>
     <path d="M400,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
-    <g transform="matrix(5.92404,0,0,1,-2363.54,0)">
-        <path d="M480,140L466.496,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:0.59px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:1.18,1.77,0,0;"/>
-    </g>
     <g transform="matrix(1,0,0,1,360.149,-23.2697)">
         <g transform="matrix(0.0961571,0,0,0.0961571,150.993,163.216)">
             <g>
@@ -170,4 +167,5 @@
             <path d="M6,19C6,20 8.25,21 12,21C15.518,21 18,20 18,19C18,17 15.646,15 12,15C8.25,15 6,17 6,19Z" style="fill:white;fill-rule:nonzero;"/>
         </g>
     </g>
+    <path d="M399,140L480,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
 </svg>
