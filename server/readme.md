@@ -3,7 +3,7 @@ The code in this folder can be run locally on your machine for testing and deplo
 
 - [Commlinks](commlink/) Code ralting to communication with channels e.g. Radios.
 - [Config](config/) All settings for the project.
-- [Database](database) Database and data.
+- [Database](databases) Database and data.
 - [Requirements](requirements/) Python environment requirements.
 - [Static](static/) Libraries and images used by the HTML.
 - [Utils](utils/) Utility and helper functions through the code.
