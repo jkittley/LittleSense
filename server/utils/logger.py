@@ -90,7 +90,6 @@ class Logger():
         else:
             query += ' ORDER BY time DESC'
 
-        print (query)
         if limit is not None:
             query += ' LIMIT {}'.format(limit)
         if offset > 0:
@@ -99,7 +98,7 @@ class Logger():
         results = list(self.get_ifdb().query(query).get_points())
         
         num_pages = math.ceil(total_records / max(1, limit))
-        page_num  = min(num_pages, 1 + offset / limit)
+        page_num  = math.ceil(min(num_pages, 1 + offset / limit))
     
         return dict(
                 total=total_records,

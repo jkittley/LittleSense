@@ -333,8 +333,8 @@ class LogFilterForm(FlaskForm):
     ], default=50)
     offset = HiddenField('Offset', default=0)
     orderby = SelectField('Order&nbsp;By', choices=[
-        ('time ASC', 'Time (New to Old)'),
-        ('time DESC', 'Time (Old to New)'),
+        ('time ASC', 'Time (Old to New)'),
+        ('time DESC', 'Time (New to Old)'),
     ], default='time DESC')
 
 class BackupForm(FlaskForm):
