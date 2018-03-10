@@ -1,6 +1,8 @@
 # Sensor Store
 Welcome to Sensor Store! This project is designed to make the deployment of sensor devices and the subsequent logging and inspection of the data they produce simple. Our ambition is not to provide an all-in-one solution, rather we hope to provide a solid foundation on which you can build a bespoke system to suite your needs. 
 
+![System Overview](https://raw.githubusercontent.com/jkittley/sensorStore/master/docs/imgs/architecture.svg)
+
 The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through a radio channel such as RFM69. This repositiory is divided into two sections: [Server](server/) and [Devices](device/). Please see the the respective readme files for more information.
 
 ## Overview
