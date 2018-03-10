@@ -8,7 +8,7 @@ The code in this folder can be run locally on your machine for testing and deplo
 - [Static](static/) Libraries and images used by the HTML.
 - [Utils](utils/) Utility and helper functions through the code.
 
-## 1 Setup
+## Setup
 To deploy this code to a Raspberry Pi we use Fabric, a tool which automates the process. The first step however is to setup the system on your local machine.
 
 ### Local Setup
@@ -49,7 +49,7 @@ Rather than entering the IP Address to access the Raspberry pi you can use a `ht
 
 Now you can access the site with ROOT_NAME.local in your browser.
 
-## 2. System Design
+## System Design
 In this section we outline some of the most important files and folders in the project.
 
 ### Key files
