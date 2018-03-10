@@ -3,6 +3,9 @@ Welcome to Sensor Store! This project is designed to make the deployment of sens
 
 The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through a radio channel such as RFM69. This repositiory is divided into two sections: [Server](server/) and [Devices](device/). Please see the the respective readme files for more information.
 
+## Overview
+In short you can through key:value pairs at the server (along with a time and a uniue sending device id) and the server will record them without question. Through a web interface, users can register devices for which they want to store data. Data from registered devices will be kept indefinately. Unregistered device data will be held for a specified amount of time before they are automatically deleted. Using the web interface users can also inspect and visuals the data through customisable dashboards.
+
 ## About the code
 The project code is designed for novice user to deploy and for novice programmers (e.g. academic researchers) to modify. As such we have chosen to use technologies which make the reading and adapting of the code less difficult, for example, we chose to use jQuery over more modern technologies such as React.js because the structure is more intuitive and there are fewer idependant technologies. In addition we have structured the project so that all relevant CSS and Javascript is contained within the tempalates. We chose to defy the convention of splitting code into seporate files so that it is obvious what code affects what and to maximise decoupling, thus minimising the chance of changes having unexpected consiquences elsewhere.
 

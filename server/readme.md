@@ -1,7 +1,16 @@
 # Sensor Store - Server
-The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi shared access over a local network. To deploy this code to a Raspberry Pi we use Fabric, a tool which automates the process. The first step however is to setup the system on your local machine.
+The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi over a local network. We have done our best to document and comment as much as we can. However if you spot anything missing then please let us know, or even better submit a pull request. Each of the subdirectories has a readme file with more information.
+
+- [Commlinks](commlink/) Code ralting to communication with channels e.g. Radios.
+- [Config](config/) All settings for the project.
+- [Database](database) Database and data.
+- [Requirements](requirements/) Python environment requirements.
+- [Static](static/) Libraries and images used by the HTML.
+- [Utils](utils/) Utility and helper functions through the code.
 
 ## 1 Setup
+To deploy this code to a Raspberry Pi we use Fabric, a tool which automates the process. The first step however is to setup the system on your local machine.
+
 ### Local Setup
 To run the project locally and to use Fabric to deploy the code to a Raspberry PI on the local network, you fill first need to setup the local environment.
 
