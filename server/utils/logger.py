@@ -1,6 +1,6 @@
 from config import settings
 from .influx import get_InfluxDB
-import arrow, json
+import arrow, json, math
 from functools import wraps
 
 
@@ -17,11 +17,14 @@ class Logger():
             return self._ifdb
 
     def stats(self):
+        return { "count": self.__len__() }
+
+    def __len__(self):
         try:
             counts = next(self.get_ifdb().query('SELECT count(*) FROM "logger"').get_points())
-        except StopIteration:
-            counts = { 'count_message': 'No logs' } 
-        return { "count": counts['count_message'] }
+            return counts['count_message']
+        except:
+            return 0
 
     def _add_to_log(self, cat, message, **data):
         logmsg = {
@@ -68,22 +71,44 @@ class Logger():
     def list_records(self, **kwargs):
         if self.get_ifdb() is None:
             return
-        cat   = kwargs.get('cat', '')
-        limit = kwargs.get('limit', 50)
-        start = kwargs.get('start', arrow.utcnow().shift(days=-1))
-        end   = kwargs.get('end', arrow.utcnow())
+        cat     = kwargs.get('cat', '')
+        offset  = int(kwargs.get('offset', 0))
+        limit   = int(kwargs.get('limit', 50))
+        start   = kwargs.get('start', arrow.utcnow().shift(days=-1))
+        end     = kwargs.get('end', arrow.utcnow())
+        orderby = kwargs.get('orderby', None)
 
-        query = 'SELECT * FROM "logger" WHERE time > \'{0}\' and time < \'{1}\''.format(start, end)
-
+        # Build Query
+        query = 'SELECT * FROM "logger" WHERE time >= \'{0}\' and time <= \'{1}\''.format(start, end)
         if cat is not None and cat is not '':
             query += ' AND "category"=\'{0}\''.format(cat)
         
-        query += ' ORDER BY DESC'
+        total_records = len(list(self.get_ifdb().query(query).get_points()))
+        
+        if orderby is not None:
+            query += ' ORDER BY '+orderby
+        else:
+            query += ' ORDER BY time DESC'
 
+        print (query)
         if limit is not None:
             query += ' LIMIT {}'.format(limit)
+        if offset > 0:
+            query += ' OFFSET {}'.format(offset)
         
-        return list(self.get_ifdb().query(query).get_points())
+        results = list(self.get_ifdb().query(query).get_points())
+        
+        num_pages = math.ceil(total_records / max(1, limit))
+        page_num  = min(num_pages, 1 + offset / limit)
+    
+        return dict(
+                total=total_records,
+                page_start=offset,
+                page_end=offset+len(results),
+                num_pages=num_pages,
+                page_num=page_num,
+                results=results
+                )
     
 
     def purge(self, **kwargs):

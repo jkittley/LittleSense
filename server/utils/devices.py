@@ -262,7 +262,12 @@ class Device():
         for rf in requested_fields:
             field_id = rf.get('field_id', None)
             agrfunc  = rf.get('agrfunc', None)
-            field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
+            
+            if len(fields_data) > 0:
+                field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
+            else:
+                log.error('_fields_to_query unknown field?', **rf)
+                continue
    
             if field_id is None:
                 log.error('_fields_to_query missing field_id', **rf)

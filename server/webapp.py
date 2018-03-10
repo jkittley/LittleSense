@@ -13,7 +13,7 @@ from utils import Device, Devices, DeviceRegister, Logger, BackupManager
 from utils.influx import INFLUX_MESSUREMENTS
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField
+from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField, IntegerField
 from wtforms.validators import DataRequired, EqualTo
 
 app = Flask(__name__)
@@ -137,7 +137,9 @@ def sysadmin_logs():
             cat=form.cat.data, 
             start=form.start.data,
             end=form.end.data,
-            limit=form.limit.data
+            limit=form.limit.data,
+            offset=form.offset.data,
+            orderby=form.orderby.data
         )
     except:
         logdata = []
@@ -323,12 +325,17 @@ class LogFilterForm(FlaskForm):
     start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
     end = DateTimeField('End', default=arrow.utcnow(), validators=[])
     cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default='')
-    limit = SelectField('Limit', choices=[
+    limit = SelectField('Per&nbsp;Page', choices=[
         ('50', 50),
         ('250', 250),
         ('500', 500),
         ('1000', 1000)
-    ], default=500)
+    ], default=50)
+    offset = HiddenField('Offset', default=0)
+    orderby = SelectField('Order&nbsp;By', choices=[
+        ('time ASC', 'Time (New to Old)'),
+        ('time DESC', 'Time (Old to New)'),
+    ], default='time DESC')
 
 class BackupForm(FlaskForm):
     start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
