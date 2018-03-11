@@ -25,14 +25,11 @@ log = Logger()
 
 # Settings
 app.config.from_object(settings)
-#  Setup the Web API manager
-from commlink import WebAPI
-webapi = WebAPI(app.config.get('IFDB'))
 # Device managment
 devices = Devices()
 
 # ------------------------------------------------------------
-# Pages
+# Dashboard
 # ------------------------------------------------------------
 
 @app.route("/<string:dash_selected>")
@@ -50,6 +47,8 @@ def home(dash_selected=None):
             dash['title'] = str(p.stem).capitalize().replace('_',' ')
     return render_template('dashboard/index.html', dash=dash, dashes=dashes)
 
+# ------------------------------------------------------------
+# System Admin
 # ------------------------------------------------------------
 
 # System Admin - Index
@@ -189,31 +188,13 @@ def sysadmin_backup_upload(filename):
     flash('Not implemented yet', 'warning')
     return redirect(url_for('sysadmin_backup'))
 
-
 @app.route("/sys/backup/download/<string:filename>")
 def sysadmin_backup_download(filename):
     return send_from_directory(directory=app.config.get('BACKUP')['folder'], filename=filename+".csv")
    
-# @app.route("/sys/backup/to/remote/<string:filename>")
-# def sysadmin_backup_remote(filename):
-#     success, message = Backup().sftp(filename)
-#     flash(message), 'success' if success else 'danger')
-#     return redirect('sysadmin_backup')
-    
-
 # ------------------------------------------------------------
 # Web API
 # ------------------------------------------------------------
-
-# WebAPI - put
-@app.route("/api/put", methods=['GET', 'POST'])
-def api_put():
-    return webapi.rx(request.values)['json_response']
-
-# WebAPI - devices get
-@app.route("/api/devices/get")
-def api_get_devices():
-    return json.dumps(devices.as_dict())
 
 # WebAPI - readings get
 @app.route("/api/readings/get", methods=['POST'])
@@ -328,7 +309,6 @@ class BackupForm(FlaskForm):
     end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
     messurement = SelectField('Dataset',choices=INFLUX_MESSUREMENTS, default=INFLUX_MESSUREMENTS[0][0])
     
-
 # ------------------------------------------------------------
 # Other
 # ------------------------------------------------------------
