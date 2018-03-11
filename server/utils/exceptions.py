@@ -1,8 +1,9 @@
 
+class UnknownDevice(KeyError):
+    """Raised when an unknown device id is used"""
 
 class IllformedFieldName(SyntaxError):
     """Thrown when a field name is not correctly formed"""
-     
 
 class UnknownFieldName(LookupError):
     """Thrown when a field name is not know to be assosiated with a device"""
