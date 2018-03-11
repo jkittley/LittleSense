@@ -37,7 +37,7 @@
     </tbody>
 </table>
 
-{% if recent_errors %}
+{% if recent_errors.results %}
 
 <div class="card ">
   <div class="card-header bg-warning ">Recent Errors</div>
@@ -50,7 +50,7 @@
         </tr>
       </thead>
       <tbody>
-          {% for error in recent_errors %}
+          {% for error in recent_errors.results %}
           <tr>
               <td>{{ error.time }}</td>
               <td>{{ error.message }}</td>
