@@ -1,12 +1,12 @@
 # Sensor Store - Server
 The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi over a local network. We have done our best to document and comment as much as we can. However if you spot anything missing then please let us know, or even better submit a pull request. Each of the subdirectories has a readme file with more information.
 
-- [Commlinks](commlink/) Code ralting to communication with channels e.g. Radios.
+- [Commlinks](commlink/) Code relating to communication with channels e.g. Radios. This is where you can add new communication and radio types.
 - [Config](config/) All settings for the project.
 - [Database](databases) Database and data.
 - [Requirements](requirements/) Python environment requirements.
 - [Static](static/) Libraries and images used by the HTML.
-- [Templates](templates/) All HTML templates for the web interface. This is where you can create new visualisations.
+- [Templates](templates/) All the HTML templates for the web interface. This is where you can create new visualisations.
 - [Utils](utils/) Utility and helper functions through the code.
 
 ## Setup
