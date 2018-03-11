@@ -173,7 +173,7 @@ class Device():
     
     def _field_id_components(self, field_id):
         parts = field_id.split('_')
-        if parts < 3:
+        if len(parts) < 3:
             raise IllformedFieldName('Too few elements')
         dtype = parts[0]
         name = " ".join(parts[1:-1]).capitalize()
