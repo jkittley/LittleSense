@@ -6,6 +6,7 @@ The code in this folder can be run locally on your machine for testing and deplo
 - [Database](databases) Database and data.
 - [Requirements](requirements/) Python environment requirements.
 - [Static](static/) Libraries and images used by the HTML.
+- [Templates](templates/) All HTML templates for the web interface. This is where you can create new visualisations.
 - [Utils](utils/) Utility and helper functions through the code.
 
 ## Setup
