@@ -130,12 +130,12 @@
         <text x="387.476px" y="130.979px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:12px;">W<tspan x="398.585px 405.259px " y="130.979px 130.979px ">eb</tspan> Server &amp; Radio Receiver</text>
     </g>
     <g transform="matrix(1.07857,0,0,1,-23.5714,0)">
-        <path d="M160,80L300,120" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
+        <path d="M160,80L300,120" style="fill:none;stroke:rgb(0,107,210);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
     </g>
     <g transform="matrix(1,0,0,1,-9,1)">
-        <path d="M359,94L359,74" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
+        <path d="M359,94L359,74" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;"/>
     </g>
-    <path d="M300,140L120,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
+    <path d="M300,140L120,140" style="fill:none;stroke:rgb(0,107,210);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
     <g transform="matrix(-2.41709e-05,-0.0443513,0.0443513,-2.41709e-05,443.911,124.018)">
         <g transform="matrix(1,0,0,1,-256,-256)">
             <g>
@@ -148,7 +148,7 @@
         </g>
     </g>
     <g transform="matrix(1.07857,0,0,1,-23.5714,0)">
-        <path d="M300,160L160,200" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
+        <path d="M300,160L160,200" style="fill:none;stroke:rgb(0,107,210);stroke-width:2.4px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:4.81,7.21,0,0;"/>
     </g>
     <path d="M400,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
     <g transform="matrix(1,0,0,1,360.149,-23.2697)">
@@ -168,4 +168,22 @@
         </g>
     </g>
     <path d="M399,140L480,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:2.5px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:5,7.5,0,0;"/>
+    <g transform="matrix(0.258328,0,0,1,358.721,-103.404)">
+        <path d="M399,140L480,140" style="fill:none;stroke:rgb(0,107,210);stroke-width:3.42px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:6.85,10.27,0,0;"/>
+    </g>
+    <g transform="matrix(0.258328,0,0,1,358.721,-117.877)">
+        <path d="M399,140L480,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:3.42px;stroke-linejoin:round;stroke-miterlimit:1.5;stroke-dasharray:6.85,10.27,0,0;"/>
+    </g>
+    <g transform="matrix(1,0,0,1,350.877,13.1224)">
+        <text x="135.636px" y="26.544px" style="font-family:'Arial-BoldItalicMT', 'Arial', sans-serif;font-weight:700;font-style:italic;font-size:9px;">Radio Channels / WiFi</text>
+    </g>
+    <g transform="matrix(0.215319,0,0,1,375.882,-88.9299)">
+        <path d="M399,140L480,140" style="fill:none;stroke:rgb(137,137,137);stroke-width:3.46px;stroke-linejoin:round;stroke-miterlimit:1.5;"/>
+    </g>
+    <g transform="matrix(1,0,0,1,350.877,27.352)">
+        <text x="135.636px" y="26.544px" style="font-family:'Arial-BoldItalicMT', 'Arial', sans-serif;font-weight:700;font-style:italic;font-size:9px;">Internal connection</text>
+    </g>
+    <g transform="matrix(1,0,0,1,307.174,-26.8254)">
+        <text x="178.68px" y="52.266px" style="font-family:'Arial-BoldItalicMT', 'Arial', sans-serif;font-weight:700;font-style:italic;font-size:9px;">WiFi / Local Network</text>
+    </g>
 </svg>
