@@ -4,7 +4,7 @@ from config import settings
 from .device_register import DeviceRegister
 from .logger import Logger
 from .influx import get_InfluxDB
-from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName
+from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice
 import arrow
 
 log = Logger()
@@ -138,8 +138,9 @@ class Device():
         self.id = device_id
         self._ifdb = get_InfluxDB()
         self._dev_reg = DeviceRegister()
+        if self._dev_reg.get_record(device_id=self.id) is None:
+            raise UnknownDevice("Unknown device {}".format(device_id))
 
-        
     def get_name(self):
         registration_record = self._dev_reg.get_record(device_id=self.id)
         return registration_record['name']
