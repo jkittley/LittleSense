@@ -4,6 +4,7 @@ from config import settings
 from .device_register import DeviceRegister
 from .logger import Logger
 from .influx import get_InfluxDB
+from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName
 import arrow
 
 log = Logger()
@@ -171,6 +172,8 @@ class Device():
     
     def _field_id_components(self, field_id):
         parts = field_id.split('_')
+        if parts < 3:
+            raise IllformedFieldName('Too few elements')
         dtype = parts[0]
         name = " ".join(parts[1:-1]).capitalize()
         unit = parts[-1]
@@ -214,16 +217,32 @@ class Device():
                 elif dtype == 'precent':
                     fields[field_name] = min(100, max(0, int(value)))
                 else:
-                    raise Exception('Invalid data type for {}'.format(field_name))
+                    raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
+
             except Exception as e:
                 log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
                 remove_list.append(field_name)
+
         # Remove bad fields
         for fn in remove_list:
             fields.pop(fn) 
         return fields
 
+    def clean_utc_str(self, utc_str):
+        if utc_str is None or utc_str == '':
+            raise InvalidUTCTimestamp('Invlaid timestamp - Missing')
+        else:
+            try:
+                utc = arrow.get(utc_str)
+                return utc.format()
+            except ValueError:
+                raise InvalidUTCTimestamp('Invlaid UTC timestamp: {}'.format(utc))
+        
+
     def add_reading(self, utc, fields, commlink_name):
+        # Clean and validate incoming data
+        utc_str = self.clean_utc_str(utc)
+        fields  = self.clean_fields(fields, self.id)
         # If device has not been seen before then add to register as unregistered
         if not self.is_registered():
             self._dev_reg.add_as_unregistered(self.id)
@@ -236,8 +255,8 @@ class Device():
                 "device_id": self.id,
                 "commlink": commlink_name
             },
-            "time": utc.strftime("%c"),
-            "fields": self.clean_fields(fields, self.id)
+            "time": utc_str,
+            "fields": fields
         }
         # Save Reading
         self._ifdb.write_points([reading])
