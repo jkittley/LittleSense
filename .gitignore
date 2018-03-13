@@ -6,3 +6,4 @@ server/databases/*.json
 server/databases/tinydb/*.json
 server/databases/*.db
 backups/
+docs/build/
