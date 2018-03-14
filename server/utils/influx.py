@@ -22,3 +22,6 @@ def get_InfluxDB():
     except RequestException as e:
         print(e)
         return None
+
+def is_connected():
+    return True if get_InfluxDB() is not None else False

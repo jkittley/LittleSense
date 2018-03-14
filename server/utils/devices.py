@@ -1,32 +1,57 @@
 from collections import namedtuple
 from tinydb import TinyDB, Query
 from config import settings
-from .device_register import DeviceRegister
 from .logger import Logger
 from .influx import get_InfluxDB
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice
+from tinydb import TinyDB, Query
 import arrow
 
 log = Logger()
 
 
-
-    
-
 class Devices():
     
     def __init__(self):
-        self._ifdb = None
-        self._all = []
-        self._registered = []
-        self._unregistered = []
+        self.all = []
+        self.registered = []
+        self.unregistered = []
         self._ifdb = get_InfluxDB()
-        if self._ifdb is not None:
-            self.update()
-    
-    def has_db_connection(self):
-        self._ifdb = get_InfluxDB()
-        return self._ifdb is not None 
+        self.update()
+       
+    def update(self):
+        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
+        self.all = [ self.get_or_create(d['value'])[0] for d in devices_in_readings ]
+        self.registered = list(filter(lambda x: x.is_registered, self.all))
+        self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
+
+    def get(self, device_id):
+        for x in self.all:
+            if x.id == device_id:
+                return x
+        return None
+
+    def get_or_create(self, device_id):
+        device = self.get(device_id)
+        if device is not None:
+            return device, False
+        else:
+            device = Device(device_id)
+            return device, True
+
+    # def items(self, update=False):
+    #     if update:
+    #         self.update()
+    #     return self.all
+
+    def __len__(self):
+        return len(self.all)
+
+    def __getitem__(self, index):
+        return self.all[index]
+
+    def __iter__(self):
+        return (d for d in self.all)
 
     def stats(self):
         if self._ifdb is None:
@@ -60,11 +85,11 @@ class Devices():
         end = kwargs.get('end', default_end)
 
         if registered and unregistered:
-            to_process = self.get_all()
+            to_process = self.all
         elif registered:
-            to_process = self.get_registered()
+            to_process = self.registered
         elif unregistered:
-            to_process = self.get_unregistered()
+            to_process = self.unregistered
         else:
             return False
 
@@ -75,37 +100,12 @@ class Devices():
                 end=end
             )
             log.funcexec('Purged', registered=registered, unregistered=unregistered)
-            # print(q)
-            o = self._ifdb.query(q)
-            # print(o)
-        
+            self._ifdb.query(q)
+
         return True
 
-    def get_all(self, update=False):
-        if update:
-            self.update()
-        return self._all
-
-    def get_device(self, device_id):
-        for x in self._all:
-            if x.id == device_id:
-                return x
-        return None
-
-    def get_registered(self, update=False):
-        if update:
-            self.update()
-        return self._registered 
-
-    def get_unregistered(self, update=False):
-        if update:
-            self.update()
-        return self._unregistered 
-
-    def set_unregistered(self, device_id):
-        d = self.get_device(device_id)
-        d.unregister()
-
+   
+ 
     def to_dict(self, devs):
         return [ d.as_dict() for d in devs ]
 
@@ -113,82 +113,63 @@ class Devices():
         if update:
             self.update()
         return {
-            "all": self.to_dict(self._all),
-            "registered": self.to_dict(self._registered),
-            "unregistered": self.to_dict(self._unregistered)
+            "all": self.to_dict(self.all),
+            "registered": self.to_dict(self.registered),
+            "unregistered": self.to_dict(self.unregistered)
         }
 
-    def update(self):
-        if self._ifdb is None:
-            return
-        devices = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
-        self._all=[ Device(device_id=d['value']) for d in devices ]
-        self._registered=list(filter(lambda x: x.is_registered(), self._all))
-        self._unregistered= list(filter(lambda x: not x.is_registered(), self._all))
-        
+
     def __str__(self):
         return "Devices"
 
    
+
+
+
 #  ----------------------------------------------------------------------------
+#  ----------------------------------------------------------------------------
+#  ----------------------------------------------------------------------------
+
 
 class Device():
 
-    def __init__(self, device_id):
-        self.id = device_id
+    def __init__(self, device_id, create_if_unknown=False):
+        self._tydb = TinyDB(settings.TINYDB['db_device_reg'])
         self._ifdb = get_InfluxDB()
-        self._dev_reg = DeviceRegister()
-        if self._dev_reg.get_record(device_id=self.id) is None:
-            raise UnknownDevice("Unknown device {}".format(device_id))
+        self.id = device_id
+        self.load(create_if_unknown)
 
-    def get_name(self):
-        registration_record = self._dev_reg.get_record(device_id=self.id)
-        return registration_record['name']
+    def _create(self):
+        data = {
+            'device_id': self.id, 
+            'name': "Unregistered",
+            "registered": False
+        }
+        self._tydb.upsert(data, Query().device_id == self.id)
 
-    def last_update(self):
-        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
+    def load(self, create_if_unknown=False):
         try:
-            last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
+            record = self._tydb.search(Query().device_id == self.id)[0]
         except IndexError:
-            last_upd = None
-        last_upd_keys = []
-        if last_upd is not None:
-            for k, v in last_upd.items():
-                if v is not None:
-                    last_upd_keys.append(k)
-        return last_upd, last_upd_keys
-        
-    def register(self, **kwargs):
-        self._dev_reg.register_device(self.id, kwargs.get('name', None))
-        
-    def unregister(self, **kwargs):
-        self._dev_reg.unregister_device(self.id)
-        
-    def is_registered(self):
-        registration_record = self._dev_reg.get_record(device_id=self.id)
-        if registration_record is not None:
-            if 'registered' in registration_record.keys():
-                return registration_record['registered']
-        return False
-    
-    def _field_id_components(self, field_id):
-        parts = field_id.split('_')
-        if len(parts) < 3:
-            raise IllformedFieldName('Too few elements')
-        dtype = parts[0]
-        name = " ".join(parts[1:-1]).capitalize()
-        unit = parts[-1]
-        return dtype, name, unit
+            if create_if_unknown:
+                self._create()
+                record = self._tydb.search(Query().device_id == self.id)[0]
+            else:
+                raise UnknownDevice("Unknown device", self.id)
 
-    def field_ids(self, **kwargs):
-        return self._dev_reg.get_seen_fields(self.id)
+        self.name = record['name']
+        self._registered = record['registered']
+
+        self._seen_field_ids = []
+        if 'fields' in record:
+            self._seen_field_ids = record['fields']
 
     def fields(self, **kwargs):
+        self.load()
         out = []
-        requested_field_ids = kwargs.get('only', None)
-     
-        for field_id in self.field_ids():
-            if requested_field_ids is not None and field_id not in requested_field_ids:
+        only_ids = kwargs.get('only', None)
+        for field_id in self._seen_field_ids:
+            if only_ids is not None and field_id not in only_ids:
                 continue
             dtype, name, unit = self._field_id_components(field_id)
             out.append({
@@ -202,53 +183,31 @@ class Device():
             }) 
         return out
 
-    def clean_fields(self, fields, device_id=None):
-        if fields is None:
-            log.device('Clean fields exception', exception="No fields")
-        remove_list = []
-        for field_name, value in fields.items():
-            try:
-                dtype, _, _ = self._field_id_components(field_name)
-                if dtype == 'float' or dtype == 'int':
-                    fields[field_name] = float(value)
-                elif dtype == 'bool':
-                    fields[field_name] = bool(value)
-                elif dtype == 'string' or dtype == 'str':
-                    fields[field_name] = str(value)
-                elif dtype == 'precent':
-                    fields[field_name] = min(100, max(0, int(value)))
-                else:
-                    raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
+    def is_registered(self, setto=None):
+        if setto is not None: 
+            assert type(setto) == bool
+            data = {
+                'device_id': self.id, 
+                "registered": setto
+            }
+            self._tydb.upsert(data, Query().device_id == self.id)
+            self.load()
+        return self._registered
 
-            except Exception as e:
-                log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
-                remove_list.append(field_name)
-
-        # Remove bad fields
-        for fn in remove_list:
-            fields.pop(fn) 
-        return fields
-
-    def clean_utc_str(self, utc_str):
-        if utc_str is None or utc_str == '':
-            raise InvalidUTCTimestamp('Invlaid timestamp - Missing')
-        else:
-            try:
-                utc = arrow.get(utc_str)
-                return utc.format()
-            except ValueError:
-                raise InvalidUTCTimestamp('Invlaid UTC timestamp: {}'.format(utc))
+    def set_name(self, name):
+        data = {
+            'device_id': self.id, 
+            "name": str(name).strip()
+        }
+        self._tydb.upsert(data, Query().device_id == self.id)
+        self.load()
         
-
     def add_reading(self, utc, fields, commlink_name):
         # Clean and validate incoming data
-        utc_str = self.clean_utc_str(utc)
-        fields  = self.clean_fields(fields, self.id)
-        # If device has not been seen before then add to register as unregistered
-        if not self.is_registered():
-            self._dev_reg.add_as_unregistered(self.id)
+        utc_str = self._clean_utc_str(utc)
+        fields  = self._clean_fields(fields, self.id)
         # Add seen fields to device register
-        self._dev_reg.add_seen_fields(self.id, list(fields.keys()))
+        self._add_fields(list(fields.keys()))
         # Create reading
         reading = {
             "measurement": "reading",
@@ -263,76 +222,18 @@ class Device():
         self._ifdb.write_points([reading])
         return True
 
-    @staticmethod
-    def _clean_interval(interval):
+    def last_reading(self):
+        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
         try:
-            interval = int(interval)
-            if interval < 1:
-                raise ValueError()
-            return interval
-        except ValueError:
-            return None
-
-    
-    def _fields_to_query(self, requested_fields):
-        fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
-        fields_out = {}
-
-        qfields = ""
-        for rf in requested_fields:
-            field_id = rf.get('field_id', None)
-            agrfunc  = rf.get('agrfunc', None)
-            
-            if len(fields_data) > 0:
-                field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
-            else:
-                log.error('_fields_to_query unknown field?', **rf)
-                continue
-   
-            if field_id is None:
-                log.error('_fields_to_query missing field_id', **rf)
-                continue
-            if field_data['is_numeric']:
-                if agrfunc is None:
-                    agrfunc = "mean"
-                if agrfunc in ['count', 'mean', 'mode', 'median', 'sum', 'max', 'min', 'first', 'last']:
-                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
-                else:
-                    log.debug('_fields_to_query invalid agrfunc', **rf)
-                    continue
-            elif field_data['is_boolean']:
-                if agrfunc is None:
-                    agrfunc = "count"
-                if agrfunc in ['count', 'first', 'last', 'max', 'min']:
-                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
-                else:
-                    log.debug('_fields_to_query invalid agrfunc', **rf)
-                    continue
-            elif field_data['is_string']:
-                log.debug('_fields_to_query dtype string not yet implemented', **rf)
-                continue
-            else:
-                log.error('_fields_to_query unknown dtype', **rf)
-                continue
-
-            # Make new_fields data with correct names
-            new_field_id = '{did}__{agrfunc}__{fid}'.format(fid=field_id, agrfunc=agrfunc, did=self.id)
-            fields_out[new_field_id] = field_data
-            fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.get_name())
-            
-            # Ref provides a trace from requested device-&-field-&-agrfunc right through the system
-            fields_out[new_field_id]['ref'] = rf.get('ref', None)
-
-        return qfields[:-2], fields_out
-        
-    @staticmethod
-    def _clean_limit(limit, min_results, max_results):
-        if limit is None:
-            return max_results
-        try:
-            return max(min(int(limit), max_results), min_results)
-        except (ValueError, TypeError):
-            return None
+            last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
+        except IndexError:
+            last_upd = None
+        last_upd_keys = []
+        if last_upd is not None:
+            for k, v in last_upd.items():
+                if v is not None:
+                    last_upd_keys.append(k)
+        return last_upd, last_upd_keys
 
     def get_readings(self, **kwargs):
         # Fill gabs in period none=dont fill, null=fill intervals with null readings
@@ -391,6 +292,132 @@ class Device():
             'readings': by_time, 
             'timestamps': timestamps
         }
+        
+
+    # ---- Helpers ------------------------------------------------------------
+
+    def _add_fields(self, field_ids_list):
+        self.load()
+        seen = self._seen_field_ids
+        seen = list(set(seen + field_ids_list))
+        self._tydb.update({ 'fields': seen }, Query().device_id == self.id)
+        self.load()
+
+    def _field_id_components(self, field_id):
+        parts = field_id.split('_')
+        if len(parts) < 3:
+            raise IllformedFieldName('Too few elements')
+        dtype = parts[0]
+        name = " ".join(parts[1:-1]).capitalize()
+        unit = parts[-1]
+        return dtype, name, unit
+
+    def _clean_fields(self, fields, device_id=None):
+        if fields is None:
+            log.device('Clean fields exception', exception="No fields")
+        remove_list = []
+        for field_name, value in fields.items():
+            try:
+                dtype, _, _ = self._field_id_components(field_name)
+                if dtype == 'float' or dtype == 'int':
+                    fields[field_name] = float(value)
+                elif dtype == 'bool':
+                    fields[field_name] = bool(value)
+                elif dtype == 'string' or dtype == 'str':
+                    fields[field_name] = str(value)
+                elif dtype == 'precent':
+                    fields[field_name] = min(100, max(0, int(value)))
+                else:
+                    raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
+
+            except Exception as e:
+                log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
+                remove_list.append(field_name)
+
+        # Remove bad fields
+        for fn in remove_list:
+            fields.pop(fn) 
+        return fields
+
+    def _clean_utc_str(self, utc_str):
+        if utc_str is None or utc_str == '':
+            raise InvalidUTCTimestamp('Invlaid timestamp - Missing')
+        else:
+            try:
+                utc = arrow.get(utc_str)
+                return utc.format()
+            except ValueError:
+                raise InvalidUTCTimestamp('Invlaid UTC timestamp: {}'.format(utc))
+    
+    @staticmethod
+    def _clean_interval(interval):
+        try:
+            interval = int(interval)
+            if interval < 1:
+                raise ValueError()
+            return interval
+        except ValueError:
+            return None
+    
+    def _fields_to_query(self, requested_fields):
+        fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
+        fields_out = {}
+
+        qfields = ""
+        for rf in requested_fields:
+            field_id = rf.get('field_id', None)
+            agrfunc  = rf.get('agrfunc', None)
+            
+            if len(fields_data) > 0:
+                field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
+            else:
+                log.error('_fields_to_query unknown field?', **rf)
+                continue
+   
+            if field_id is None:
+                log.error('_fields_to_query missing field_id', **rf)
+                continue
+            if field_data['is_numeric']:
+                if agrfunc is None:
+                    agrfunc = "mean"
+                if agrfunc in ['count', 'mean', 'mode', 'median', 'sum', 'max', 'min', 'first', 'last']:
+                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+                else:
+                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    continue
+            elif field_data['is_boolean']:
+                if agrfunc is None:
+                    agrfunc = "count"
+                if agrfunc in ['count', 'first', 'last', 'max', 'min']:
+                    qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+                else:
+                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    continue
+            elif field_data['is_string']:
+                log.debug('_fields_to_query dtype string not yet implemented', **rf)
+                continue
+            else:
+                log.error('_fields_to_query unknown dtype', **rf)
+                continue
+
+            # Make new_fields data with correct names
+            new_field_id = '{did}__{agrfunc}__{fid}'.format(fid=field_id, agrfunc=agrfunc, did=self.id)
+            fields_out[new_field_id] = field_data
+            fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.name)
+            
+            # Ref provides a trace from requested device-&-field-&-agrfunc right through the system
+            fields_out[new_field_id]['ref'] = rf.get('ref', None)
+
+        return qfields[:-2], fields_out
+        
+    @staticmethod
+    def _clean_limit(limit, min_results, max_results):
+        if limit is None:
+            return max_results
+        try:
+            return max(min(int(limit), max_results), min_results)
+        except (ValueError, TypeError):
+            return None
 
     def __eq__(self, other):
         return self.id == other.id

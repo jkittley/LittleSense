@@ -5,6 +5,7 @@
 import json
 from tinydb import TinyDB, Query
 from utils import Device
+from utils.exceptions import UnknownDevice
 
 class InvaidPacketFormatter(Exception):
     pass
@@ -31,8 +32,11 @@ class CommLink:
 
 
     def _save_reading(self, utc, device_id, sensor_readings):
-        dev = Device(device_id=device_id)
+        dev = Device(device_id, True)
         return dev.add_reading(utc, sensor_readings, self.commlink_name)
+   
+
+       
 
     
     def _ping(self):

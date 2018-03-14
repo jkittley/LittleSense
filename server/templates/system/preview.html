@@ -47,7 +47,7 @@
                 end: moment().utc().format(),
                 fill: "null",
                 interval: 3,
-                device_id: '{{ device_id }}'
+                device_id: '{{ device.id }}'
             },
             success: callback_success,
             error: callback_error
@@ -86,7 +86,7 @@
 {% endblock %}
 
 
-{% block title %}Device - Data Preview{% endblock %}
+{% block title %}{{ device.name }} ({{ device.id }}) - Data Preview {% endblock %}
 
 {% block menu %}
 {% with active = 'devices' %}
@@ -102,7 +102,7 @@
         <a href="{{ url_for('sysadmin_devices') }}" class="btn btn-block btn-info">Back</a>
     </div>
     <div id="option-config" class="col">
-        <a href="{{ url_for('device_register_config', device_id=device_id) }}" class="btn btn-block btn-success">Configure / Register</a>
+        <a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
     </div>
 </div>
 {% endblock%}

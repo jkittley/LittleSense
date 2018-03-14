@@ -1,0 +1,67 @@
+{
+    "header": null,
+    "footer": null,
+    "plots": [
+        {
+            "id": 1,
+            "pos": 1,
+            "title": "Plot 1",
+            "width": 6,
+            "help": "Some help text for the viewer",
+            "metrics": [{
+                "name": "Device 10: Mean Temp (C)",
+                "field_id": "float_temp_c",
+                "device_id": "test_device_10",
+                "agrfunc": "mean"             
+            },{
+                "name": "Device 4: Max Light Level (Lux)",
+                "field_id": "int_light_level_lux",
+                "device_id": "test_device_4",
+                "agrfunc": "max"
+            }],
+            "time": {
+                "start": "2018-03-09 12:30",
+                "end": "2018-03-09 14:30",
+                "reading_interval_seconds": 600,
+                "period": {
+                    "days": 0,
+                    "hours": 0,
+                    "minutes": 5
+                }
+            },
+            "type": "timeseries",
+            "refresh_interval_seconds": 5
+        }
+        ,{
+            "id": 45,
+            "pos": 2,
+            "width": 6,
+            "title": "Plot 2",
+            "help": "",
+            "metrics": [{
+                "name": "Device 10: Temp (C)",
+                "field_id": "float_temp_c",
+                "device_id": "test_device_10",
+                "agrfunc": "mean"
+            },{
+                "name": "Device 10: Light Level (Lux)",
+                "field_id": "int_light_level_lux",
+                "device_id": "test_device_4",
+                "agrfunc": "max"
+            }],
+            "time": {
+                "start": null,
+                "end": null,
+                "reading_interval_seconds": 60,
+                "period": {
+                    "days": 0,
+                    "hours": 0,
+                    "minutes": 15
+                }
+            },
+            "type": "timeseries",
+            "config": {},
+            "refresh_interval_seconds": 5
+        }
+        ]
+}

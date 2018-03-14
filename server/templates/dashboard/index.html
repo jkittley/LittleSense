@@ -39,7 +39,7 @@
     </a>
     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
         {% for d in dashes %}
-        <a class="dropdown-item" href="{{ url_for('home', dash_selected=d.1) }}"><i class="{{ 'fas' if d.0 == dash.title else 'far' }} fa-circle" data-fa-transform="shrink-4"></i> {{ d.0 }}</a>
+        <a class="dropdown-item" href="{{ url_for('home', dash_selected=d.slug) }}"><i class="{{ 'fas' if d.title == dash.title else 'far' }} fa-circle" data-fa-transform="shrink-4"></i> {{ d.title }}</a>
         {% endfor %}
     </div>
     {% else %}
