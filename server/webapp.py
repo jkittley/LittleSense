@@ -112,11 +112,12 @@ def sysadmin_db():
     if purge_form.validate_on_submit():
         # Purge
 
-        if purge_form.reged.data or purge_form.unreg.data:
+        if purge_form.reged.data or purge_form.unreg.data or purge_form.registry.data:
             success = devices.purge(
                 end=arrow.utcnow(),  
                 unregistered=purge_form.unreg.data,
-                registered=purge_form.reged.data
+                registered=purge_form.reged.data,
+                registry=purge_form.registry.data
             )
             if success:
                 flash('Purged devices data', 'success')
@@ -124,10 +125,9 @@ def sysadmin_db():
                 flash('Failed to purge devices data', 'danger')
 
         if purge_form.logs.data:
-            flash('Log Purge not implemented yet.', 'warning')
+            log.purge()
+            flash('Logs Purged', 'success')
 
-        if purge_form.registry.data:
-            flash('Registry Purge not implemented yet.', 'warning')
     
     # Always clear verify
     purge_form.verify.data = ""
