@@ -81,6 +81,7 @@ def print_success(message):
 # Sub Tasks - OS
 # ----------------------------------------------------------------------------------------
 
+@task
 def add_ssh_key():
     print_title('Adding SSH Key to remote')
     if settings.PUBLIC_SSH_KEY != "":
