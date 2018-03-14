@@ -63,8 +63,8 @@
                         <h1 class="display-3">Welcome!</h1>
                         <p class="lead">All you need to deploy a sesnsor network in minutes. Little Sense is is quick to setup, uses the latest technologies, is easy to customise and utilises off the shelf hardware such as the Raspberry Pi. </p>
                         <hr class="my-4">
-                        <a href="/" class="btn btn-primary btn-lg"><i class="fas fa-book"></i> Documentation</a>
-                        <a href="/" class="btn btn-success btn-lg"><i class="fas fa-code"></i>Get the code</a>
+                        <a href="http://littlesense.readthedocs.org/" class="btn btn-primary btn-lg"><i class="fas fa-book"></i> Documentation</a>
+                        <a href="https://github.com/jkittley/LittleSense" class="btn btn-success btn-lg"><i class="fas fa-code"></i>Get the code</a>
                     </div>
                 </div>
                 <div class="col">
@@ -137,15 +137,24 @@
 
     <div class="container">
         <p class="lead">
-            Little sense is designed specifically for researchers and enthusiasts who want
+            Little<strong>Sense</strong> is designed specifically for researchers and enthusiasts who want
             to develope bespoke sensor network applications. The code in this project is 
             intended as a foundation on which specialise applications can be build. Out of 
-            the box, Little sense provides a local server (Raspberry Pi based), which can 
-            will collect readings collected by Arduino based sensor (example code provided). 
-            Sensors can communicate with little sense over Wifi and via other radios such as 
+            the box, Little<strong>Sense</strong> provides a local server (Raspberry Pi based), which  
+            will collect any data thrown at it from Arduino based sensor (example code provided). 
+            Sensors can communicate with Little<strong>Sense</strong> over Wifi and via other radios such as 
             RFM69. The server also provides a web interface where users can inspect and 
             see visualisations of the collected data. 
         </p>
+
+        <img src="static/architecture.svg" alt="System layout" />
+
+        <p class="lead">
+            Our ambition is to create a platform to facilitate the quick setup and customisation of sensor based systems on local networks. 
+            We are continuously improving the code base and functionality. Feature requests are always welcome, however we don't want the project 
+            to become bloated and confusing, so we may suggest creating a Fork. 
+        </p>
+
     </div>
     <BR><BR>
   </body>
