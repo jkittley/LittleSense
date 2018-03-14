@@ -1,4 +1,4 @@
-# Sensor Store - Server
+# Little Sense - Server
 The code in this folder can be run locally on your machine for testing and deployed to a Raspberry Pi over a local network. We have done our best to document and comment as much as we can. However if you spot anything missing then please let us know, or even better submit a pull request. Each of the subdirectories has a readme file with more information.
 
 - [Commlinks](commlink/) Code relating to communication with channels e.g. Radios. This is where you can add new communication and radio types.

@@ -1,2 +1,2 @@
-# Sensor Store
+# Little Sense
 Docs comming soon
