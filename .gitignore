@@ -2,8 +2,8 @@
 old/
 *.pyc
 server/config/secure.py
-server/databases/*.json
-server/databases/tinydb/*.json
-server/databases/*.db
+server/data/*.json
+server/data/tinydb/*.json
+server/data/*.db
 backups/
 docs/build/
