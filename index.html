@@ -35,71 +35,41 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/4.0.0/lumen/bootstrap.min.css" integrity="sha384-0LGTKb8NPx8fBKaojW3qF+Qo2Yhhs/mBrVHMYjPV8V/o4ZAmZ1cpGI2OeQab16T2" crossorigin="anonymous">   
+    <link rel="stylesheet" href="static/index.css">   
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
-    <style>
-        body {
-            margin-top: 55px;
-        }
-        .bg-main { 
-            background: url("static/bg-foot.svg");
-            background-size: cover;
-            background-position: center bottom;
-            min-height: 600px;
-            margin: 0;
-            padding: 40px;
-        }
-        .jumbotron {
-            background: none;
-            border: none;
-            box-shadow: 0;
-            -webkit-box-shadow: none;
-        }
-        .jumbotron a {
-            font-size: 22px;
-        }
-        .lead {
-            font-size:24px;
-        }
-        .list-group-item {
-            font-size:18px;
-        }
-        .logo {
-            height: 40px;
-        }
-    </style>
+    
 </head>
 
   <body>
-    <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-      <div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
         <a href="/" class="navbar-brand"><img src="static/logo-white.svg" alt="Little Sense" class="logo" /></a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-         
-        </div>
-      </div>
-    </div>
+    </nav>
     <div class="bg-main">
         <div class="container">
+
             <div class="row align-items-center">
-                <div class="col">
+                <div class="col-lg-7">
                     <div class="jumbotron">
                         <h1 class="display-3">Welcome!</h1>
                         <p class="lead">All you need to deploy a sesnsor network in minutes. Little Sense is is quick to setup, uses the latest technologies, is easy to customise and utilises off the shelf hardware such as the Raspberry Pi. </p>
                         <hr class="my-4">
-                        <a href="http://littlesense.readthedocs.org/" class="btn btn-primary btn-lg"><i class="fas fa-book"></i> Documentation</a>
-                        <a href="https://github.com/jkittley/LittleSense" class="btn btn-success btn-lg"><i class="fas fa-code"></i>Get the code</a>
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12 pb-2">
+                                <a href="http://littlesense.readthedocs.org/" class="btn btn-primary btn-block btn-lg"><i class="fas fa-book"></i> Documentation</a>
+                            </div>
+                            <div class="col-md-6 col-sm-12 pb-2">
+                                <a href="https://github.com/jkittley/LittleSense" class="btn btn-success btn-block btn-lg"><i class="fas fa-code"></i> Get the code</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col">
+                <div class="col-lg-5">
                     <img src="static/macbook.png" width="100%" /><br>
                 </div>
             </div>
             
             <div class="row">
-                <div class="col-4">
+                <div class="col-md-4 mb-4">
                     <div class="card">
                         <div class="card-header">Core Technogies</div>
                         <ul class="list-group list-group-flush">
@@ -118,11 +88,11 @@
                         </ul>
                     </div>
                 </div>
-                <div class="col-8">
+                <div class="col-md-8 mb-4">
                     <div class="card">
                         <div class="card-header">Key Features</div>
                         <div class="row">
-                            <div class="col" style="padding-right:2px;">
+                            <div class="col-md-6 pr-md-0">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item">
                                         <i class="fas fa-star"></i> Quick setup and deploy
@@ -138,7 +108,7 @@
                                     </li>
                                 </ul>
                             </div>
-                            <div class="col" style="padding-left:2px;">
+                            <div class="col-md-6 pl-md-0">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item">
                                         <i class="fas fa-star"></i> Minimal configuration

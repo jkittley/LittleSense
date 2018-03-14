@@ -1,0 +1,38 @@
+body {
+    margin-top: 55px;
+}
+.bg-main { 
+    background: url("bg-foot.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    min-height: 600px;
+    margin: 0;
+}
+@media only screen and (max-width: 320px) {
+    .bg-main { 
+        background: none;
+        background-color: #91ddfb;
+    }
+}
+.jumbotron {
+    background: none;
+    border: none;
+    box-shadow: 0;
+    -webkit-box-shadow: none;
+}
+.jumbotron a {
+    font-size: 22px;
+}
+.lead {
+    font-size:24px;
+}
+.list-group-item {
+    font-size:18px;
+}
+.logo {
+    height: 40px;
+}
+.container {
+    min-width: 200px!important;
+}
