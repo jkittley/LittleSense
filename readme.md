@@ -1,4 +1,4 @@
-# Sensor Store
+# Little Sense
 Welcome to Sensor Store! This project is designed to make the deployment of sensor devices and the subsequent logging and inspection of the data they produce simple. Our ambition is not to provide an all-in-one solution, rather we hope to provide a solid foundation on which you can build a bespoke system to suite your needs. 
 
 ![System Overview](docs/img/architecture.svg)

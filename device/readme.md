@@ -1,4 +1,4 @@
-# Sensor Store - Device
+# Little Sense - Device
 This folder contains code for various platforms and communication channels. Each folder contains instructions and the required part to setup a device to send sensor readings to the [server](/server/readme.md).  
 
 Sensor store does it’s best to minimise configuration server side. To help this, all sensor devices should transmit readings where the variable name is constructed as `<dtype>_<variable-name>_<unit>`.
