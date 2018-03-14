@@ -5,6 +5,7 @@ from .logger import Logger
 from .influx import get_InfluxDB
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice
 from tinydb import TinyDB, Query
+from unipath import Path
 import arrow
 
 log = Logger()
@@ -57,6 +58,10 @@ class Devices():
     def purge(self, **kwargs):
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
+        registry     = kwargs.get('registry', False)
+
+        if registry:
+            Path(settings.TINYDB['db_device_reg']).remove()
 
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
@@ -64,23 +69,23 @@ class Devices():
         default_end = arrow.utcnow().shift(minutes=-settings.PURGE['unreg_interval'])
         end = kwargs.get('end', default_end)
 
+        to_process = None
         if registered and unregistered:
             to_process = self.all
         elif registered:
             to_process = self.registered
         elif unregistered:
             to_process = self.unregistered
-        else:
-            return False
-
-        for device in to_process:
-            q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
-                device_id=device.id,
-                start=start,
-                end=end
-            )
-            log.funcexec('Purged', registered=registered, unregistered=unregistered)
-            self._ifdb.query(q)
+       
+        if to_process is not None:
+            for device in to_process:
+                q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                    device_id=device.id,
+                    start=start,
+                    end=end
+                )
+                log.funcexec('Purged', registered=registered, unregistered=unregistered)
+                self._ifdb.query(q)
 
         return True
  
