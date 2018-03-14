@@ -38,6 +38,8 @@ dashes  = DashBoards()
 @app.route("/")
 def home(dash_selected=None):
     dash = None
+    if settings.DEBUG:
+        dashes.update()
     if dash_selected is not None:
         dash = dashes.get(slug=dash_selected)
     elif len(dashes) > 0:
@@ -205,6 +207,7 @@ def sysadmin_backup_download(filename):
 @app.route("/api/readings/get", methods=['POST'])
 def api_get(device_id=None):
     # A metric is a dict(device_id=,field_id,agrfunc=)
+    errors = []
     metrics_str = request.values.get('metrics', None)
     device_id = request.values.get('device_id', None)
 
@@ -239,6 +242,9 @@ def api_get(device_id=None):
                 count_field_readings += len(field_readings.keys())
                 joined_data.setdefault(time, {}).update(field_readings)
                 joined_fields.update(device_results['fields'])
+        else:
+            log.error("get_readings failure", extra=device_results)
+            errors.append(device_results)
 
 
     joined_data_as_list = joined_data.values()
@@ -250,7 +256,8 @@ def api_get(device_id=None):
         "fields": joined_fields,
         "field_ids": list(joined_fields.keys()),
         "timestamps": list(joined_data.keys()),
-        "readings": list(joined_data_as_list)
+        "readings": list(joined_data_as_list),
+        "errors": errors
     }), 200 , {'ContentType':'application/json'} 
 
 
