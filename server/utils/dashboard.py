@@ -10,12 +10,10 @@ class DashBoards():
 
     def get(self, **kwargs):
         seek_slug = kwargs.get('slug', None)
-        
         if seek_slug is not None:
             results = [d for d in self.dashes if d.slug == seek_slug]
             if len(results) > 0:
                 return results[0]
-
         return None
 
     def update(self):
@@ -32,8 +30,6 @@ class DashBoards():
     def __iter__(self):
         return (d for d in self.dashes)
 
-  
-
 
 class Dashboard():
 
@@ -47,7 +43,6 @@ class Dashboard():
         self.slug = p.stem
 
         json_data = json.load(open(self.path.absolute()))
-        # print(json_data)
 
         for key, value in json_data.items():
             setattr(self, key, value)
