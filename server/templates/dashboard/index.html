@@ -27,6 +27,69 @@
     $(document).ready(function() { 
         $('[data-toggle="popover"]').popover()
     });
+    var api_url = "{{ url_for('api_get') }}";
+
+
+    function calculate_times(init) {
+        if (init==null) {
+            showAlert('No init time provided to calculate_times', 'danger');
+            return null;
+        }
+        start = null;
+        end = null;
+
+        if (init.end == null) {
+            // If there is no end time then set to now
+            end = moment().utc()
+        } else{
+            // If there is an end time then cancel the refresh
+            end = moment(init.end, 'YYYY-MM-DD, h:mm:ss');
+        }
+        if (init.start == null) {
+            if (init.period != undefined) {
+                // If there is no start time then use the period settings
+                start = moment(end).subtract(init.period.days, 'days')
+                                    .subtract(init.period.hours, 'hours')
+                                    .subtract(init.period.minutes, 'minutes')
+            } else {
+                showAlert('No start time or period', 'danger')
+                return null;
+            }
+        } else {
+            start = moment(init.start, 'YYYY-MM-DD, h:mm:ss');
+        }
+
+        if (start === null || end === null) {
+            showAlert('Failed to calculate start and end times', 'danger');
+            return null;
+        }
+        // console.log([start_time.format(), end_time.format()]);
+
+        return {
+            start: start.format(),
+            end: end.format(),
+        }
+    }
+
+    function getData(start, end, fill, interval, metrics, callback_success, callback_error) {
+        var query = {
+            dataType: "json",
+            method: "POST",
+            url: api_url,
+            data: {
+                start: start,
+                end: end,
+                fill: fill,
+                interval: interval,
+                metrics:  JSON.stringify(metrics),
+            },
+            success: callback_success,
+            error: callback_error
+        }
+        console.log(query);
+        $.ajax(query); 
+    }
+
 </script>
 {% endblock %}
 
