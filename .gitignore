@@ -7,3 +7,6 @@ server/data/tinydb/*.json
 server/data/*.db
 backups/
 docs/build/
+docs/make.bat
+docs/Makefile
+*.afdesign
