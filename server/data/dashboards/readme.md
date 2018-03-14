@@ -1,2 +1,2 @@
-# Sensor Store
+# Little Sense
 Dashboards documentation coming soon.
