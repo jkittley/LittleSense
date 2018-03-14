@@ -21,37 +21,17 @@ class Devices():
        
     def update(self):
         devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
-        self.all = [ self.get_or_create(d['value'])[0] for d in devices_in_readings ]
+        self.all = [ self.get(d['value'], True) for d in devices_in_readings ]
         self.registered = list(filter(lambda x: x.is_registered, self.all))
         self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
 
-    def get(self, device_id):
+    def get(self, device_id, create_if_unknown=False):
         for x in self.all:
-            if x.id == device_id:
+            if x.id == str(device_id).strip():
                 return x
+        if create_if_unknown:
+            return Device(device_id, True)
         return None
-
-    def get_or_create(self, device_id):
-        device = self.get(device_id)
-        if device is not None:
-            return device, False
-        else:
-            device = Device(device_id)
-            return device, True
-
-    # def items(self, update=False):
-    #     if update:
-    #         self.update()
-    #     return self.all
-
-    def __len__(self):
-        return len(self.all)
-
-    def __getitem__(self, index):
-        return self.all[index]
-
-    def __iter__(self):
-        return (d for d in self.all)
 
     def stats(self):
         if self._ifdb is None:
@@ -71,7 +51,7 @@ class Devices():
             "total_readings": counts,
             "last_update": last_upd.format('YYYY-MM-DD HH:mm:ss ZZ'),
             "last_update_humanized": humanize,
-            "registered_devices": len(self._registered)
+            "registered_devices": len(self.registered)
         }
 
     def purge(self, **kwargs):
@@ -103,8 +83,6 @@ class Devices():
             self._ifdb.query(q)
 
         return True
-
-   
  
     def to_dict(self, devs):
         return [ d.as_dict() for d in devs ]
@@ -118,13 +96,18 @@ class Devices():
             "unregistered": self.to_dict(self.unregistered)
         }
 
-
     def __str__(self):
-        return "Devices"
+        return "Devices()"
 
+    def __len__(self):
+        return len(self.all)
+
+    def __getitem__(self, index):
+        return self.all[index]
+
+    def __iter__(self):
+        return (d for d in self.all)
    
-
-
 
 #  ----------------------------------------------------------------------------
 #  ----------------------------------------------------------------------------
@@ -159,7 +142,6 @@ class Device():
 
         self.name = record['name']
         self._registered = record['registered']
-
         self._seen_field_ids = []
         if 'fields' in record:
             self._seen_field_ids = record['fields']
@@ -246,11 +228,11 @@ class Device():
 
         # Fieldnames to get - defaults to all
         requested_fields = kwargs.get('fields', None)
-       
+
         # Fields
         qfields, fields_data = self._fields_to_query(requested_fields)
         if len(qfields) == 0:
-            return False, { "error" : "Device has no fields" }
+            return False, { "error" : "Device has no fields", "device_id":self.id }
 
         # Time span
         try:
@@ -274,7 +256,6 @@ class Device():
             fill=fillmode,
             limit="LIMIT {0}".format(limit)
         )
-        # print (q)
         readings = self._ifdb.query(q)
         readings = sorted(list(readings.get_points()), key=lambda k: k['time']) 
     
@@ -360,6 +341,7 @@ class Device():
             return None
     
     def _fields_to_query(self, requested_fields):
+        
         fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
         fields_out = {}
 
@@ -419,8 +401,7 @@ class Device():
         except (ValueError, TypeError):
             return None
 
-    def __eq__(self, other):
-        return self.id == other.id
+    
 
     def as_dict(self):
         last_update, last_upd_keys =  self.last_update()
@@ -431,4 +412,10 @@ class Device():
             "last_update": last_update,
             "last_upd_keys": last_upd_keys
         }
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __str__(self):
+        return "Device({})".format(self.id)
    
