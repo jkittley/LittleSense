@@ -13,7 +13,9 @@ from flask_wtf import FlaskForm
 from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm
 
 from config import settings
-from utils import Device, Devices, DeviceRegister, Logger, BackupManager
+from utils import Device, Devices, Logger, BackupManager, DashBoards
+from utils.influx import is_connected as influx_connected
+from utils.exceptions import UnknownDevice
 
 app = Flask(__name__)
 log = Logger()
@@ -26,6 +28,7 @@ log = Logger()
 app.config.from_object(settings)
 # Device managment
 devices = Devices()
+dashes  = DashBoards()
 
 # ------------------------------------------------------------
 # Dashboard
@@ -34,16 +37,13 @@ devices = Devices()
 @app.route("/<string:dash_selected>")
 @app.route("/")
 def home(dash_selected=None):
-    dashes = [ (str(x.stem).capitalize().replace('_',' '), x.stem) for x in Path(settings.DASHBOARDS_PATH).listdir(pattern="*.json")]
     dash = None
-    if dash_selected is None:
-        dash_selected = dashes[0][1]
-    p = Path(settings.DASHBOARDS_PATH).child(dash_selected+'.json')
-    if p.exists():
-        with open(p.absolute(), "r") as dashfile:
-            print (dashfile)
-            dash = json.load(dashfile)
-            dash['title'] = str(p.stem).capitalize().replace('_',' ')
+    if settings.DEBUG:
+        dashes.update()
+    if dash_selected is not None:
+        dash = dashes.get(slug=dash_selected)
+    elif len(dashes) > 0:
+        dash = dashes[0]        
     return render_template('dashboard/index.html', dash=dash, dashes=dashes)
 
 # ------------------------------------------------------------
@@ -61,41 +61,49 @@ def sysadmin_index():
     )
     return render_template('system/index.html', stats=stats, recent_errors=recent_errors)
 
+# System Admin - Devices
+@app.route("/sys/devices")
+def sysadmin_devices():
+    devices.update()
+    return render_template('system/devices.html')
+
 # Register - preview device
 @app.route("/sys/register/device/<string:device_id>")
 def device_register_preview(device_id):
-    return render_template('system/preview.html', device_id=device_id)
+    device = devices.get(device_id)
+    return render_template('system/preview.html', device=device)
+
 
 # Register - configure device
 @app.route("/sys/configure/device/<string:device_id>", methods=['GET','POST'])
 def device_register_config(device_id):
-    device = devices.get_device(device_id)
-    form = DeviceSettingsForm(device_id=device_id, name=device.get_name()) 
+    device = devices.get(device_id)
+    form = DeviceSettingsForm(device_id=device.id, name=device.name) 
     # Save form data
     if form.is_submitted and form.validate_on_submit():
         # Save to database
-        device.register(name=form.name.data)
+        device.is_registered(True)
+        device.set_name(name=form.name.data)
         # Show done page
         flash('Device registered', 'success')
         return redirect(url_for('sysadmin_devices'))
     # Show config form page 
     return render_template('system/configure.html', device_id=device_id, device=device, form=form)
 
-# System Admin - Index
-@app.route("/sys/devices")
-def sysadmin_devices():
-    devices.update()
-    return render_template('system/devices.html')
 
-# System Admin - Index
+
+
+# System Admin - Unregister
 @app.route("/sys/devices/unregister/<string:device_id>", methods=['POST','GET'])
 def sysadmin_unreg(device_id):
     unreg_form = AreYouSureForm()
     if unreg_form.validate_on_submit():
+        device = devices.get(device_id)
+        device.is_registered(False)
         flash('Device {} unregistered'.format(device_id), 'success')
-        devices.set_unregistered(device_id)
         return redirect(url_for('sysadmin_devices'))
     return render_template('system/unregister.html', device_id=device_id, unreg_form=unreg_form)
+
 
 # System Admin - Database Functions
 @app.route("/sys/admin/db", methods=['GET','POST'])
@@ -104,11 +112,12 @@ def sysadmin_db():
     if purge_form.validate_on_submit():
         # Purge
 
-        if purge_form.reged.data or purge_form.unreg.data:
+        if purge_form.reged.data or purge_form.unreg.data or purge_form.registry.data:
             success = devices.purge(
                 end=arrow.utcnow(),  
                 unregistered=purge_form.unreg.data,
-                registered=purge_form.reged.data
+                registered=purge_form.reged.data,
+                registry=purge_form.registry.data
             )
             if success:
                 flash('Purged devices data', 'success')
@@ -116,10 +125,9 @@ def sysadmin_db():
                 flash('Failed to purge devices data', 'danger')
 
         if purge_form.logs.data:
-            flash('Log Purge not implemented yet.', 'warning')
+            log.purge()
+            flash('Logs Purged', 'success')
 
-        if purge_form.registry.data:
-            flash('Registry Purge not implemented yet.', 'warning')
     
     # Always clear verify
     purge_form.verify.data = ""
@@ -199,6 +207,7 @@ def sysadmin_backup_download(filename):
 @app.route("/api/readings/get", methods=['POST'])
 def api_get(device_id=None):
     # A metric is a dict(device_id=,field_id,agrfunc=)
+    errors = []
     metrics_str = request.values.get('metrics', None)
     device_id = request.values.get('device_id', None)
 
@@ -213,7 +222,11 @@ def api_get(device_id=None):
     joined_fields = {}
     count_field_readings = 0
     for device_id, fields_data in metrics.items():
-        device = Device(device_id)
+        try:
+            device = Device(device_id)
+        except UnknownDevice:
+            return json.dumps({ 'error': 'Unknown device' })
+
         success, device_results = device.get_readings(
             fields   = fields_data,
             fill     = request.values.get('fill', 'none'), 
@@ -229,6 +242,9 @@ def api_get(device_id=None):
                 count_field_readings += len(field_readings.keys())
                 joined_data.setdefault(time, {}).update(field_readings)
                 joined_fields.update(device_results['fields'])
+        else:
+            log.error("get_readings failure", extra=device_results)
+            errors.append(device_results)
 
 
     joined_data_as_list = joined_data.values()
@@ -240,7 +256,8 @@ def api_get(device_id=None):
         "fields": joined_fields,
         "field_ids": list(joined_fields.keys()),
         "timestamps": list(joined_data.keys()),
-        "readings": list(joined_data_as_list)
+        "readings": list(joined_data_as_list),
+        "errors": errors
     }), 200 , {'ContentType':'application/json'} 
 
 
@@ -273,13 +290,13 @@ def get_device_metrics(device_id):
 @app.before_request
 def handle_missing_db_connection():
     log = Logger()
-    if not devices.has_db_connection():
+    if not influx_connected():
         return "<h1>No Device Database Connection</h1>"
 
 @app.context_processor
 def context_basics():
     log.interaction(request.url)
-    return dict(config=app.config, devices=devices.get_all())
+    return dict(config=app.config, devices=devices)
 
 
 if __name__ == '__main__':

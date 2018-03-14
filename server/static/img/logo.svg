@@ -12,13 +12,13 @@
     </g>
     <g transform="matrix(0.435748,0,0,0.435748,444.592,-0.388829)">
         <g transform="matrix(0.842116,0,0,0.750744,-83.2306,-122.504)">
-            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(22,139,186);stroke-width:5.75px;"/>
+            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(132,219,206);stroke-width:5.75px;"/>
         </g>
         <g transform="matrix(0.842116,0,0,0.750744,-68.5286,-122.504)">
-            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(22,139,186);stroke-width:5.75px;"/>
+            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(132,219,206);stroke-width:5.75px;"/>
         </g>
         <g transform="matrix(0.842116,0,0,0.750744,-54.7567,-122.504)">
-            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(22,139,186);stroke-width:5.75px;"/>
+            <path d="M100,200L140,160L140,260L100,300L100,200Z" style="fill:white;stroke:rgb(132,219,206);stroke-width:5.75px;"/>
         </g>
     </g>
 </svg>

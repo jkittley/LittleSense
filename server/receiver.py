@@ -55,7 +55,7 @@ def pack_formatter_test(unformatted):
     if bool(randint(0,1)):
         return utc, "test_device_1", output_dict1
     else:
-        return utc, "test_device_203", output_dict2
+        return utc, "test_device_2", output_dict2
 
 # =============================================================================
 # Main event loop manager

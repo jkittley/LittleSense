@@ -39,9 +39,10 @@ class RadioTest(CommLink):
                 log.debug("Test Radio Packet receieved", **formatted)
                 self._save_reading(utc, device_id, formatted)
                 print('Test packet saved', utc, device_id, formatted)
-            except:
+            except Exception as e:
                 log.error("Test Radio failed to format and save packet")
                 print('Test packet failed to save')
+                print(e)
 
             
 

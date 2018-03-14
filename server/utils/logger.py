@@ -19,13 +19,6 @@ class Logger():
     def stats(self):
         return { "count": self.__len__() }
 
-    def __len__(self):
-        try:
-            counts = next(self.get_ifdb().query('SELECT count(*) FROM "logger"').get_points())
-            return counts['count_message']
-        except:
-            return 0
-
     def _add_to_log(self, cat, message, **data):
         logmsg = {
             "measurement": "logger",
@@ -113,7 +106,7 @@ class Logger():
     def purge(self, **kwargs):
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
-        default_end = arrow.utcnow().shift(minutes=-settings.PURGE['auto_interval'])
+        default_end = arrow.utcnow()
         end = kwargs.get('end', default_end)
         q = 'DELETE FROM "logger" WHERE time > \'{start}\' AND time < \'{end}\''.format(
             start=start,
@@ -124,6 +117,12 @@ class Logger():
         return True
 
 
+    def __len__(self):
+        try:
+            counts = next(self.get_ifdb().query('SELECT count(*) FROM "logger"').get_points())
+            return counts['count_message']
+        except:
+            return 0
+
     def __iter__(self):
-        for x in self.list_records():
-            yield x
+        return (x for x in self.list_records())

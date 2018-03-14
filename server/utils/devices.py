@@ -1,32 +1,38 @@
 from collections import namedtuple
 from tinydb import TinyDB, Query
 from config import settings
-from .device_register import DeviceRegister
 from .logger import Logger
 from .influx import get_InfluxDB
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice
+from tinydb import TinyDB, Query
+from unipath import Path
 import arrow
 
 log = Logger()
 
 
-
-    
-
 class Devices():
     
     def __init__(self):
-        self._ifdb = None
-        self._all = []
-        self._registered = []
-        self._unregistered = []
+        self.all = []
+        self.registered = []
+        self.unregistered = []
         self._ifdb = get_InfluxDB()
-        if self._ifdb is not None:
-            self.update()
-    
-    def has_db_connection(self):
-        self._ifdb = get_InfluxDB()
-        return self._ifdb is not None 
+        self.update()
+       
+    def update(self):
+        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
+        self.all = [ self.get(d['value'], True) for d in devices_in_readings ]
+        self.registered = list(filter(lambda x: x.is_registered, self.all))
+        self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
+
+    def get(self, device_id, create_if_unknown=False):
+        for x in self.all:
+            if x.id == str(device_id).strip():
+                return x
+        if create_if_unknown:
+            return Device(device_id, True)
+        return None
 
     def stats(self):
         if self._ifdb is None:
@@ -46,12 +52,16 @@ class Devices():
             "total_readings": counts,
             "last_update": last_upd.format('YYYY-MM-DD HH:mm:ss ZZ'),
             "last_update_humanized": humanize,
-            "registered_devices": len(self._registered)
+            "registered_devices": len(self.registered)
         }
 
     def purge(self, **kwargs):
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
+        registry     = kwargs.get('registry', False)
+
+        if registry:
+            Path(settings.TINYDB['db_device_reg']).remove()
 
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
@@ -59,53 +69,26 @@ class Devices():
         default_end = arrow.utcnow().shift(minutes=-settings.PURGE['unreg_interval'])
         end = kwargs.get('end', default_end)
 
+        to_process = None
         if registered and unregistered:
-            to_process = self.get_all()
+            to_process = self.all
         elif registered:
-            to_process = self.get_registered()
+            to_process = self.registered
         elif unregistered:
-            to_process = self.get_unregistered()
-        else:
-            return False
+            to_process = self.unregistered
+       
+        if to_process is not None:
+            for device in to_process:
+                q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                    device_id=device.id,
+                    start=start,
+                    end=end
+                )
+                log.funcexec('Purged', registered=registered, unregistered=unregistered)
+                self._ifdb.query(q)
 
-        for device in to_process:
-            q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
-                device_id=device.id,
-                start=start,
-                end=end
-            )
-            log.funcexec('Purged', registered=registered, unregistered=unregistered)
-            # print(q)
-            o = self._ifdb.query(q)
-            # print(o)
-        
         return True
-
-    def get_all(self, update=False):
-        if update:
-            self.update()
-        return self._all
-
-    def get_device(self, device_id):
-        for x in self._all:
-            if x.id == device_id:
-                return x
-        return None
-
-    def get_registered(self, update=False):
-        if update:
-            self.update()
-        return self._registered 
-
-    def get_unregistered(self, update=False):
-        if update:
-            self.update()
-        return self._unregistered 
-
-    def set_unregistered(self, device_id):
-        d = self.get_device(device_id)
-        d.unregister()
-
+ 
     def to_dict(self, devs):
         return [ d.as_dict() for d in devs ]
 
@@ -113,82 +96,67 @@ class Devices():
         if update:
             self.update()
         return {
-            "all": self.to_dict(self._all),
-            "registered": self.to_dict(self._registered),
-            "unregistered": self.to_dict(self._unregistered)
+            "all": self.to_dict(self.all),
+            "registered": self.to_dict(self.registered),
+            "unregistered": self.to_dict(self.unregistered)
         }
 
-    def update(self):
-        if self._ifdb is None:
-            return
-        devices = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
-        self._all=[ Device(device_id=d['value']) for d in devices ]
-        self._registered=list(filter(lambda x: x.is_registered(), self._all))
-        self._unregistered= list(filter(lambda x: not x.is_registered(), self._all))
-        
     def __str__(self):
-        return "Devices"
+        return "Devices()"
 
+    def __len__(self):
+        return len(self.all)
+
+    def __getitem__(self, index):
+        return self.all[index]
+
+    def __iter__(self):
+        return (d for d in self.all)
    
+
 #  ----------------------------------------------------------------------------
+#  ----------------------------------------------------------------------------
+#  ----------------------------------------------------------------------------
+
 
 class Device():
 
-    def __init__(self, device_id):
-        self.id = device_id
+    def __init__(self, device_id, create_if_unknown=False):
+        self._tydb = TinyDB(settings.TINYDB['db_device_reg'])
         self._ifdb = get_InfluxDB()
-        self._dev_reg = DeviceRegister()
-        if self._dev_reg.get_record(device_id=self.id) is None:
-            raise UnknownDevice("Unknown device {}".format(device_id))
+        self.id = device_id
+        self.load(create_if_unknown)
 
-    def get_name(self):
-        registration_record = self._dev_reg.get_record(device_id=self.id)
-        return registration_record['name']
+    def _create(self):
+        data = {
+            'device_id': self.id, 
+            'name': "Unregistered",
+            "registered": False
+        }
+        self._tydb.upsert(data, Query().device_id == self.id)
 
-    def last_update(self):
-        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
+    def load(self, create_if_unknown=False):
         try:
-            last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
+            record = self._tydb.search(Query().device_id == self.id)[0]
         except IndexError:
-            last_upd = None
-        last_upd_keys = []
-        if last_upd is not None:
-            for k, v in last_upd.items():
-                if v is not None:
-                    last_upd_keys.append(k)
-        return last_upd, last_upd_keys
-        
-    def register(self, **kwargs):
-        self._dev_reg.register_device(self.id, kwargs.get('name', None))
-        
-    def unregister(self, **kwargs):
-        self._dev_reg.unregister_device(self.id)
-        
-    def is_registered(self):
-        registration_record = self._dev_reg.get_record(device_id=self.id)
-        if registration_record is not None:
-            if 'registered' in registration_record.keys():
-                return registration_record['registered']
-        return False
-    
-    def _field_id_components(self, field_id):
-        parts = field_id.split('_')
-        if len(parts) < 3:
-            raise IllformedFieldName('Too few elements')
-        dtype = parts[0]
-        name = " ".join(parts[1:-1]).capitalize()
-        unit = parts[-1]
-        return dtype, name, unit
+            if create_if_unknown:
+                self._create()
+                record = self._tydb.search(Query().device_id == self.id)[0]
+            else:
+                raise UnknownDevice("Unknown device", self.id)
 
-    def field_ids(self, **kwargs):
-        return self._dev_reg.get_seen_fields(self.id)
+        self.name = record['name']
+        self._registered = record['registered']
+        self._seen_field_ids = []
+        if 'fields' in record:
+            self._seen_field_ids = record['fields']
 
     def fields(self, **kwargs):
+        self.load()
         out = []
-        requested_field_ids = kwargs.get('only', None)
-     
-        for field_id in self.field_ids():
-            if requested_field_ids is not None and field_id not in requested_field_ids:
+        only_ids = kwargs.get('only', None)
+        for field_id in self._seen_field_ids:
+            if only_ids is not None and field_id not in only_ids:
                 continue
             dtype, name, unit = self._field_id_components(field_id)
             out.append({
@@ -202,7 +170,135 @@ class Device():
             }) 
         return out
 
-    def clean_fields(self, fields, device_id=None):
+    def is_registered(self, setto=None):
+        if setto is not None: 
+            assert type(setto) == bool
+            data = {
+                'device_id': self.id, 
+                "registered": setto
+            }
+            self._tydb.upsert(data, Query().device_id == self.id)
+            self.load()
+        return self._registered
+
+    def set_name(self, name):
+        data = {
+            'device_id': self.id, 
+            "name": str(name).strip()
+        }
+        self._tydb.upsert(data, Query().device_id == self.id)
+        self.load()
+        
+    def add_reading(self, utc, fields, commlink_name):
+        # Clean and validate incoming data
+        utc_str = self._clean_utc_str(utc)
+        fields  = self._clean_fields(fields, self.id)
+        # Add seen fields to device register
+        self._add_fields(list(fields.keys()))
+        # Create reading
+        reading = {
+            "measurement": "reading",
+            "tags": {
+                "device_id": self.id,
+                "commlink": commlink_name
+            },
+            "time": utc_str,
+            "fields": fields
+        }
+        # Save Reading
+        self._ifdb.write_points([reading])
+        return True
+
+    def last_reading(self):
+        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
+        try:
+            last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
+        except IndexError:
+            last_upd = None
+        last_upd_keys = []
+        if last_upd is not None:
+            for k, v in last_upd.items():
+                if v is not None:
+                    last_upd_keys.append(k)
+        return last_upd, last_upd_keys
+
+    def get_readings(self, **kwargs):
+        # Fill gabs in period none=dont fill, null=fill intervals with null readings
+        fillmode = kwargs.get('fill','none')
+
+        # Interval
+        interval = self._clean_interval(kwargs.get('interval',5))
+        if interval is None:
+            return False, { "error" : "Invalid interval. Must be in second (integer) and > 0" }
+
+        # Fieldnames to get - defaults to all
+        requested_fields = kwargs.get('fields', None)
+
+        # Fields
+        qfields, fields_data = self._fields_to_query(requested_fields)
+        if len(qfields) == 0:
+            return False, { "error" : "Device has no fields", "device_id":self.id }
+
+        # Time span
+        try:
+            s = arrow.get(kwargs.get('start', arrow.utcnow().shift(hours=-1)))
+            e = arrow.get(kwargs.get('end', arrow.utcnow()))
+        except arrow.parser.ParserError:
+            return False, { "error" : "Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z" }
+        
+        # Limit
+        min_results, max_results = 1, 5000
+        limit = self._clean_limit(kwargs.get('limit'), min_results, max_results)
+        if limit is None:
+            return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(min_results, max_results) }
+         
+        # Build Query
+        q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
+            device_id=self.id, 
+            interval="{}s".format(interval),
+            timespan="time > '{start}' AND time <= '{end}'".format(start=s, end=e),
+            fields=qfields,
+            fill=fillmode,
+            limit="LIMIT {0}".format(limit)
+        )
+        readings = self._ifdb.query(q)
+        readings = sorted(list(readings.get_points()), key=lambda k: k['time']) 
+    
+        # Build list of timestamps  
+        timestamps = []
+        by_time = {}
+        for r in readings:
+            timestamps.append(r['time'])
+            by_time[r['time']] = r
+
+        # Return
+        return True, { 
+            "count": len(readings),
+            "fields": fields_data,
+            'readings': by_time, 
+            'timestamps': timestamps
+        }
+        
+
+    # ---- Helpers ------------------------------------------------------------
+
+    def _add_fields(self, field_ids_list):
+        self.load()
+        seen = self._seen_field_ids
+        seen = list(set(seen + field_ids_list))
+        self._tydb.update({ 'fields': seen }, Query().device_id == self.id)
+        self.load()
+
+    def _field_id_components(self, field_id):
+        parts = field_id.split('_')
+        if len(parts) < 3:
+            raise IllformedFieldName('Too few elements')
+        dtype = parts[0]
+        name = " ".join(parts[1:-1]).capitalize()
+        unit = parts[-1]
+        return dtype, name, unit
+
+    def _clean_fields(self, fields, device_id=None):
         if fields is None:
             log.device('Clean fields exception', exception="No fields")
         remove_list = []
@@ -229,7 +325,7 @@ class Device():
             fields.pop(fn) 
         return fields
 
-    def clean_utc_str(self, utc_str):
+    def _clean_utc_str(self, utc_str):
         if utc_str is None or utc_str == '':
             raise InvalidUTCTimestamp('Invlaid timestamp - Missing')
         else:
@@ -238,31 +334,7 @@ class Device():
                 return utc.format()
             except ValueError:
                 raise InvalidUTCTimestamp('Invlaid UTC timestamp: {}'.format(utc))
-        
-
-    def add_reading(self, utc, fields, commlink_name):
-        # Clean and validate incoming data
-        utc_str = self.clean_utc_str(utc)
-        fields  = self.clean_fields(fields, self.id)
-        # If device has not been seen before then add to register as unregistered
-        if not self.is_registered():
-            self._dev_reg.add_as_unregistered(self.id)
-        # Add seen fields to device register
-        self._dev_reg.add_seen_fields(self.id, list(fields.keys()))
-        # Create reading
-        reading = {
-            "measurement": "reading",
-            "tags": {
-                "device_id": self.id,
-                "commlink": commlink_name
-            },
-            "time": utc_str,
-            "fields": fields
-        }
-        # Save Reading
-        self._ifdb.write_points([reading])
-        return True
-
+    
     @staticmethod
     def _clean_interval(interval):
         try:
@@ -272,9 +344,9 @@ class Device():
             return interval
         except ValueError:
             return None
-
     
     def _fields_to_query(self, requested_fields):
+        
         fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
         fields_out = {}
 
@@ -318,7 +390,7 @@ class Device():
             # Make new_fields data with correct names
             new_field_id = '{did}__{agrfunc}__{fid}'.format(fid=field_id, agrfunc=agrfunc, did=self.id)
             fields_out[new_field_id] = field_data
-            fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.get_name())
+            fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.name)
             
             # Ref provides a trace from requested device-&-field-&-agrfunc right through the system
             fields_out[new_field_id]['ref'] = rf.get('ref', None)
@@ -334,66 +406,7 @@ class Device():
         except (ValueError, TypeError):
             return None
 
-    def get_readings(self, **kwargs):
-        # Fill gabs in period none=dont fill, null=fill intervals with null readings
-        fillmode = kwargs.get('fill','none')
-
-        # Interval
-        interval = self._clean_interval(kwargs.get('interval',5))
-        if interval is None:
-            return False, { "error" : "Invalid interval. Must be in second (integer) and > 0" }
-
-        # Fieldnames to get - defaults to all
-        requested_fields = kwargs.get('fields', None)
-       
-        # Fields
-        qfields, fields_data = self._fields_to_query(requested_fields)
-        if len(qfields) == 0:
-            return False, { "error" : "Device has no fields" }
-
-        # Time span
-        try:
-            s = arrow.get(kwargs.get('start', arrow.utcnow().shift(hours=-1)))
-            e = arrow.get(kwargs.get('end', arrow.utcnow()))
-        except arrow.parser.ParserError:
-            return False, { "error" : "Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z" }
-        
-        # Limit
-        min_results, max_results = 1, 5000
-        limit = self._clean_limit(kwargs.get('limit'), min_results, max_results)
-        if limit is None:
-            return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(min_results, max_results) }
-         
-        # Build Query
-        q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
-            device_id=self.id, 
-            interval="{}s".format(interval),
-            timespan="time > '{start}' AND time <= '{end}'".format(start=s, end=e),
-            fields=qfields,
-            fill=fillmode,
-            limit="LIMIT {0}".format(limit)
-        )
-        # print (q)
-        readings = self._ifdb.query(q)
-        readings = sorted(list(readings.get_points()), key=lambda k: k['time']) 
     
-        # Build list of timestamps  
-        timestamps = []
-        by_time = {}
-        for r in readings:
-            timestamps.append(r['time'])
-            by_time[r['time']] = r
-
-        # Return
-        return True, { 
-            "count": len(readings),
-            "fields": fields_data,
-            'readings': by_time, 
-            'timestamps': timestamps
-        }
-
-    def __eq__(self, other):
-        return self.id == other.id
 
     def as_dict(self):
         last_update, last_upd_keys =  self.last_update()
@@ -404,4 +417,10 @@ class Device():
             "last_update": last_update,
             "last_upd_keys": last_upd_keys
         }
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __str__(self):
+        return "Device({})".format(self.id)
    
