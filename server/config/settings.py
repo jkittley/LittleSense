@@ -7,11 +7,11 @@ class DefaultSetting(SecureSettings):
     LOCAL = False
     DEBUG = LOCAL
     # The public facing name of the web interface
-    SITE_NAME = "Sensor Store"
+    SITE_NAME = "Little Sense"
     # A system friendly version of the SITE_NAME. Only use aplphanumeric 
     # characters and underscores (no spaces). This is used for a nubmer of 
     # thing including the root folder name.
-    ROOT_NAME = "noise"
+    ROOT_NAME = "littlesense"
     # Show link to settings page on dashbaord
     SHOW_SETTINGS_LINK = True
     # Details of the Influx database
@@ -24,10 +24,10 @@ class DefaultSetting(SecureSettings):
     } 
     # Details of the TinyDB databases
     TINYDB = {
-        "db_device_reg": "databases/tinydb/devices.json"
+        "db_device_reg": "data/tinydb/devices.json"
     }
     # Saved Dashboard locations
-    DASHBOARDS_PATH = "databases/dashboards"    
+    DASHBOARDS_PATH = "data/dashboards"    
 
     # Settings for how best to purge (remove old) data from the databases. 
     # Unregistered sensor data is cleaned every 'unreg_interval' minutes and 
@@ -56,7 +56,10 @@ class DefaultSetting(SecureSettings):
     # Path to a public SSH key for the machine doing the deployment. Set to
     # None if not required, but it will save a lot of usename and password
     # inputting.
-    PUBLIC_SSH_KEY = '/Users/jacob/.ssh/id_rsa.pub'
+
+    # PUBLIC_SSH_KEY = '~/.ssh/id_rsa.pub'
+    PUBLIC_SSH_KEY = ""
+
     # Deployment (remote) server settings
     DEPLOY_USER  = 'pi'
     DEPLOY_GRP   = 'www-data'
@@ -80,10 +83,10 @@ class RemotelSetting(DefaultSetting):
     LOCAL = False
     DEBUG = False
     BACKUP_SERVER =  {
-            "host": '192.168.1.188',
-            "user": 'pi',
-            "pass": 'firebird30',
-            "dir": 'srv/test_backup'
+            "host": '',
+            "user": '',
+            "pass": '',
+            "dir": ''
         }
 
 # -----------------------------------------------------------------------------

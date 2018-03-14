@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 450 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
+    <g transform="matrix(1.73879,0,0,1.73879,-94.1256,-36.4394)">
+        <g transform="matrix(1,0,0,1,-40.7664,3.72479)">
+            <text x="92.595px" y="71.167px" style="font-family:'PTSans-Narrow', 'PT Sans Narrow', sans-serif;font-stretch:condensed;font-size:72px;">lit</text>
+        </g>
+        <g transform="matrix(1,0,0,1,-104.531,17.8309)">
+            <text x="205.396px" y="57.061px" style="font-family:'PTSans-Narrow', 'PT Sans Narrow', sans-serif;font-stretch:condensed;font-size:72px;">tle</text>
+            <text x="271.708px" y="57.061px" style="font-family:'PTSans-NarrowBold', 'PT Sans Narrow', sans-serif;font-weight:700;font-stretch:condensed;font-size:72px;">sense</text>
+        </g>
+    </g>
+</svg>

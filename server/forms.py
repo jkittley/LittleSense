@@ -3,6 +3,9 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, HiddenField, BooleanField, SubmitField, DateTimeField, SelectField, IntegerField
 from wtforms.validators import DataRequired, EqualTo
 from utils.influx import INFLUX_MESSUREMENTS
+from utils import Logger
+
+log = Logger()
 
 class DeviceSettingsForm(FlaskForm):
     device_id = StringField('Device Id', validators=[DataRequired()]) 
