@@ -66,13 +66,13 @@ def pack_formatter_test(unformatted):
 def launch(test=False):
 
     if test:
-        from commlink.test import RadioTest
-        comm = RadioTest(pack_formatter_test)
+        from commlink.test import ManagerTEST
+        comm = ManagerTEST(pack_formatter_test)
         log.debug("Radio TEST Starting...")
     else:
         # Initialise
-        from commlink.rfm69 import RadioRFM69
-        comm = RadioRFM69(pack_formatter_rf69)
+        from commlink.rfm69 import ManagerRFM69
+        comm = ManagerRFM69(pack_formatter_rf69)
         log.debug("Radio RFM69 Starting...")
     
     # Add radio to pool

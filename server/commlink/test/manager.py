@@ -16,7 +16,7 @@ from random import randint, choice
 
 log = Logger()
 
-class RadioTest(CommLink):
+class ManagerTEST(CommLink):
 
     def __init__(self, packet_formatter_func):
         self.MAC_ADDRESS = get_mac_address()

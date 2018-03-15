@@ -44,7 +44,11 @@ class Logger():
             ('interaction', 'Interaction'),
             ('funcexec', 'Function Execution'),
             ('device', 'Sensor Device'),
+            ('comms', 'Communication e.g. Radio'),
         ]
+
+    def comms(self, msg, **kwargs):
+        self._add_to_log('comms', msg, **kwargs)
 
     def debug(self, msg, **kwargs):
         self._add_to_log('debug', msg, **kwargs)
