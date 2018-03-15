@@ -88,6 +88,20 @@ def restart_bg_services():
     sudo('systemctl daemon-reload')
     sudo('systemctl restart receiver')
 
+
+# Restart background services
+@task
+def services_status():
+    print_title('journalctl since yeterday')
+    sudo('journalctl --since yesterday')
+    print_title('Systemctl status nginx')
+    sudo('systemctl status nginx')
+    print_title('Systemctl status gunicorn')
+    sudo('systemctl status gunicorn')
+    print_title('Systemctl status receiver')
+    sudo('systemctl status receiver')
+
+
 # ----------------------------------------------------------------------------------------
 # Helper functions below
 # ----------------------------------------------------------------------------------------
@@ -346,6 +360,7 @@ def setup_receiver():
         [Service]
         User={USER}
         Group={GRP}
+        Restart=always
         WorkingDirectory={PATH}
         ExecStart={VIRTUALENV_PATH}/bin/python receiver.py
 
