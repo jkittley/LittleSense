@@ -1,6 +1,6 @@
 arrow==0.10.0
 Fabric==1.13.1
-fabtools_python==0.20.0
+fabtools_python
 Flask==0.12.2
 Flask-Cors==2.1.2
 Flask-WTF==0.12

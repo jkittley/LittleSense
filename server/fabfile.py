@@ -62,6 +62,8 @@ def init():
     set_env_vars()
     setup_receiver()
     restart_bg_services()
+    # Final server reboot for luck
+    restart_web_services()
 
 # ----------------------------------------------------------------------------------------
 # Helper functions below
