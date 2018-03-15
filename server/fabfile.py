@@ -22,6 +22,7 @@ from fabtools.python import virtualenv, install_requirements, install
 
 from config import settings
 from termcolor import colored
+from unipath import Path, DIRS
 
 env.user = settings.DEPLOY_USER
 
@@ -64,6 +65,28 @@ def init():
     restart_bg_services()
     # Final server reboot for luck
     restart_web_services()
+
+# Restart webservices
+@task
+def restart_web_services():
+    print_title('Restarting Web Service - nginx and gunicorn')
+    sudo('systemctl daemon-reload')
+    sudo('systemctl restart nginx')
+    sudo('systemctl restart gunicorn')
+
+# Restart database services
+@task
+def restart_db_services():
+    print_title('Restarting Influxdb')
+    sudo('systemctl restart influxdb')
+    # sudo('systemctl restart grafana')
+
+# Restart background services
+@task
+def restart_bg_services():
+    print_title('Restarting background services i.e. receiver script')
+    sudo('systemctl daemon-reload')
+    sudo('systemctl restart receiver')
 
 # ----------------------------------------------------------------------------------------
 # Helper functions below
@@ -176,7 +199,12 @@ def install_venv_requirements():
     print_title('Installing remote virtual env requirements')
     with virtualenv(settings.DIR_VENV):
         install_requirements('{0}requirements/remote.txt'.format(settings.DIR_CODE), use_sudo=False)
-
+        # Install radio requirements
+        print_title('Installing Radio Specific virtual env requirements')
+        for p in Path('commlink').listdir(filter=DIRS):
+            if p.child('requirements.txt').exists():
+                radio_req = '{0}{1}'.format(settings.DIR_CODE, p.child('requirements.txt'))
+                install_requirements(radio_req, use_sudo=False)
 
 # ----------------------------------------------------------------------------------------
 # Sub Tasks - Web Server
@@ -254,6 +282,7 @@ def setup_gunicorn():
         User={USER}
         Group={GRP}
         WorkingDirectory={PATH}
+        Restart=always
         ExecStart={VIRTUALENV_PATH}/bin/gunicorn --workers 3 --bind unix:{SOCKET_FILES_PATH}{PROJECT_NAME}.sock webapp:app
 
         [Install]
@@ -275,13 +304,6 @@ def setup_gunicorn():
    
 
 
-# Restart webservices
-@task
-def restart_web_services():
-    print_title('Restarting Web Service - nginx and gunicorn')
-    sudo('systemctl daemon-reload')
-    sudo('systemctl restart nginx')
-    sudo('systemctl restart gunicorn')
 
 # ----------------------------------------------------------------------------------------
 # Sub Tasks - Database
@@ -296,12 +318,6 @@ def install_influx():
     sudo('echo "deb https://repos.influxdata.com/debian jessie stable" | sudo tee /etc/apt/sources.list.d/influxdb.list')
     sudo('apt-get update -y')
     sudo('apt-get install -y influxdb')
-
-# Restart database services
-def restart_db_services():
-    print_title('Restarting Influxdb')
-    sudo('systemctl restart influxdb')
-    # sudo('systemctl restart grafana')
 
 
 # ----------------------------------------------------------------------------------------
@@ -350,8 +366,6 @@ def setup_receiver():
     sudo('systemctl enable receiver')
     sudo('systemctl start receiver')
 
-def restart_bg_services():
-    print_title('Restarting background services i.e. receiver script')
-    sudo('systemctl daemon-reload')
-    sudo('systemctl restart receiver')
+
+
 
