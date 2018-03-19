@@ -40,14 +40,13 @@
     function getData(callback_success, callback_error) {
         $.ajax({
             dataType: "json",
-            method: "POST",
-            url: "{{ url_for('api_get') }}",
+            method: "GET",
+            url: "{{ url_for('api.readingsapi', device_id=device.id) }}",
             data: {
                 start: moment().utc().subtract(2, 'minutes').format(),
                 end: moment().utc().format(),
                 fill: "null",
-                interval: 3,
-                device_id: '{{ device.id }}'
+                interval: 3
             },
             success: callback_success,
             error: callback_error
@@ -56,12 +55,12 @@
 
     function updatePlot() {
         getData(function(data) {
-            console.log(data);
+            
             var names = {};
             $.each(data.fields, function(field_id, field_info) {
                 names[field_id] = field_info.name;
             });
-
+            console.log(data.field_ids);
             chart.load({
                 json: data.readings,
                 keys: {
