@@ -3,7 +3,7 @@ Fabric==1.13.1
 fabtools_python
 Flask==0.12.2
 Flask-Cors==2.1.2
-Flask-WTF==0.12
+Flask-WTF==0.14.2
 influxdb==5.0.0
 requests==2.18.4
 WTForms==2.1
