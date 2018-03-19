@@ -12,9 +12,11 @@ The code in this folder creates a webserver which can be run locally on your mac
 - [Utils](utils/) Utility and helper functions through the code.
 
 ## Files
+- api.py - Web API for interaction with devices and their readings.
 - cronjobs.py - Periodic tasks managed by crontab and configured automatically - see file for details. 
 - fabfile.py - This file is used by Fabric to automate the deplotment of the project and setup services such as InfluxDB on a remote host i.e. a Raspberry Pi.
 - forms.py - This file contains all the WTForm forms used by the webserver.
 - receiver.py - This script runs a background service to  listen to a communication channel e.g. a RMF69 radio receiver.
 - webapp.py - This script creates a website using the Flask microframework. 
+- sysadmin.py - The views and controls assosiated with the System Admin section of the web interface.
 
