@@ -1,13 +1,19 @@
+# =============================================================================
+# This script is uses the Flask microframework to create a blueprint to extend 
+# webapp.py with the admin panel functionality.
+# =============================================================================
+
 from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory
-from jinja2 import TemplateNotFound
 from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm
 import arrow
 from flask import current_app as app
 from utils import Device, Devices, Logger, BackupManager, DashBoards
 
-
 sysadmin = Blueprint('sysadmin', __name__, template_folder='templates/system')
 
+# -----------------------------------------------------------------------------
+# Home i.e. Stats
+# -----------------------------------------------------------------------------
 
 # System Admin - Index
 @sysadmin.route("/")
