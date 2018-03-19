@@ -1,9 +1,12 @@
+import json
 from collections import namedtuple
 from tinydb import TinyDB, Query
 from config import settings
 from .logger import Logger
+from .readings import Readings
+from .metric import Metric
 from .influx import get_InfluxDB
-from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice
+from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice, InvalidReadingsRequest
 from tinydb import TinyDB, Query
 from unipath import Path
 import arrow
@@ -102,6 +105,9 @@ class Devices():
         }
 
     def __str__(self):
+        return "Device List"
+
+    def __repr__(self):
         return "Devices()"
 
     def __len__(self):
@@ -229,28 +235,28 @@ class Device():
         # Interval
         interval = self._clean_interval(kwargs.get('interval',5))
         if interval is None:
-            return False, { "error" : "Invalid interval. Must be in second (integer) and > 0" }
+            raise InvalidReadingsRequest("Invalid interval. Must be in second (integer) and > 0")
 
         # Fieldnames to get - defaults to all
         requested_fields = kwargs.get('fields', None)
-
+        
         # Fields
         qfields, fields_data = self._fields_to_query(requested_fields)
         if len(qfields) == 0:
-            return False, { "error" : "Device has no fields", "device_id":self.id }
+            raise InvalidReadingsRequest("Device has no fields or none that match the requested metrics")
 
         # Time span
         try:
             s = arrow.get(kwargs.get('start', arrow.utcnow().shift(hours=-1)))
             e = arrow.get(kwargs.get('end', arrow.utcnow()))
         except arrow.parser.ParserError:
-            return False, { "error" : "Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z" }
+            raise InvalidReadingsRequest("Invalid start or end timestamp. Format example: 2018-03-08T15:29:00.000Z")
         
         # Limit
         min_results, max_results = 1, 5000
         limit = self._clean_limit(kwargs.get('limit'), min_results, max_results)
         if limit is None:
-            return False, { "error" : "Invalid limit. Must be integer between {} and {}".format(min_results, max_results) }
+            raise InvalidReadingsRequest("Invalid limit. Must be integer between {} and {}".format(min_results, max_results))
          
         # Build Query
         q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
@@ -262,22 +268,9 @@ class Device():
             limit="LIMIT {0}".format(limit)
         )
         readings = self._ifdb.query(q)
-        readings = sorted(list(readings.get_points()), key=lambda k: k['time']) 
     
-        # Build list of timestamps  
-        timestamps = []
-        by_time = {}
-        for r in readings:
-            timestamps.append(r['time'])
-            by_time[r['time']] = r
-
         # Return
-        return True, { 
-            "count": len(readings),
-            "fields": fields_data,
-            'readings': by_time, 
-            'timestamps': timestamps
-        }
+        return Readings(readings, self.id, s, e, interval, fillmode, limit, fields_data)
         
 
     # ---- Helpers ------------------------------------------------------------
@@ -347,54 +340,50 @@ class Device():
     
     def _fields_to_query(self, requested_fields):
         
-        fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
-        fields_out = {}
+        if requested_fields is not None and len(requested_fields) > 0:
+            fields_data = self.fields(only=[ x['field_id'] for x in requested_fields ])
+        else:
+            fields_data = self.fields()
 
+        fields_out = {}
         qfields = ""
-        for rf in requested_fields:
-            field_id = rf.get('field_id', None)
-            agrfunc  = rf.get('agrfunc', None)
-            
-            if len(fields_data) > 0:
-                field_data = list(filter(lambda x: x['id']==field_id, fields_data))[0]
-            else:
-                log.error('_fields_to_query unknown field?', **rf)
-                continue
-   
+        for fd in fields_data:
+
+            field_id = fd['id']
+            agrfunc = None
+
+         
             if field_id is None:
-                log.error('_fields_to_query missing field_id', **rf)
+                log.error('_fields_to_query missing field_id', **fd)
                 continue
-            if field_data['is_numeric']:
+            if fd['is_numeric']:
                 if agrfunc is None:
                     agrfunc = "mean"
                 if agrfunc in ['count', 'mean', 'mode', 'median', 'sum', 'max', 'min', 'first', 'last']:
                     qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
                 else:
-                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    log.debug('_fields_to_query invalid agrfunc', **fd)
                     continue
-            elif field_data['is_boolean']:
+            elif fd['is_boolean']:
                 if agrfunc is None:
                     agrfunc = "count"
                 if agrfunc in ['count', 'first', 'last', 'max', 'min']:
                     qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
                 else:
-                    log.debug('_fields_to_query invalid agrfunc', **rf)
+                    log.debug('_fields_to_query invalid agrfunc', **fd)
                     continue
-            elif field_data['is_string']:
-                log.debug('_fields_to_query dtype string not yet implemented', **rf)
+            elif fd['is_string']:
+                log.debug('_fields_to_query dtype string not yet implemented', **fd)
                 continue
             else:
-                log.error('_fields_to_query unknown dtype', **rf)
+                log.error('_fields_to_query unknown dtype', **fd)
                 continue
 
             # Make new_fields data with correct names
             new_field_id = '{did}__{agrfunc}__{fid}'.format(fid=field_id, agrfunc=agrfunc, did=self.id)
-            fields_out[new_field_id] = field_data
+            fields_out[new_field_id] = fd
             fields_out[new_field_id]['name'] = '{devname}: {agrfunc} {fname}'.format(fname=fields_out[new_field_id]['name'], agrfunc=agrfunc.capitalize(), devname=self.name)
-            
-            # Ref provides a trace from requested device-&-field-&-agrfunc right through the system
-            fields_out[new_field_id]['ref'] = rf.get('ref', None)
-
+    
         return qfields[:-2], fields_out
         
     @staticmethod
@@ -406,10 +395,8 @@ class Device():
         except (ValueError, TypeError):
             return None
 
-    
-
     def as_dict(self):
-        last_update, last_upd_keys =  self.last_update()
+        last_update, last_upd_keys =  self.last_reading()
         return { 
             "device_id": self.id,
             "registered": self.is_registered(),
@@ -422,5 +409,8 @@ class Device():
         return self.id == other.id
 
     def __str__(self):
+        return "Device {}".format(self.id)
+
+    def __repr__(self):
         return "Device({})".format(self.id)
-   
+
