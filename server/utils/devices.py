@@ -215,10 +215,14 @@ class Device():
         self._ifdb.write_points([reading])
         return True
 
+    def get_commlink(self):
+        all_tags = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "commlink" WHERE "device_id"=\'{}\''.format(self.id))
+        return [ x['value'] for x in list(all_tags.get_points()) if x['value'] != "NONE" ]
+
     def last_reading(self):
         last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
         try:
-            last_upd = list(last_upds.get_points(tags={'device_id': self.id}))[0]
+            last_upd = list(last_upds.get_points(tags=dict(device_id=self.id)))[0]
         except IndexError:
             last_upd = None
         last_upd_keys = []
