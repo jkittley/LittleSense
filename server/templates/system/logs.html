@@ -1,7 +1,7 @@
 {% extends 'system/base.html' %}
 {% import 'macros.html' as b_wtf %}
 
-{% block title %}System Admin - Logs{% endblock %}
+{% block title %}Logs{% endblock %}
 
 {% block menu %}
 {% with active = 'logs' %}
@@ -66,7 +66,7 @@
 {% block content %}
 <div class="card">
   <div class="card-body">
-    <form id="filter" class="form-inline" action="{{ url_for('sysadmin_logs') }}" method="POST">
+    <form id="filter" class="form-inline" action="{{ url_for('.logs') }}" method="POST">
         {{form.hidden_tag()}}
         <div class="form-row align-items-baseline">
           <div class="">

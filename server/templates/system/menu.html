@@ -1,30 +1,30 @@
 
     <li class="nav-item">
-        <a class="nav-link {{ 'active' if active=='index' else '' }}" href="{{ url_for('sysadmin_index') }}">
+        <a class="nav-link {{ 'active' if active=='index' else '' }}" href="{{ url_for('.index') }}">
             <i class="fas fa-save"></i>
             System Stats
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {{ 'active' if active=='devices' else '' }}" href="{{ url_for('sysadmin_devices') }}">
+        <a class="nav-link {{ 'active' if active=='devices' else '' }}" href="{{ url_for('.devices') }}">
             <i class="fas fa-cube"></i>
             Devices
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {{ 'active' if active=='logs' else '' }}" href="{{ url_for('sysadmin_logs') }}">
+        <a class="nav-link {{ 'active' if active=='logs' else '' }}" href="{{ url_for('.logs') }}">
                 <i class="fas fa-file-alt"></i>
             View Logs
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {{ 'active' if active=='db' else '' }}" href="{{ url_for('sysadmin_db') }}">
+        <a class="nav-link {{ 'active' if active=='db' else '' }}" href="{{ url_for('.db') }}">
                 <i class="fas fa-database"></i>
             Database Tools
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {{ 'active' if active=='backup' else '' }}" href="{{ url_for('sysadmin_backup') }}">
+        <a class="nav-link {{ 'active' if active=='backup' else '' }}" href="{{ url_for('.backup') }}">
             <i class="fas fa-save"></i>
             Backup / Restore
         </a>

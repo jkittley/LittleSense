@@ -99,10 +99,10 @@
 <hr>
 <div class="row">
     <div class="col">
-        <a href="{{ url_for('sysadmin_devices') }}" class="btn btn-block btn-info">Back</a>
+        <a href="{{ url_for('.devices') }}" class="btn btn-block btn-info">Back</a>
     </div>
     <div id="option-config" class="col">
-        <a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
+        <a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
     </div>
 </div>
 {% endblock%}

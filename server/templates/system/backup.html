@@ -1,7 +1,7 @@
 {% extends 'system/base.html' %}
 {% import 'macros.html' as b_wtf %}
 
-{% block title %}System Admin - Backup / Restore{% endblock %}
+{% block title %}Backup / Restore{% endblock %}
 
 {% block menu %}
 {% with active = 'backup' %}
@@ -19,7 +19,7 @@
         {% if delete_form %}
         <div class="card-body">
         <p>Are you sure you want to delete {{ delete_file }}?</p>
-        <form action="{{ url_for('sysadmin_backup_delete', filename=delete_file) }}" method="POST">
+        <form action="{{ url_for('.backup_delete', filename=delete_file) }}" method="POST">
             {{ b_wtf.bootstrap_form(delete_form) }}      
             <button type="submit" class="btn btn-primary">Backup</button>
         </form> 
@@ -46,9 +46,9 @@
                 <tr>
                     <th scope="row">{{ b.dataset }}</th>
                     <th scope="row">{{ b.start }} to {{ b.end }}</th>
-                    <td><a href="{{ url_for('sysadmin_backup_download', filename=b.stem) }}" class="btn btn-info">Download</a></td>
-                    <td><a href="{{ url_for('sysadmin_backup_upload', filename=b.stem) }}" class="btn btn-info">Upload</a></td>
-                    <td><a href="{{ url_for('sysadmin_backup_delete', filename=b.stem) }}" class="btn btn-danger">Delete</button></td>
+                    <td><a href="{{ url_for('.backup_download', filename=b.stem) }}" class="btn btn-info">Download</a></td>
+                    <td><a href="{{ url_for('.backup_upload', filename=b.stem) }}" class="btn btn-info">Upload</a></td>
+                    <td><a href="{{ url_for('.backup_delete', filename=b.stem) }}" class="btn btn-danger">Delete</button></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -63,7 +63,7 @@
  <div class="card">
     <div class="card-header lead">Create Backup</div>
     <div class="card-body">
-        <form action="{{ url_for('sysadmin_backup_create') }}" method="POST">
+        <form action="{{ url_for('.backup_create') }}" method="POST">
             {{ b_wtf.bootstrap_form(backup_form) }}      
             <button type="submit" class="btn btn-primary">Backup</button>
         </form> 

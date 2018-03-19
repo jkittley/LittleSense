@@ -7,18 +7,18 @@ import json, os
 from random import randint
 
 import arrow
-from flask import render_template, Flask, request, abort, redirect, url_for, flash, send_from_directory
+from flask import render_template, Flask, request, abort, redirect, url_for, flash
 from unipath import Path
-from flask_wtf import FlaskForm
 from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm
 
 from config import settings
-from utils import Device, Devices, Logger, BackupManager, DashBoards
+from utils import Device, Devices, Logger, DashBoards
 from utils.influx import is_connected as influx_connected
 from utils.exceptions import UnknownDevice
+from sysadmin import sysadmin
 
 app = Flask(__name__)
-log = Logger()
+log = None
 
 # ------------------------------------------------------------
 # Setup
@@ -26,9 +26,6 @@ log = Logger()
 
 # Settings
 app.config.from_object(settings)
-# Device managment
-devices = Devices()
-dashes  = DashBoards()
 
 # ------------------------------------------------------------
 # Dashboard
@@ -38,6 +35,7 @@ dashes  = DashBoards()
 @app.route("/")
 def home(dash_selected=None):
     dash = None
+    dashes = app.config.get('dashes')
     if settings.DEBUG:
         dashes.update()
     if dash_selected is not None:
@@ -50,155 +48,8 @@ def home(dash_selected=None):
 # System Admin
 # ------------------------------------------------------------
 
-# System Admin - Index
-@app.route("/sys/admin")
-def sysadmin_index():
-    stats = dict(log=log.stats(), device=devices.stats())
-    recent_errors = log.list_records(
-        cat = 'error',
-        start = arrow.utcnow().shift(days=-7),
-        limit = 10
-    )
-    return render_template('system/index.html', stats=stats, recent_errors=recent_errors)
+app.register_blueprint(sysadmin, url_prefix='/system')
 
-# System Admin - Devices
-@app.route("/sys/devices")
-def sysadmin_devices():
-    devices.update()
-    return render_template('system/devices.html')
-
-# Register - preview device
-@app.route("/sys/register/device/<string:device_id>")
-def device_register_preview(device_id):
-    device = devices.get(device_id)
-    return render_template('system/preview.html', device=device)
-
-
-# Register - configure device
-@app.route("/sys/configure/device/<string:device_id>", methods=['GET','POST'])
-def device_register_config(device_id):
-    device = devices.get(device_id)
-    form = DeviceSettingsForm(device_id=device.id, name=device.name) 
-    # Save form data
-    if form.is_submitted and form.validate_on_submit():
-        # Save to database
-        device.is_registered(True)
-        device.set_name(name=form.name.data)
-        # Show done page
-        flash('Device registered', 'success')
-        return redirect(url_for('sysadmin_devices'))
-    # Show config form page 
-    return render_template('system/configure.html', device_id=device_id, device=device, form=form)
-
-
-
-
-# System Admin - Unregister
-@app.route("/sys/devices/unregister/<string:device_id>", methods=['POST','GET'])
-def sysadmin_unreg(device_id):
-    unreg_form = AreYouSureForm()
-    if unreg_form.validate_on_submit():
-        device = devices.get(device_id)
-        device.is_registered(False)
-        flash('Device {} unregistered'.format(device_id), 'success')
-        return redirect(url_for('sysadmin_devices'))
-    return render_template('system/unregister.html', device_id=device_id, unreg_form=unreg_form)
-
-
-# System Admin - Database Functions
-@app.route("/sys/admin/db", methods=['GET','POST'])
-def sysadmin_db():
-    purge_form = DBPurgeForm()
-    if purge_form.validate_on_submit():
-        # Purge
-
-        if purge_form.reged.data or purge_form.unreg.data or purge_form.registry.data:
-            success = devices.purge(
-                end=arrow.utcnow(),  
-                unregistered=purge_form.unreg.data,
-                registered=purge_form.reged.data,
-                registry=purge_form.registry.data
-            )
-            if success:
-                flash('Purged devices data', 'success')
-            else:
-                flash('Failed to purge devices data', 'danger')
-
-        if purge_form.logs.data:
-            log.purge()
-            flash('Logs Purged', 'success')
-
-    
-    # Always clear verify
-    purge_form.verify.data = ""
-    return render_template('system/db.html', purge_form=purge_form)
-
-# System Admin - Logs
-@app.route("/sys/admin/logs", methods=['GET','POST'])
-def sysadmin_logs():
-    form = LogFilterForm()
-    form.validate_on_submit()
-    try:
-        logdata = log.list_records(
-            cat=form.cat.data, 
-            start=form.start.data,
-            end=form.end.data,
-            limit=form.limit.data,
-            offset=form.offset.data,
-            orderby=form.orderby.data
-        )
-    except:
-        logdata = []
-    return render_template('system/logs.html', logdata=logdata, form=form)
-
-
-# System Admin - Backup index
-@app.route("/sys/backup/restore", methods=['GET','POST'])
-def sysadmin_backup(del_file=None):
-    backup_manager = BackupManager()
-    backup_form = BackupForm()
-    return render_template('system/backup.html', backup_form=backup_form, restore_form='NOT YET', backups_list=backup_manager.get_backups())
-
-# System Admin - Backup index
-@app.route("/sys/backup/delete/<string:filename>", methods=['GET','POST'])
-def sysadmin_backup_delete(filename):
-    delete_form = AreYouSureForm()
-    if delete_form.validate_on_submit():
-        backup_manager = BackupManager()
-        success, msg = backup_manager.delete_backup(filename+".csv")
-        if success:
-            flash(msg, 'success')
-            return redirect(url_for('sysadmin_backup'))
-        else:
-            flash(msg, 'danger')
-    return render_template('system/backup.html', delete_form=delete_form, delete_file=filename)
-
-# System Admin - Backup create
-@app.route("/sys/backup/create", methods=['POST']) 
-def sysadmin_backup_create(): 
-    backup_form = BackupForm()
-    # Create Backup
-    if backup_form.validate_on_submit():
-        # Create backup 
-        backup_manager = BackupManager()
-        download_file, message = backup_manager.create(
-            backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
-        if download_file is not None:
-            flash('Backup created', 'success')
-        else:
-            flash('Backup failed {}'.format(message), 'danger')
-    return redirect(url_for('sysadmin_backup'))
-
-# System Admin - Backup create
-@app.route("/sys/backup/upload/<string:filename>/to/remote", methods=['GET']) 
-def sysadmin_backup_upload(filename): 
-    flash('Not implemented yet', 'warning')
-    return redirect(url_for('sysadmin_backup'))
-
-@app.route("/sys/backup/download/<string:filename>")
-def sysadmin_backup_download(filename):
-    return send_from_directory(directory=app.config.get('BACKUP')['folder'], filename=filename+".csv")
-   
 # ------------------------------------------------------------
 # Web API
 # ------------------------------------------------------------
@@ -287,6 +138,21 @@ def get_device_metrics(device_id):
 # Other
 # ------------------------------------------------------------
 
+@app.before_first_request
+def init_devices():
+    app.config['devices'] = Devices()
+
+@app.before_first_request
+def init_dashboards():
+    app.config['dashes']  = DashBoards()
+
+@app.before_first_request
+def init_log():
+    app.config['log'] = Logger()
+    global log
+    log = app.config['log']
+
+
 @app.before_request
 def handle_missing_db_connection():
     log = Logger()
@@ -296,7 +162,7 @@ def handle_missing_db_connection():
 @app.context_processor
 def context_basics():
     log.interaction(request.url)
-    return dict(config=app.config, devices=devices)
+    return dict(config=app.config, devices=app.config.get('devices'))
 
 
 if __name__ == '__main__':
