@@ -80,7 +80,11 @@ class BackupManager():
             self.log.funcexec('Backup failed for {0}'.format(messurement), error=message)
             return None, message
 
+    def __str__(self):
+        return "Backup Manager"
 
+    def __repr__(self):
+        return "BackupManager()"
     
     # def sftp(self, filename):
     #     path = '{0}/{1}'.format(BACKUP_FOLDER, filename).replace('//','/')

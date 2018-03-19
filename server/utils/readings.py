@@ -67,3 +67,9 @@ class Readings():
                 merged[t].update(other_readings_by_time[t]) 
                 
         self.readings = [ reads for _, reads in merged.items() ]
+
+    def __str__(self):
+        return "Readings Result Object"
+
+    def __repr__(self):
+        return "Readings(readings, device_id, time_start, time_end, time_interval, fillmode, limit, fields_data)"

@@ -30,10 +30,17 @@ class DashBoards():
     def __iter__(self):
         return (d for d in self.dashes)
 
+    def __str__(self):
+        return "Dashboard List"
+
+    def __repr__(self):
+        return "Dashboards()"
+
 
 class Dashboard():
 
     def __init__(self, file_path):
+        self.file_path = file_path
         self.loadJSON(file_path)
 
     def loadJSON(self, file_path):
@@ -47,4 +54,9 @@ class Dashboard():
         for key, value in json_data.items():
             setattr(self, key, value)
     
+    def __str__(self):
+        return "Dashboard"
+
+    def __repr__(self):
+        return "Dashboard({})".format(self.file_path)
         

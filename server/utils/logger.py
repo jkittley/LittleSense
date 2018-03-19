@@ -130,3 +130,9 @@ class Logger():
 
     def __iter__(self):
         return (x for x in self.list_records())
+
+    def __str__(self):
+        return "Custom Logger"
+
+    def __repr__(self):
+        return "Logger()"

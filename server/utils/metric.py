@@ -13,7 +13,7 @@ class Metric():
         return cls(*parts)
 
     def __str__(self):
-        return "Metric({},{},{})".format(self.device_id, self.field_id, self.aggregation)
+        return "Metric ({},{},{})".format(self.device_id, self.field_id, self.aggregation)
     
     def __repr__(self):
         return "Metric({},{},{})".format(self.device_id, self.field_id, self.aggregation)
