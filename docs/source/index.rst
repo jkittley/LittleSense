@@ -53,6 +53,9 @@ The project is structured in two main section. We recomment starting by setting 
    server_about
    customisation
    device
+   utils
+   exceptions
+   api
    
 About the code
 --------------

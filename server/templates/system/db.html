@@ -1,7 +1,7 @@
 {% extends 'system/base.html' %}
 {% import 'macros.html' as b_wtf %}
 
-{% block title %}System Admin - Database Tools{% endblock %}
+{% block title %}Database Tools{% endblock %}
 
 {% block menu %}
 {% with active = 'db' %}
@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<form id="confirm_purge" action="{{ url_for('sysadmin_db') }}" method="POST">
+<form id="confirm_purge" action="{{ url_for('.db') }}" method="POST">
 <div class="card border-danger">
     <div class="card-header bg-danger text-white lead">Purge Data</div>
     <div class="card-body">

@@ -1,7 +1,7 @@
 {% extends 'system/base.html' %}
 {% import 'macros.html' as b_wtf %}
 
-{% block title %}System Admin - Unregister Device{% endblock %}
+{% block title %}Unregister '{{ device_id }}'{% endblock %}
 
 {% block menu %}
 {% with active = 'devices' %}
@@ -10,13 +10,19 @@
 {% endblock %}
 
 {% block content %}
-<form id="confirm_purge" action="{{ url_for('sysadmin_unreg', device_id=device_id) }}" method="POST">
-<div class="card">
-    <div class="card-header lead">Unregister {{ device_id }}?</div>
-    <div class="card-body">
-          {{ b_wtf.bootstrap_form(unreg_form) }}      
-          <button type="submit" class="btn btn-block btn-danger">Unregister</button>
+<div class="container">
+  <div class="row justify-content-md-center">
+    <div class="col-sm-6">
+      <form id="confirm_purge" action="{{ url_for('.device_unregister', device_id=device_id) }}" method="POST">
+        <div class="card border-danger">
+          <div class="card-header lead">Unregister {{ device_id }}?</div>
+          <div class="card-body">
+                {{ b_wtf.bootstrap_form(unreg_form) }}      
+                <button type="submit" class="btn btn-block btn-danger">Unregister</button>
+          </div>
+        </div>
+      </form> 
     </div>
   </div>
-</form> 
+</div>
 {% endblock %}

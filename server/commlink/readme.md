@@ -1,2 +1,4 @@
 # Little Sense
-Docs comming soon
+This directory contains a set of packages. Each package hold all the nessesary information and code to setup and run a particular radio or communication channel. If the package has some additional Python dependancies they are listed in the requirements.txt file. The contents of this file are installed when fab deploy or init are used.
+
+Each package contains a 'manage.py' which containes a class designed to manage the interactions between Little Sense and the communication channel. All managment classes inherit from the CommLink class contained in the parent.py file in this folder. Think of it like this: The managment classes act as translators between the Radios and the CommLink functions. Only CommLink functions should interact with Little Sense. This approach maintains a degree of seporation and limits erronious code.

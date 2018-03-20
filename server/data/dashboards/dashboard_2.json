@@ -12,22 +12,22 @@
                 "name": "Device 1: Signal (dB)",
                 "field_id": "float_signal_db",
                 "device_id": "test_device_1",
-                "agrfunc": "mean"             
+                "aggrfunc": "mean"             
             },{
                 "name": "Device 1: Mean Audio Level (dB)",
                 "field_id": "float_audio_level_db",
                 "device_id": "test_device_1",
-                "agrfunc": "mean"
+                "aggrfunc": "mean"
             },{
                 "name": "Device 1: Max Light Level (Lux)",
                 "field_id": "int_light_level_lux",
                 "device_id": "test_device_1",
-                "agrfunc": "max"
+                "aggrfunc": "max"
             },{
                 "name": "Device 1: Max Temp (F)",
                 "field_id": "float_temp_f",
                 "device_id": "test_device_1",
-                "agrfunc": "max"
+                "aggrfunc": "max"
             }],
             "time": {
                 "start": null,

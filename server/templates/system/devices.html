@@ -1,6 +1,6 @@
 {% extends 'system/base.html' %}
 
-{% block title %}System Admin - Devices{% endblock %}
+{% block title %}Devices{% endblock %}
 
 {% block menu %}
 {% with active = 'devices' %}
@@ -19,8 +19,8 @@
             <th scope="col">Name</th>
             <th scope="col">Last Updated</th>
             <th scope="col">Fields</th>
+            <th scope="col">Commlink(s)</th>
             <th scope="col" colspan="3"></th>
-     
           </tr>
         </thead>
         <tbody>
@@ -36,14 +36,13 @@
                   {{ f.name }} ({{ f.unit }})
                   {% if not loop.last %}, {% endif %}
                   {% endfor %}</td>
-                
-                
-                <td><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-primary">Preview</a></td>
+                <td>{{ device.get_commlinks() }}</td>
+                <td><a href="{{ url_for('.device_register_preview', device_id=device.id) }}" class="btn btn-block btn-primary">Preview</a></td>
                 {% if device.is_registered() %}
-                <td><a href="{{ url_for('device_register_config', device_id=device.id) }}" class="btn btn-block btn-primary">Configure</a></td>
-                <td><a href="{{ url_for('sysadmin_unreg', device_id=device.id) }}" class="btn btn-block btn-danger">Unregister</a></td>
+                <td><a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-primary">Configure</a></td>
+                <td><a href="{{ url_for('.device_unregister', device_id=device.id) }}" class="btn btn-block btn-danger">Unregister</a></td>
                 {% else %}
-                <td colspan="2"><a href="{{ url_for('device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Register</a></td>
+                <td colspan="2"><a href="{{ url_for('.device_register_preview', device_id=device.id) }}" class="btn btn-block btn-success">Register</a></td>
                 {% endif %}
             
             </tr>

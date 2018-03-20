@@ -27,7 +27,7 @@
     $(document).ready(function() { 
         $('[data-toggle="popover"]').popover()
     });
-    var api_url = "{{ url_for('api_get') }}";
+    var api_url = "{{ url_for('api.readingsapi') }}";
 
 
     function calculate_times(init) {
@@ -72,16 +72,23 @@
     }
 
     function getData(start, end, fill, interval, metrics, callback_success, callback_error) {
+        var metrics_list = [];
+        $.each(metrics, function(k,v) { 
+            metrics_list.push(v.device_id+','+v.field_id+','+v.aggrfunc)
+        });
+        
+
         var query = {
             dataType: "json",
-            method: "POST",
+            method: "GET",
             url: api_url,
+
             data: {
                 start: start,
                 end: end,
                 fill: fill,
                 interval: interval,
-                metrics:  JSON.stringify(metrics),
+                metric: metrics_list,
             },
             success: callback_success,
             error: callback_error

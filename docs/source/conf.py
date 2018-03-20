@@ -30,7 +30,15 @@ sys.path.insert(0, os.path.abspath('../../server/'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [ 'sphinx.ext.autodoc']
+extensions = [ 
+    'sphinx.ext.autodoc',
+    'sphinxcontrib.napoleon',
+    'sphinxcontrib.httpdomain',
+    'sphinxcontrib.autohttp.flask',
+    'sphinxcontrib.autohttp.flaskqref',
+    'sphinx.ext.autosummary',
+    'sphinx_automodapi.automodapi',
+]
 
 autodoc_mock_imports = ['spidev', 'RPi']
 

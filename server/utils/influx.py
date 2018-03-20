@@ -12,6 +12,7 @@ INFLUX_MESSUREMENTS = [
 
 
 def get_InfluxDB():
+    """Get an instance of the InfluxDB database"""
     try:
         ifdb = InfluxDBClient(settings.INFLUX['host'], settings.INFLUX['port'], settings.INFLUX['user'], settings.INFLUX['pass'], settings.INFLUX['dbname'])
         ifdb.create_database(settings.INFLUX['dbname'])
@@ -23,5 +24,6 @@ def get_InfluxDB():
         print(e)
         return None
 
-def is_connected():
+def influx_connected():
+    """Test connection to InfluxDB database"""
     return True if get_InfluxDB() is not None else False

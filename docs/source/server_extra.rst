@@ -1,6 +1,6 @@
 .. include:: global.rst
 
-Optional - Server Customisation
+Server Customisation (Optional)
 ===============================
 On this page we detail some of the server configurations you may want to change from standard.
 
@@ -53,5 +53,8 @@ Reduce GPU memory
 If you have no intention of using the Raspberry Pi's desktop environment then you can reduce the amount of memory allocated to the GPU. This frees up memory for other applications and may improve preformance.
 
 1. Run ```sudo raspi-config```
-2. Select Advanced
-3. Select TODO
+2. Select "Advanced options"
+3. Select "Memory Split"
+4. Set to "16"
+5. Select "OK"
+6. Select "Finish" and the Pi may ask to reboot.

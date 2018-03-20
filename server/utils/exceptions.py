@@ -13,3 +13,9 @@ class InvalidFieldDataType(LookupError):
 
 class InvalidUTCTimestamp(ValueError):
     """Thrown when the passed UTC string cannot be parsed"""
+
+class InvalidPacket(ValueError):
+    """Thrown when the packet formatter cannot parse the incomming data"""
+
+class InvalidReadingsRequest(ValueError):
+    """Thrown when a request for readings has an invalid format"""

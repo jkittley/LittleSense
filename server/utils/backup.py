@@ -1,29 +1,52 @@
 import os, arrow, csv
+from arrow.arrow import Arrow
+from typing import List, Dict
 from config import settings
 from unipath import Path
 from .logger import Logger
 from .influx import get_InfluxDB
 
+
+
 class BackupManager():
+    """This class manages all thing relating to backups."""
 
     def __init__(self):
         self.log = Logger()
         pass
 
-    def get_backups_folder(self):
+    def get_backups_folder(self) -> Path:
+        """Get the path to the local backup folder. Automatically creates folder if does not exist.
+
+        Returns:
+            path: List of Paths 
+        """
         backup_folder = Path(settings.BACKUP['folder'])
         if not backup_folder.exists():
             backup_folder.mkdir()
         return backup_folder
 
-    def delete_backup(self, filename):
+    def delete_backup(self, filename: str):
+        """Delete specified backup files.
+
+        Args:
+            filename: The name of the backup file to delete. This cannont be a path and must be in the backups folder.
+
+        Raises:
+            FileNotFoundError
+        """
         delpath = self.get_backups_folder().child(filename)
         if delpath.exists():
             delpath.remove()
-            return True, "'{}' deleted".format(filename)
-        return False, "Failed to delete: '{}'".format(filename)
+            return True
+        raise FileNotFoundError("Failed to delete: '{}'".format(filename))
 
-    def get_backups(self):
+    def get_backups(self) -> List[Dict]:
+        """List backup files which exist locally.
+
+        Returns:
+            List of dictionarys containing filename, stem, dataset, start and end.
+        """
         out = []
         for p in self.get_backups_folder().listdir(pattern="*.csv"):
             parts = p.stem.split('_')
@@ -38,10 +61,30 @@ class BackupManager():
         return out
          
 
-    def create(self, messurement, start=arrow.utcnow().shift(days=-1), end=arrow.utcnow()):
+    def create(self, messurement:str, start:str=None, end:str=None) -> str:
+        """Create a new backup locally.
+
+        Args:
+            messurement: The messurement type i.e. 'readings' or 'logs'.
+            start: Datetime start of backup period (default: 1 hour ago).
+            end: Datetime end of backup period (default: Now).
+        
+        Returns:
+            Saved file name
+
+        Raises:
+            LookupError if no data to backup
+        """
         # If datetime passed rather than arrow
-        start = arrow.get(start)
-        end = arrow.get(end)
+        if start is None:
+            start = Arrow=arrow.utcnow().shift(days=-1)
+        else:
+            start = arrow.get(start)
+
+        if end is None:    
+            end = Arrow=arrow.utcnow()
+        else:
+            end = arrow.get(end)
 
         save_name = "{messurement}_{start}_to_{end}.csv".format(
             messurement=messurement,
@@ -74,18 +117,15 @@ class BackupManager():
                     csvwriter.writerow(dict(reading))
 
                 self.log.funcexec('Backup created for {0}'.format(messurement), savedas=save_name)
-                return save_name, None
+                return save_name
         else:
             message = "No data to backup"
             self.log.funcexec('Backup failed for {0}'.format(messurement), error=message)
-            return None, message
+            raise LookupError(message)
 
+    def __str__(self):
+        return "Backup Manager"
 
+    def __repr__(self):
+        return "BackupManager()"
     
-    # def sftp(self, filename):
-    #     path = '{0}/{1}'.format(BACKUP_FOLDER, filename).replace('//','/')
-    #     with pysftp.Connection(BACKUP_REMOTE_HOST, username=BACKUP_REMOTE_USER, password=BACKUP_REMOTE_PASS) as sftp:
-    #         with sftp.cd(BACKUP_REMOTE_DIR):    # temporarily chdir to public
-    #             sftp.put(path)  # upload file to public/ on remote
-    #             return True, "Uploaded {0} to {1}{2}".format(path, BACKUP_REMOTE_HOST, BACKUP_REMOTE_DIR)
-    #     return False, "Failed to upload"

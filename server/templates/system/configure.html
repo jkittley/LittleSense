@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block title %}Device - Settings &nbsp;&nbsp;
-<div class="float-right"><a href="{{ url_for('device_register_preview', device_id=device_id) }}" class="btn btn-sm btn-info">Preview Data</a></div>
+<div class="float-right"><a href="{{ url_for('.device_register_preview', device_id=device_id) }}" class="btn btn-sm btn-info">Preview Data</a></div>
 {% endblock %}
 
 {% block menu %}
@@ -47,7 +47,7 @@
                 </div>
             </div>
             <div class="col">
-                <form method="POST" class="form form-horizontal" action="{{ url_for('device_register_config', device_id=device_id) }}">
+                <form method="POST" class="form form-horizontal" action="{{ url_for('.device_register_config', device_id=device_id) }}">
                         {% for field in form.errors %}
                         {% for error in form.errors[field] %}
                             <div class="alert alert-danger">

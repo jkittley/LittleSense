@@ -1,9 +1,9 @@
 arrow==0.10.0
 Fabric==1.13.1
-fabtools_python==0.20.0
+fabtools_python
 Flask==0.12.2
 Flask-Cors==2.1.2
-Flask-WTF==0.12
+Flask-WTF==0.14.2
 influxdb==5.0.0
 requests==2.18.4
 WTForms==2.1
@@ -12,3 +12,11 @@ tinydb==3.8.0
 python-crontab==2.2.8
 click==6.7
 termcolor==1.1.0
+Flask-RESTful==0.3.6
+Sphinx==1.7.1
+sphinx-autobuild==0.7.1
+sphinx-rtd-theme==0.2.4
+sphinxcontrib-httpdomain==1.6.1
+sphinxcontrib-napoleon==0.6.1
+sphinxcontrib-websupport==1.0.1
+sphinx-automodapi==0.7

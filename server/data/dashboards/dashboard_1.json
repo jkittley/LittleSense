@@ -12,17 +12,22 @@
                 "name": "Device 1: Signal (dB)",
                 "field_id": "float_signal_db",
                 "device_id": "test_device_1",
-                "agrfunc": "mean"             
+                "aggrfunc": "mean"             
             },{
                 "name": "Device 1: Max Light Level (Lux)",
                 "field_id": "int_light_level_lux",
                 "device_id": "test_device_1",
-                "agrfunc": "max"
+                "aggrfunc": "max"
+            },{
+                "name": "Device 2: Switch State (OnOff)",
+                "field_id": "bool_switch_state",
+                "device_id": "test_device_2",
+                "aggrfunc": "count"
             }],
             "time": {
                 "start": null,
                 "end": null,
-                "reading_interval_seconds": 2,
+                "reading_interval_seconds": 10,
                 "period": {
                     "days": 0,
                     "hours": 0,
@@ -31,7 +36,7 @@
                 "fill": "none"
             },
             "type": "timeseries",
-            "refresh_interval_seconds": 2
+            "refresh_interval_seconds": 5
         },
         {
             "id": 2,
@@ -48,12 +53,12 @@
                 "name": "Device 2: Switch State (OnOff)",
                 "field_id": "bool_switch_state",
                 "device_id": "test_device_2",
-                "agrfunc": "count"
+                "aggrfunc": "count"
             }],
             "time": {
                 "start": null,
                 "end": null,
-                "reading_interval_seconds": 2,
+                "reading_interval_seconds": 5,
                 "period": {
                     "days": 0,
                     "hours": 0,
@@ -62,7 +67,7 @@
                 "fill": "none"
             },
             "type": "timeseries",
-            "refresh_interval_seconds": 2
+            "refresh_interval_seconds": 5
         }
         ]
 }
