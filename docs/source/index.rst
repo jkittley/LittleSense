@@ -54,6 +54,7 @@ The project is structured in two main section. We recomment starting by setting 
    customisation
    device
    utils
+   exceptions
    api
    
 About the code

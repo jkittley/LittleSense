@@ -7,12 +7,3 @@ The "utils" package contains a set of classes which model all the key concepts o
 .. automodapi:: utils
   :no-heading:
   :no-inheritance-diagram:
-
-
-Exceptions (utils.exceptions)
-=============================
-In addtion the utils.exceptions module contains a number of bespoke exceptions.
-
-.. automodapi:: utils.exceptions
-  :no-heading:
-  :no-inheritance-diagram:

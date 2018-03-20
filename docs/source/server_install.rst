@@ -10,7 +10,7 @@ This is a 10 minute video which walks you through the setup process from install
 
 .. raw:: html
 
-    <iframe width="690" height="415" src="http://www.youtube.com/embed/6Dakd7EIgBE?rel=0" frameborder="0" allowfullscreen></iframe>
+    <iframe width="690" height="380" src="https://www.youtube.com/embed/gAPfL7tdLxY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <br>
     <br>
 
