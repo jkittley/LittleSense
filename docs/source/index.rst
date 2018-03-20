@@ -70,8 +70,8 @@ For a breif moment we thought it was funny and also memorable domain names are h
 
 Contribute
 ----------
-- Issue Tracker: github.com/jkittley/|slug|/issues
-- Source Code: github.com/jkittley/|slug|
+- Issue Tracker: https://github.com/jkittley/|slug|/issues
+- Source Code: https://github.com/jkittley/|slug|
 
 Support
 -------
