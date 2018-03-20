@@ -45,3 +45,12 @@ class BackupForm(FlaskForm):
     start = DateTimeField('Start Date', default=arrow.utcnow().shift(days=-1), validators=[])
     end = DateTimeField('End Date', default=arrow.utcnow(), validators=[])
     messurement = SelectField('Dataset',choices=INFLUX_MESSUREMENTS, default=INFLUX_MESSUREMENTS[0][0])
+
+
+class ReadingForm(FlaskForm):
+    utc = DateTimeField('UTC', default=arrow.utcnow(), validators=[])
+    device_id = StringField('Device ID',  validators=[DataRequired()])
+    field = StringField('Field name',  validators=[DataRequired()])
+    dtype = SelectField('Data Type', choices=[('float','float'), ('int','int'), ('bool','bool'), ('string','string'), ('percent','percent')], validators=[])
+    unit  = StringField('Unit of messurement', validators=[DataRequired()])
+    value = StringField('Value', validators=[DataRequired()])

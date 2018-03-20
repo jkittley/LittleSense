@@ -243,16 +243,20 @@ class Device():
         for field_id in self._seen_field_ids:
             if only_ids is not None and field_id not in only_ids:
                 continue
-            dtype, name, unit = self._field_id_components(field_id)
-            out.append({
-                'id': field_id,
-                'name': name,
-                'dtype': dtype,
-                'unit': unit,
-                'is_numeric': dtype in ['float','int','pecent'],
-                'is_boolean': dtype in ['bool'],
-                'is_string': dtype in ['string', 'str']
-            }) 
+            try:
+                dtype, name, unit = self._field_id_components(field_id)
+                out.append({
+                    'id': field_id,
+                    'name': name,
+                    'dtype': dtype,
+                    'unit': unit,
+                    'is_numeric': dtype in ['float','int','pecent'],
+                    'is_boolean': dtype in ['bool'],
+                    'is_string': dtype in ['string', 'str']
+                }) 
+            except IllformedFieldName:
+                log.error('device.fields() returning an ill formed field name! Skipped.')
+                
         return out
 
     def is_registered(self, setto=None) -> bool:
@@ -286,12 +290,12 @@ class Device():
         self._tydb.upsert(data, Query().device_id == self.id)
         self._load()
         
-    def add_reading(self, utc:str, fields:str, commlink_name:str):
+    def add_reading(self, utc:str, fields:dict, commlink_name:str):
         """Add a new reading for the device.
         
         Args:
             utc: UTC timestamp as a string.
-            fields: The feild_id of the field 
+            fields: Dictionary of field_id:values
             commlink_name: Name of the commulication link through which the reading was devivered 
         
         Raises:
@@ -408,6 +412,29 @@ class Device():
         # Return
         return Readings(readings, self.id, s, e, interval, fillmode, fields_data)
         
+    def get_dtypes(self, category:str=None):
+        """Get the most recent reading from this devices data.
+        
+        Args:
+            category (str): What sub type of dtypes to return. Options: numbers, strings, booleans
+           
+        Returns:
+            list: List of acceptable data types.
+
+        """
+
+        alltypes = dict(
+            numbers  = ['float', 'int'],
+            strings  = ['string', 'str'],
+            booleans = ['bool']
+        )
+        if category is None:
+            return alltypes['numbers'] + alltypes['strings'] + alltypes['booleans']
+        elif category in alltypes.keys():
+            return alltypes[category]
+        else:
+            raise IndexError('Unknown Key Cat')
+
 
     # ---- Helpers ------------------------------------------------------------
 
@@ -418,11 +445,22 @@ class Device():
         self._tydb.update({ 'fields': seen }, Query().device_id == self.id)
         self._load()
 
+    
+
     def _field_id_components(self, field_id):
-        parts = field_id.split('_')
+        """Split feild id into parts i.e. data rtype, name and unit"""
+        parts = field_id.lower().strip().split('_')
+        # Are there the right number of elements
         if len(parts) < 3:
             raise IllformedFieldName('Too few elements')
+        # Are any of the elements blank
+        for p in parts:
+            if len(p) == 0:
+                raise IllformedFieldName('Blank Elements')
         dtype = parts[0]
+        if dtype not in self.get_dtypes():
+            raise IllformedFieldName('Unknown data type {}'.format(dtype))
+
         name = " ".join(parts[1:-1]).capitalize()
         unit = parts[-1]
         return dtype, name, unit
@@ -432,22 +470,15 @@ class Device():
             log.device('Clean fields exception', exception="No fields")
         remove_list = []
         for field_name, value in fields.items():
-            try:
-                dtype, _, _ = self._field_id_components(field_name)
-                if dtype == 'float' or dtype == 'int':
-                    fields[field_name] = float(value)
-                elif dtype == 'bool':
-                    fields[field_name] = bool(value)
-                elif dtype == 'string' or dtype == 'str':
-                    fields[field_name] = str(value)
-                elif dtype == 'precent':
-                    fields[field_name] = min(100, max(0, int(value)))
-                else:
-                    raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
-
-            except IllformedFieldName as e:
-                log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
-                remove_list.append(field_name)
+            dtype, _, _ = self._field_id_components(field_name)
+            if dtype in self.get_dtypes('numbers'):
+                fields[field_name] = float(value)
+            elif dtype in self.get_dtypes('booleans'):
+                fields[field_name] = bool(value)
+            elif dtype in self.get_dtypes('strings'):
+                fields[field_name] = str(value)
+            else:
+                raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
 
         # Remove bad fields
         for fn in remove_list:

@@ -4,7 +4,7 @@
 # =============================================================================
 
 from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory
-from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm
+from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm, ReadingForm
 import arrow
 from flask import current_app as app
 from utils import Device, Devices, Logger, BackupManager, DashBoards
@@ -39,8 +39,10 @@ def devices():
 # Register - preview device
 @sysadmin.route("/devices/preview/<string:device_id>")
 def device_register_preview(device_id):
+    
     device = app.config.get('devices').get(device_id)
-    return render_template('system/preview.html', device=device)
+    form = ReadingForm(device_id=device.id)
+    return render_template('system/preview.html', device=device, form=form)
 
 
 # Register - configure device

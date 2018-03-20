@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, abort
 from flask_restful import Api, Resource, url_for, reqparse
 from flask import current_app as app
-from utils.exceptions import InvalidReadingsRequest, UnknownDevice
+from utils.exceptions import InvalidReadingsRequest, UnknownDevice, IllformedFieldName
 from utils import Metric, Device
 
 api_bp = Blueprint('api', __name__)
@@ -171,6 +171,68 @@ class ReadingsAPI(Resource):
     def __init__(self, *args, **kwargs):
         self.devices = app.config.get('devices')
 
+    def put(self):
+        """Add reading for device
+        
+        .. :quickref: Add reading; Add a new reading.
+
+        **Example request**:
+
+        .. sourcecode:: http
+
+          POST /api/readings HTTP/1.1
+          Host: littlesense.local
+          Accept: application/json
+        
+        **Example response**:
+
+        .. sourcecode:: http
+
+          HTTP/1.1 200 OK
+          Vary: Accept
+          Content-Type: application/json
+          
+          {
+            "success": true
+          }
+
+        :query device_id: Device ID e.g. test_device_id
+        :query utc: UTC timestamp string e.g. 2018-03-20T13:30:00Z
+        :query field: Field ID e.g. float_light_level_lux
+        :query dtype: Field data type e.g. float or int
+        :query unit: Field messurement unit e.g. lux or C
+        :query value: Value to record
+
+        :resheader Content-Type: application/json
+        :status 200: query successful found
+        :status 400: invalid request
+
+        """
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('device_id',     type=str, required=True, help='Device ID e.g. test_device_id')
+        parser.add_argument('utc',           type=str, required=True, help='UTC timestamp string e.g. 2018-03-20T13:30:00Z')
+        parser.add_argument('field',         type=str, required=True, help='Field Name e.g. light_level must be alpha numeric and contain no spaces only underscores')
+        parser.add_argument('dtype',         type=str, required=True, help='Field data type e.g. float')
+        parser.add_argument('unit',          type=str, required=True, help='Unit of messurement')
+        parser.add_argument('value',         type=str, required=True, help='Value to record')
+        args = parser.parse_args()  
+        
+        print (args)
+
+        try:
+            device = Device(args['device_id'], True)
+            field_id = "{}_{}_{}".format(args['dtype'],args['field'],args['unit'])
+            fields = dict()
+            fields[field_id] = args['value']
+            device.add_reading(args['utc'], fields, "WebAPI")
+            return dict(success=True, fields=fields)
+        except UnknownDevice:
+            return abort(400, "Device: {} unknown".format(args['device_id']))
+        except IllformedFieldName as e:
+            return abort(400, str(e))
+   
+
     def get(self):
         """Query readings from one or more device
         
@@ -251,6 +313,8 @@ class ReadingsAPI(Resource):
         :query end: End of readings period (inclusive)
         :query limit: Limit the number of results
         :query format: Results format. Default is as a list. by_time = dict where key is timestamp and value is a dict of field:value pairs
+        :query metrics[]: &metric[]=device_is,field_id,aggregation_function can use multiple &metric[]'s in call
+        :query device_id: Optional device id (replaces need for metric)
 
         :resheader Content-Type: application/json
         :status 200: query successful found
@@ -267,18 +331,31 @@ class ReadingsAPI(Resource):
         parser.add_argument('end',      type=str, default=None,   help='End of readings period (inclusive)')
         parser.add_argument('limit',    type=int, default=None,   help='Limit the number of results')
         parser.add_argument('format',   type=str, default=None,   help='Results format. Default is as a list. by_time = dict where key is timestamp and value is a dict of field:value pairs')
+        parser.add_argument('metric[]', action='append', default=[], type=str, help='Must be a series of metric[] = comma seportared list (device_is, field_id, aggregation function)')
+        parser.add_argument('device_id', default=None, type=str, help='Optional device id (replaces need for metric)')
         
-        parser.add_argument('metric[]',  action='append', default=[], type=str, help='Must be a comma seportared list (device_is, field_id, aggregation function)')
         args = parser.parse_args()  
 
-        metrics_by_device = {}
-        try:
-            for metric_str in args['metric[]']:
-                m = Metric.fromString(metric_str)
-                metrics_by_device.setdefault(m.device_id, []).append(m)
-        except ValueError as e:
-            abort(400, str(e))
-      
+        if len(args['metric[]']) > 0:
+            metrics_by_device = {}
+            try:
+                for metric_str in args['metric[]']:
+                    m = Metric.fromString(metric_str)
+                    metrics_by_device.setdefault(m.device_id, []).append(m)
+            except ValueError as e:
+                abort(400, str(e))
+
+        elif args['device_id'] is not None:
+            try:
+                device = Device(args['device_id'])
+                metrics_by_device = dict()
+                metrics_by_device[device.id] = "" 
+            except UnknownDevice:
+                abort(404, "Unknown device ID")
+
+        else:
+            abort(404, "You must specify a device id or a series of metrics")
+
         merged_results = None
         for device_id, metrics in metrics_by_device.items():
             # Fetch readings
@@ -302,6 +379,9 @@ class ReadingsAPI(Resource):
             except InvalidReadingsRequest as e:
                 abort(404, str(e))
         
-        return merged_results.all()
+        if merged_results is not None:
+            return merged_results.all()
+
+        return dict(count=0)
 
 api.add_resource(ReadingsAPI, '/readings/')

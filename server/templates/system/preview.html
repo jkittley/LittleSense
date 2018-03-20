@@ -1,4 +1,5 @@
 {% extends 'system/base.html' %}
+{% import 'macros.html' as b_wtf %}
 
 {% block style %}
 {% endblock%}
@@ -41,12 +42,13 @@
         $.ajax({
             dataType: "json",
             method: "GET",
-            url: "{{ url_for('api.readingsapi', device_id=device.id) }}",
+            url: "{{ url_for('api.readingsapi') }}",
             data: {
+                device_id: "{{ device.id }}",
                 start: moment().utc().subtract(2, 'minutes').format(),
                 end: moment().utc().format(),
                 fill: "null",
-                interval: 3
+                interval: 5
             },
             success: callback_success,
             error: callback_error
@@ -55,7 +57,6 @@
 
     function updatePlot() {
         getData(function(data) {
-            
             var names = {};
             $.each(data.fields, function(field_id, field_info) {
                 names[field_id] = field_info.name;
@@ -75,11 +76,26 @@
             clearInterval(intervalTimer);
         });
     }
+
+    function putData() {
+        $.ajax({
+            dataType: "json",
+            method: "PUT",
+            url: "{{ url_for('api.readingsapi') }}",
+            data: $( "#putform" ).serialize(),
+            success: function() { showAlert('Reading Added', 'success'); },
+            error: function() { showAlert('Failed to add reading', 'danger'); }
+        }); 
+    }
     
     $(document).ready(function() {
         initPlot();
         updatePlot();
         intervalTimer = setInterval(updatePlot, refresh_interval);
+        $('#putform').submit(function(e) {
+            e.preventDefault();
+            putData();
+        })
     });
 </script>
 {% endblock %}
@@ -95,13 +111,40 @@
 
 {% block content %}
 <div id="chart"></div>
-<hr>
-<div class="row">
-    <div class="col">
-        <a href="{{ url_for('.devices') }}" class="btn btn-block btn-info">Back</a>
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col">
+            <a href="{{ url_for('.devices') }}" class="btn btn-block btn-info">Back</a>
+        </div>
+        <div id="option-config" class="col">
+            <a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
+        </div>
     </div>
-    <div id="option-config" class="col">
-        <a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
+    <BR>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <form id="putform" class="form form-horizontal" action="">
+                    {% for field in form.errors %}
+                    {% for error in form.errors[field] %}
+                        <div class="alert alert-danger">
+                            <strong>{{ form[field].label }}</strong> {{error}}
+                        </div>
+                    {% endfor %}
+                    {% endfor %}
+                <div class="card">
+                    <div class="card-header">Add Reading</div>
+                    <div class="card-body">
+                        {{ form.csrf_token }}
+                        {{ b_wtf.bootstrap_form(form) }}  
+                        <input type="submit" class="btn btn-block btn-success float-right" value="Save">
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
+
 </div>
 {% endblock%}
