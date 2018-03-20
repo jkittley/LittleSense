@@ -58,7 +58,8 @@ app.register_blueprint(api_blueprint, url_prefix='/api')
 
 @app.before_first_request
 def init_devices():
-    app.config['devices'] = Devices()
+    if influx_connected():
+        app.config['devices'] = Devices()
 
 @app.before_first_request
 def init_dashboards():
@@ -72,9 +73,9 @@ def init_log():
 
 @app.before_request
 def handle_missing_db_connection():
-    log = Logger()
     if not influx_connected():
         return "<h1>No Device Database Connection</h1>"
+    log = Logger()
 
 @app.context_processor
 def context_basics():
