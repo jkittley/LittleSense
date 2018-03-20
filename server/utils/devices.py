@@ -26,7 +26,7 @@ class Devices():
        
     def update(self):
         """Refreshed cache of known devices from database"""
-        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
+        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "{}" WITH KEY = "device_id"'.format(settings.INFLUX_READINGS)).get_points()
         self.all = [ self.get(d['value'], True) for d in devices_in_readings ]
         self.registered = list(filter(lambda x: x.is_registered, self.all))
         self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
@@ -60,11 +60,11 @@ class Devices():
         if self._ifdb is None:
             return
         try:
-            counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
+            counts = next(self._ifdb.query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_READINGS)).get_points())
         except StopIteration:
             counts = {}
         try:
-            last_upd = next(self._ifdb.query('SELECT * FROM "reading" ORDER BY time DESC LIMIT 1').get_points())
+            last_upd = next(self._ifdb.query('SELECT * FROM "{}" ORDER BY time DESC LIMIT 1'.format(settings.INFLUX_READINGS)).get_points())
             last_upd = arrow.get(last_upd['time'])
             humanize = last_upd.humanize()
         except StopIteration:
@@ -114,7 +114,8 @@ class Devices():
        
         if to_process is not None:
             for device in to_process:
-                q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                q = 'DELETE FROM "{messurement}" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                    messurement=settings.INFLUX_READINGS,
                     device_id=device.id,
                     start=start,
                     end=end
@@ -310,7 +311,7 @@ class Device():
         self._add_fields(list(fields.keys()))
         # Create reading
         reading = {
-            "measurement": "reading",
+            "measurement": settings.INFLUX_READINGS,
             "tags": {
                 "device_id": self.id,
                 "commlink": commlink_name
@@ -329,7 +330,7 @@ class Device():
             list: List of commlink names.
 
         """
-        all_tags = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "commlink" WHERE "device_id"=\'{}\''.format(self.id))
+        all_tags = self._ifdb.query('SHOW TAG VALUES FROM "{0}" WITH KEY = "commlink" WHERE "device_id"=\'{1}\''.format(settings.INFLUX_READINGS, self.id))
         return [ x['value'] for x in list(all_tags.get_points()) if x['value'] != "NONE" ]
 
     def last_reading(self):
@@ -340,7 +341,7 @@ class Device():
             last_upd_keys: The keys assosiated with the reading.
 
         """
-        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
+        last_upds = self._ifdb.query('SELECT * FROM "{}" GROUP BY * ORDER BY DESC LIMIT 1'.format(settings.INFLUX_READINGS))
         try:
             last_upd = list(last_upds.get_points(tags=dict(device_id=self.id)))[0]
         except IndexError:
@@ -399,7 +400,8 @@ class Device():
             raise InvalidReadingsRequest("Invalid limit. Must be integer between {} and {}".format(min_results, max_results))
          
         # Build Query
-        q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
+        q = 'SELECT {fields} FROM "{messurement}" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
+            messurement=settings.INFLUX_READINGS,
             device_id=self.id, 
             interval="{}s".format(interval),
             timespan="time > '{start}' AND time <= '{end}'".format(start=s, end=e),

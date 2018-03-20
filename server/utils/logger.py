@@ -3,7 +3,6 @@ from .influx import get_InfluxDB
 import arrow, json, math
 from functools import wraps
 
-
 class Logger():
     """Custom logger with InfluxDB backend"""
 
@@ -22,7 +21,7 @@ class Logger():
 
     def _add_to_log(self, cat, message, **data):
         logmsg = {
-            "measurement": "logger",
+            "measurement": settings.INFLUX_LOGS,
             "tags": {
                 "category": cat
             },
@@ -77,7 +76,7 @@ class Logger():
         orderby = kwargs.get('orderby', None)
 
         # Build Query
-        query = 'SELECT * FROM "logger" WHERE time >= \'{0}\' and time <= \'{1}\''.format(start, end)
+        query = 'SELECT * FROM "{0}" WHERE time >= \'{1}\' and time <= \'{2}\''.format(settings.INFLUX_LOGS, start, end)
         if cat is not None and cat is not '':
             query += ' AND "category"=\'{0}\''.format(cat)
         
@@ -113,7 +112,8 @@ class Logger():
         start = kwargs.get('start', default_start)
         default_end = arrow.utcnow()
         end = kwargs.get('end', default_end)
-        q = 'DELETE FROM "logger" WHERE time > \'{start}\' AND time < \'{end}\''.format(
+        q = 'DELETE FROM "{messurement}" WHERE time > \'{start}\' AND time < \'{end}\''.format(
+            messurement=settings.INFLUX_LOGS,
             start=start,
             end=end
         )
@@ -124,7 +124,7 @@ class Logger():
 
     def __len__(self):
         try:
-            counts = next(self.get_ifdb().query('SELECT count(*) FROM "logger"').get_points())
+            counts = next(self.get_ifdb().query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_LOGS)).get_points())
             return counts['count_message']
         except:
             return 0

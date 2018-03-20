@@ -3,14 +3,6 @@ from influxdb.exceptions import InfluxDBClientError
 from requests.exceptions import RequestException
 from config import settings
 
-INFLUX_READINGS = "reading"
-INFLUX_LOGS = "logs"
-INFLUX_MESSUREMENTS = [
-    (INFLUX_READINGS, "Readings"),
-    (INFLUX_LOGS, "Logs")
-]
-
-
 def get_InfluxDB():
     """Get an instance of the InfluxDB database"""
     try:
@@ -18,7 +10,7 @@ def get_InfluxDB():
         ifdb.create_database(settings.INFLUX['dbname'])
 
         # Test connection
-        _ = ifdb.query('SHOW FIELD KEYS FROM "reading"')
+        _ = ifdb.query('SHOW FIELD KEYS FROM "{}"'.format(settings.INFLUX_READINGS))
         return ifdb
     except RequestException as e:
         print(e)

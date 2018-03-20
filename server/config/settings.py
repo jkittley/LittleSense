@@ -22,6 +22,14 @@ class DefaultSetting(SecureSettings):
         "user": "root",
         "pass": "root"
     } 
+    # Influx Messurements
+    INFLUX_READINGS = "reading"
+    INFLUX_LOGS = "logger"
+    INFLUX_MESSUREMENTS = [
+        (INFLUX_READINGS, "Readings"),
+        (INFLUX_LOGS, "Logs")
+    ]
+
     # Details of the TinyDB databases
     TINYDB = {
         "db_device_reg": "data/tinydb/devices.json"
@@ -89,6 +97,14 @@ class RemotelSetting(DefaultSetting):
             "dir": ''
         }
 
+class TestSettings(DefaultSetting):
+    INFLUX_READINGS = "test_reading"
+    INFLUX_LOGS = "test_logger"
+    INFLUX_MESSUREMENTS = [
+        (INFLUX_READINGS, "Readings"),
+        (INFLUX_LOGS, "Logs")
+    ]
+   
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 # DO NOT EDIF BELOW THIS LINE
@@ -98,5 +114,7 @@ class RemotelSetting(DefaultSetting):
 settings = None
 if 'LOCAL' in os.environ and os.environ['LOCAL'] == '1':
     settings = LocalSetting()
+elif 'TESTING' in os.environ and os.environ['TESTING'] == '1':
+    settings = TestSettings()
 else:
     settings = RemotelSetting()
