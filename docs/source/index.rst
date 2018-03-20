@@ -75,8 +75,7 @@ Contribute
 
 Support
 -------
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+If you are having issues, please let us know by submitting an issue.
 
 License
 -------
