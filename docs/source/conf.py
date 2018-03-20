@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.abspath('../../server/'))
 # ones.
 extensions = [ 
     'sphinx.ext.autodoc',
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
     'sphinxcontrib.httpdomain',
     'sphinxcontrib.autohttp.flask',
     'sphinxcontrib.autohttp.flaskqref',
