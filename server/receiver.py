@@ -7,7 +7,8 @@
 import signal, sys, string, time
 from random import randint, choice
 import click, arrow
-from utils import Logger
+from utils import Logger, Device
+from utils.exceptions import InvalidPacket
 
 log = Logger()
 comms_pool = []
@@ -24,16 +25,15 @@ comms_pool = []
 
 def pack_formatter_rf69(unformatted):
     utc = arrow.utcnow()
-    data = unformatted.get('data')
+    data = unformatted.get('data', None)
+    if data is None:
+        raise InvalidPacket('data is None')
     output_dict = dict(
-        sound_pressure = data[0] + data[1]<<8,
-        battery_level  = data[2] + data[3]<<8,
-        mode           = data[4] + data[5]<<8,
-        node_id   = unformatted.get('sender_id'),
-        rssi      = unformatted.get('rssi')
+        sound_pressure = data[0],
+        battery_level  = data[1],
+        rssi = unformatted.get('rssi')
     )
-    return utc, "device_{}".format(output_dict['node_id']), output_dict
-
+    return utc, "device_{}".format(unformatted.get('sender_id')), output_dict
 
 def pack_formatter_test(unformatted):
     # Because this is a test class there is no incomming data in the 'unformatted'
@@ -58,27 +58,40 @@ def pack_formatter_test(unformatted):
         return utc, "test_device_2", output_dict2
 
 # =============================================================================
+# Function to act on the formatted packets (returned by the punction above)
+# =============================================================================
+
+def save_reading(commlink_name, utc, device_id, sensor_readings):
+    dev = Device(device_id, True)
+    dev.add_reading(utc, sensor_readings, commlink_name)
+    return
+
+
+# =============================================================================
 # Main event loop manager
 # =============================================================================
 
 @click.command()
 @click.option('--test/--no-test', default=False)
-def launch(test=False):
+@click.option('--verbose/--no-verbose', default=False)
+def launch(test=False, verbose=False):
 
     if test:
         from commlink.test import ManagerTEST
-        comm = ManagerTEST(pack_formatter_test)
+        comm = ManagerTEST(pack_formatter_test, save_reading, verbose=True)
         log.debug("Radio TEST Starting...")
     else:
         # Initialise
         from commlink.rfm69 import ManagerRFM69
-        comm = ManagerRFM69(pack_formatter_rf69)
+        comm = ManagerRFM69(pack_formatter_rf69, save_reading, verbose=verbose)
         log.debug("Radio RFM69 Starting...")
     
     # Add radio to pool
     comms_pool.append(comm)
     comm.initialise()
     
+    # comm.transmit(2, "Hi ya")
+
     # This loop tries repeatedly to make receive work.
     while True:
         try:

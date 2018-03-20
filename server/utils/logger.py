@@ -5,6 +5,7 @@ from functools import wraps
 
 
 class Logger():
+    """Custom logger with InfluxDB backend"""
 
     def __init__(self):
         self._ifdb = get_InfluxDB()

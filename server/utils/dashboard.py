@@ -3,12 +3,21 @@ from unipath import Path
 from config import settings
 
 class DashBoards():
+    """Dashboard Collection (Iterable)"""
 
     def __init__(self):
         self.dashes = []
         self.update()
 
     def get(self, **kwargs):
+        """Get specific dashbaord.
+
+        Keyword Args:
+            slug: The slug assosiated with the dashboard.
+
+        Returns:
+            Dashboard is successful else None
+        """
         seek_slug = kwargs.get('slug', None)
         if seek_slug is not None:
             results = [d for d in self.dashes if d.slug == seek_slug]
@@ -17,6 +26,7 @@ class DashBoards():
         return None
 
     def update(self):
+        """Reload dashboard from file i.e. update cache"""
         self.dashes = []
         for x in Path(settings.DASHBOARDS_PATH).listdir(pattern="*.json"):
             self.dashes.append(Dashboard(x))
@@ -38,6 +48,7 @@ class DashBoards():
 
 
 class Dashboard():
+    """Dashboard Individual"""
 
     def __init__(self, file_path):
         self.file_path = file_path

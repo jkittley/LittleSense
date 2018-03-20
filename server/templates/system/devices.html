@@ -36,7 +36,7 @@
                   {{ f.name }} ({{ f.unit }})
                   {% if not loop.last %}, {% endif %}
                   {% endfor %}</td>
-                <td>{{ device.get_commlink() }}</td>
+                <td>{{ device.get_commlinks() }}</td>
                 <td><a href="{{ url_for('.device_register_preview', device_id=device.id) }}" class="btn btn-block btn-primary">Preview</a></td>
                 {% if device.is_registered() %}
                 <td><a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-primary">Configure</a></td>

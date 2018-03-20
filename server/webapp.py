@@ -7,8 +7,7 @@ import json
 import arrow
 from flask import render_template, Flask, request, abort, redirect, url_for, flash
 from config import settings
-from utils import Device, Devices, Logger, DashBoards
-from utils.influx import is_connected as influx_connected
+from utils import Device, Devices, Logger, DashBoards, influx_connected
 from utils.exceptions import UnknownDevice
 from sysadmin import sysadmin
 from api import api_bp as api_blueprint

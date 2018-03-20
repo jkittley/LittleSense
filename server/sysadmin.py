@@ -82,16 +82,16 @@ def db():
         # Purge
 
         if purge_form.reged.data or purge_form.unreg.data or purge_form.registry.data:
-            success = app.config.get('devices').purge(
-                end=arrow.utcnow(),  
-                unregistered=purge_form.unreg.data,
-                registered=purge_form.reged.data,
-                registry=purge_form.registry.data
-            )
-            if success:
+            try:
+                app.config.get('devices').purge(
+                    end=arrow.utcnow(),  
+                    unregistered=purge_form.unreg.data,
+                    registered=purge_form.reged.data,
+                    registry=purge_form.registry.data
+                )
                 flash('Purged devices data', 'success')
-            else:
-                flash('Failed to purge devices data', 'danger')
+            except ValueError as e:
+                flash('Failed to purge devices data {}'.format(e), 'danger')
 
         if purge_form.logs.data:
             app.config.get('log').purge()
@@ -141,12 +141,12 @@ def backup_delete(filename):
     delete_form = AreYouSureForm()
     if delete_form.validate_on_submit():
         backup_manager = BackupManager()
-        success, msg = backup_manager.delete_backup(filename+".csv")
-        if success:
-            flash(msg, 'success')
+        try:
+            backup_manager.delete_backup(filename+".csv")
+            flash("Backup created", 'success')
             return redirect(url_for('.backup'))
-        else:
-            flash(msg, 'danger')
+        except FileNotFoundError:
+            flash("Failed to create backup", 'danger')
     return render_template('system/backup.html', delete_form=delete_form, delete_file=filename)
 
 # System Admin - Backup create
@@ -157,12 +157,12 @@ def backup_create():
     if backup_form.validate_on_submit():
         # Create backup 
         backup_manager = BackupManager()
-        download_file, message = backup_manager.create(
-            backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
-        if download_file is not None:
+        try:
+            download_file = backup_manager.create(backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
             flash('Backup created', 'success')
-        else:
+        except LookupError:
             flash('Backup failed {}'.format(message), 'danger')
+
     return redirect(url_for('.backup'))
 
 # System Admin - Backup create

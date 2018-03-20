@@ -9,6 +9,7 @@ api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
 
 class DevicesAPI(Resource):
+    """Device Listing """
 
     def __init__(self, *args, **kwargs):
         self.devices = app.config.get('devices')
@@ -20,6 +21,7 @@ api.add_resource(DevicesAPI, '/devices')
 
 
 class DeviceAPI(Resource):
+    """Device API"""
 
     def __init__(self, *args, **kwargs):
         self.devices = app.config.get('devices')
@@ -34,12 +36,14 @@ api.add_resource(DeviceAPI, '/device/<string:device_id>')
 
 
 class ReadingsAPI(Resource):
+    """Readings API"""
 
     def __init__(self, *args, **kwargs):
         self.devices = app.config.get('devices')
 
     def get(self):
-
+        """Query readings from one or more device"""
+        
         # Parse variables
         parser = reqparse.RequestParser()
         parser.add_argument('fill',     type=str, default="none", help='Fill mode specifies what to do if there is no data for an interval. If set to "null" then an interval reading will be returned but with a null value. If "none" then no reading will be returned for the interval. ')

@@ -15,7 +15,8 @@ log = Logger()
 
 
 class Devices():
-    
+    """Devices Collection (Iterator)"""
+
     def __init__(self):
         self.all = []
         self.registered = []
@@ -24,12 +25,24 @@ class Devices():
         self.update()
        
     def update(self):
+        """Refreshed cache of known devices from database"""
         devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
         self.all = [ self.get(d['value'], True) for d in devices_in_readings ]
         self.registered = list(filter(lambda x: x.is_registered, self.all))
         self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
 
-    def get(self, device_id, create_if_unknown=False):
+    def get(self, device_id:str, create_if_unknown:bool=False):
+        """Get (or create) a specific Device
+
+        args:
+            device_id: The unique ID of the device.
+
+        keyword args:
+            create_if_unknown: If the device_id is not known then create a new Device.
+
+        returns:
+            Device: If device_id is found returns a Device. If no mathcing device found and create_if_unknown is False then returns None. However if create_if_unknown is True then return the newly created Device()
+        """
         for x in self.all:
             if x.id == str(device_id).strip():
                 return x
@@ -38,6 +51,12 @@ class Devices():
         return None
 
     def stats(self):
+        """Generate device related statistics
+
+        returns:
+            dict: total_readings, last_update, last_update_humanized, list of registered_devices
+
+        """
         if self._ifdb is None:
             return
         try:
@@ -59,6 +78,19 @@ class Devices():
         }
 
     def purge(self, **kwargs):
+        """Purge (delete) databases of requested content
+        
+        keyword args:
+            registered (bool): Purge registered devices.
+            unregistered (bool): Purge unregistered devices.
+            registry (bool): Purge known device registry.
+            start (str): DateTime string from when to purge data.
+            end (str): DateTime string until when to purge data. 
+        
+        raises:
+            ValueError: If ill defined purge
+        """
+
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
         registry     = kwargs.get('registry', False)
@@ -89,13 +121,31 @@ class Devices():
                 )
                 log.funcexec('Purged', registered=registered, unregistered=unregistered)
                 self._ifdb.query(q)
+        else:
+            raise ValueError('Nothing specified to process')
 
-        return True
  
-    def to_dict(self, devs):
-        return [ d.as_dict() for d in devs ]
+    def to_dict(self, devices:list):
+        """Converts list of Devices to list of dictionaries
 
-    def as_dict(self, update=False):
+        Args:
+            devices: List of Device() objects
+
+        Returns:
+            list: List of dictionaries, each representing a Device()
+        """
+        return [ d.as_dict() for d in devices ]
+
+    def as_dict(self, update:bool=False) -> dict:
+        """Get Devices collection represented as a dictionary
+
+        Args:
+            update: Update cache before returning.
+
+        Returns:
+            dict: Dictionary containing three lists. All devices (all), Registered devices (registered) and Unregistered devices (unregistered)
+        
+        """
         if update:
             self.update()
         return {
@@ -126,14 +176,21 @@ class Devices():
 
 
 class Device():
+    """Individual Device
+    
+    Args:
+        device_id: The unique ID of the device.
+        create_if_unknown: If the device_id is not known then create a new Device.
+    """
 
-    def __init__(self, device_id, create_if_unknown=False):
+    def __init__(self, device_id:str, create_if_unknown:bool=False):
         self._tydb = TinyDB(settings.TINYDB['db_device_reg'])
         self._ifdb = get_InfluxDB()
         self.id = device_id
-        self.load(create_if_unknown)
+        self._load(create_if_unknown)
 
     def _create(self):
+        """Create a new device in the database"""
         data = {
             'device_id': self.id, 
             'name': "Unregistered",
@@ -141,7 +198,8 @@ class Device():
         }
         self._tydb.upsert(data, Query().device_id == self.id)
 
-    def load(self, create_if_unknown=False):
+    def _load(self, create_if_unknown=False):
+        """Load device from database"""
         try:
             record = self._tydb.search(Query().device_id == self.id)[0]
         except IndexError:
@@ -158,7 +216,28 @@ class Device():
             self._seen_field_ids = record['fields']
 
     def fields(self, **kwargs):
-        self.load()
+        """List all fields which this device has at some time reported values for.
+
+        Keyword Args:
+            only (list): List of device_ids to which results should be limited.
+
+        Returns:
+            list: List of dictionaries, each carrying information pertaining to the Field::
+
+            [{
+                'id': (str) field_id,
+                'name': (str) human readable name,
+                'dtype': (str) data type e.g. float, int,
+                'unit': (str) unit of messurement,
+                'is_numeric': (bool) is the value numeric,
+                'is_boolean': (bool) is the value a boolean,
+                'is_string': (bool) is the value a string
+            },
+            ...
+            ]
+
+        """
+        self._load()
         out = []
         only_ids = kwargs.get('only', None)
         for field_id in self._seen_field_ids:
@@ -176,7 +255,16 @@ class Device():
             }) 
         return out
 
-    def is_registered(self, setto=None):
+    def is_registered(self, setto=None) -> bool:
+        """Set/Get device registration status
+
+        Args:
+            setto (bool): New registration status
+
+        Returns:
+            Current registration status
+
+        """
         if setto is not None: 
             assert type(setto) == bool
             data = {
@@ -184,18 +272,33 @@ class Device():
                 "registered": setto
             }
             self._tydb.upsert(data, Query().device_id == self.id)
-            self.load()
+            self._load()
         return self._registered
 
-    def set_name(self, name):
-        data = {
-            'device_id': self.id, 
-            "name": str(name).strip()
-        }
-        self._tydb.upsert(data, Query().device_id == self.id)
-        self.load()
+    def set_name(self, name:str):
+        """Set a human readable name for the device.
         
-    def add_reading(self, utc, fields, commlink_name):
+        Args:
+            name: New human readable name for the device
+            
+        """
+        data = dict(device_id=self.id, name=str(name).strip())
+        self._tydb.upsert(data, Query().device_id == self.id)
+        self._load()
+        
+    def add_reading(self, utc:str, fields:str, commlink_name:str):
+        """Add a new reading for the device.
+        
+        Args:
+            utc: UTC timestamp as a string.
+            fields: The feild_id of the field 
+            commlink_name: Name of the commulication link through which the reading was devivered 
+        
+        Raises:
+            utils.exceptions.InvalidUTCTimestamp: If UTC value is incorrectly formatted
+            utils.exceptions.IllformedFieldName: If field name does not conform to the prescribed pattern or conatins eronious values.
+
+        """
         # Clean and validate incoming data
         utc_str = self._clean_utc_str(utc)
         fields  = self._clean_fields(fields, self.id)
@@ -213,13 +316,26 @@ class Device():
         }
         # Save Reading
         self._ifdb.write_points([reading])
-        return True
+    
 
-    def get_commlink(self):
+    def get_commlinks(self):
+        """Get a list off commlinks which have provided data to this devices data
+        
+        Returns:
+            list: List of commlink names.
+
+        """
         all_tags = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "commlink" WHERE "device_id"=\'{}\''.format(self.id))
         return [ x['value'] for x in list(all_tags.get_points()) if x['value'] != "NONE" ]
 
     def last_reading(self):
+        """Get the most recent reading from this devices data.
+        
+        Returns:
+            last_upd: The most recent reading.
+            last_upd_keys: The keys assosiated with the reading.
+
+        """
         last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
         try:
             last_upd = list(last_upds.get_points(tags=dict(device_id=self.id)))[0]
@@ -231,8 +347,24 @@ class Device():
                 if v is not None:
                     last_upd_keys.append(k)
         return last_upd, last_upd_keys
+        # Readings(readings, self.id, s, e, interval, fillmode, limit, fields_data)
 
     def get_readings(self, **kwargs):
+        """Get the most recent reading from this devices data.
+        
+        Keyword Args:
+            fill (str): A fill mode for intervals with no data. Options:: "none" don't fill and "null" fill intervals with null readings (defaults to none).
+            interval (int): Reading interval in seconds. Readings are groupded into intervals (defaults to 5s).
+            fields (list): Limit fields to this lists field_ids (defaults to all)
+            start (arrow.arrow.Arrow): Datetime start of search period (defaults to 1 hour ago)
+            end (arrow.arrow.Arrow): Datetime end of search period (defaults to now)
+            limit (int): Limit the number of readings (Max = 5000, Min = 1).
+
+        Returns:
+            Readings: Readings matching query.
+
+        """
+
         # Fill gabs in period none=dont fill, null=fill intervals with null readings
         fillmode = kwargs.get('fill','none')
 
@@ -272,19 +404,19 @@ class Device():
             limit="LIMIT {0}".format(limit)
         )
         readings = self._ifdb.query(q)
-    
+        readings = list(readings.get_points())
         # Return
-        return Readings(readings, self.id, s, e, interval, fillmode, limit, fields_data)
+        return Readings(readings, self.id, s, e, interval, fillmode, fields_data)
         
 
     # ---- Helpers ------------------------------------------------------------
 
     def _add_fields(self, field_ids_list):
-        self.load()
+        self._load()
         seen = self._seen_field_ids
         seen = list(set(seen + field_ids_list))
         self._tydb.update({ 'fields': seen }, Query().device_id == self.id)
-        self.load()
+        self._load()
 
     def _field_id_components(self, field_id):
         parts = field_id.split('_')
@@ -313,7 +445,7 @@ class Device():
                 else:
                     raise InvalidFieldDataType('Invalid data type for {}'.format(field_name))
 
-            except Exception as e:
+            except IllformedFieldName as e:
                 log.device('Clean fields exception: {}'.format(field_name), exception=str(e), device_id=device_id)
                 remove_list.append(field_name)
 
@@ -400,6 +532,21 @@ class Device():
             return None
 
     def as_dict(self):
+        """Device represented as a dictionary
+        
+        Returns: Device represented as a dictionary::
+        
+            {
+                "device_id": (str) The device ID,
+                "registered": (bool) Is this device registered,
+                "fields": {
+                    see fields for details
+                },
+                "last_update": last update,
+                "last_upd_keys": last update keys
+            }
+
+        """
         last_update, last_upd_keys =  self.last_reading()
         return { 
             "device_id": self.id,
