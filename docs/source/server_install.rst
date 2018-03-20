@@ -61,14 +61,13 @@ Now we want to enable a few service, namely SSH access so we can connect over th
 6. Hit "ok" to return to the main menu.
 7. Select "Finish" and "OK" to reboot.
 
-
 Remote (Raspberry PI) First Install
 -----------------------------------
 Once you have prepared your Pi: 
 
 1. Activated your local virtual environment e.g. ```conda activate myenv```.
 2. Navigate to your local project folder and enter the server subfolder.
-3. Run ```fab -H <PI_IP_ADDRESS> init``` to setup the Pi for the first time. 
+3. Run ```fab -H littlesense.local init``` to setup the Pi for the first time. 
 4. Enter your username and password. If you have specifed a SSH public key path in the settings, this will be the only time the Pi will ask you. 
 
 The init process can take quite a while - it will install large packages like Python 3.5 and update the OS. Don't worry deploying changes is much faster!
@@ -78,9 +77,7 @@ Remote Updates
 When you want to update the Pi with changes that you have make locally (and tested!):
 
 1. Make sure you are using the virtual environment and in the server folder. 
-2. Run the command: ```fab -H 192.168.0.106 deploy```. 
-
-If have chosen not to specify a SSH Key you can add ```-u <USERNAME> -p<PASSWORD>``` to the end of the command to speed things up.
+2. Run the command: ```fab -H littlesense.local deploy```. 
 
 .. toctree::
    :maxdepth: 3
