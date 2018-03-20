@@ -61,13 +61,13 @@ class BackupManager():
         return out
          
 
-    def create(self, messurement:str, start:Arrow=arrow.utcnow().shift(days=-1), end:Arrow=arrow.utcnow()) -> str:
+    def create(self, messurement:str, start:str=None, end:str=None) -> str:
         """Create a new backup locally.
 
         Args:
             messurement: The messurement type i.e. 'readings' or 'logs'.
-            start: Arrow Datetime start of backup period.
-            end: Arrow Datetime end of backup period.
+            start: Datetime start of backup period (default: 1 hour ago).
+            end: Datetime end of backup period (default: Now).
         
         Returns:
             Saved file name
@@ -76,8 +76,15 @@ class BackupManager():
             LookupError if no data to backup
         """
         # If datetime passed rather than arrow
-        start = arrow.get(start)
-        end = arrow.get(end)
+        if start is None:
+            start = Arrow=arrow.utcnow().shift(days=-1)
+        else:
+            start = arrow.get(start)
+
+        if end is None:    
+            end = Arrow=arrow.utcnow()
+        else:
+            end = arrow.get(end)
 
         save_name = "{messurement}_{start}_to_{end}.csv".format(
             messurement=messurement,

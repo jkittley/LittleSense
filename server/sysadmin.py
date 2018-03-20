@@ -143,10 +143,10 @@ def backup_delete(filename):
         backup_manager = BackupManager()
         try:
             backup_manager.delete_backup(filename+".csv")
-            flash("Backup created", 'success')
+            flash("Backup deleted", 'success')
             return redirect(url_for('.backup'))
         except FileNotFoundError:
-            flash("Failed to create backup", 'danger')
+            flash("Failed to delete backup", 'danger')
     return render_template('system/backup.html', delete_form=delete_form, delete_file=filename)
 
 # System Admin - Backup create
@@ -158,10 +158,10 @@ def backup_create():
         # Create backup 
         backup_manager = BackupManager()
         try:
-            download_file = backup_manager.create(backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
+            backup_manager.create(backup_form.messurement.data, backup_form.start.data, backup_form.end.data)
             flash('Backup created', 'success')
-        except LookupError:
-            flash('Backup failed {}'.format(message), 'danger')
+        except LookupError as e:
+            flash('Backup failed {}'.format(e), 'danger')
 
     return redirect(url_for('.backup'))
 
