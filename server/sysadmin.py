@@ -3,11 +3,13 @@
 # webapp.py with the admin panel functionality.
 # =============================================================================
 
-from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory
-from forms import DeviceSettingsForm, DBPurgeForm, AreYouSureForm, LogFilterForm, BackupForm, ReadingForm
+from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory, request
+from forms import DeviceSettingsForm, DBPurgeReadingsForm, DBPurgeDeviceReadingsForm, DBPurgeRegistryForm, DBPurgeLogsForm, LogFilterForm, BackupForm, ReadingForm
 import arrow
+from unipath import Path
 from flask import current_app as app
 from utils import Device, Devices, Logger, BackupManager, DashBoards
+from config import settings
 
 sysadmin = Blueprint('sysadmin', __name__, template_folder='templates/system')
 
@@ -39,7 +41,6 @@ def devices():
 # Register - preview device
 @sysadmin.route("/devices/preview/<string:device_id>")
 def device_register_preview(device_id):
-    
     device = app.config.get('devices').get(device_id)
     form = ReadingForm(device_id=device.id)
     return render_template('system/preview.html', device=device, form=form)
@@ -79,30 +80,86 @@ def device_unregister(device_id):
 # System Admin - Database Functions
 @sysadmin.route("/databases", methods=['GET','POST'])
 def db():
-    purge_form = DBPurgeForm()
-    if purge_form.validate_on_submit():
-        # Purge
+    app.config['devices'].update()
+    return render_template('system/db.html', form=None, log=app.config.get('log').stats())
 
-        if purge_form.reged.data or purge_form.unreg.data or purge_form.registry.data:
+# System Admin - Database Functions
+@sysadmin.route("/databases/purge/by/device", methods=['GET','POST'])
+def db_purge_by_device():
+    app.config['devices'].update()
+    form = DBPurgeDeviceReadingsForm() 
+    form.devices.choices = [ (x.id, "{} ({}) - Registered: {}".format(x.name, x.id, x.is_registered())) for x in list(app.config['devices'].all) ]
+    if form.validate_on_submit():
+        if len(form.devices.data) > 0:
             try:
                 app.config.get('devices').purge(
                     end=arrow.utcnow(),  
-                    unregistered=purge_form.unreg.data,
-                    registered=purge_form.reged.data,
-                    registry=purge_form.registry.data
+                    devices=form.devices.data
                 )
                 flash('Purged devices data', 'success')
             except ValueError as e:
                 flash('Failed to purge devices data {}'.format(e), 'danger')
+        else:
+            flash('Nothing to purge. Please select at least one device', 'warning')
+    form.verify.data = ""
+    return render_template('system/db.html', form=form)
 
-        if purge_form.logs.data:
-            app.config.get('log').purge()
+# System Admin - Database Functions
+@sysadmin.route("/databases/purge/by/registration/status", methods=['GET','POST'])
+def db_purge_by_reg_state():
+    app.config['devices'].update()
+    form = DBPurgeReadingsForm() 
+    if form.validate_on_submit():
+        if form.reged.data or form.unreg.data:
+            try:
+                app.config.get('devices').purge(
+                    end=arrow.utcnow(),  
+                    unregistered=form.unreg.data,
+                    registered=form.reged.data,
+                )
+                flash('Purged data', 'success')
+            except ValueError as e:
+                flash('Failed to purge data {}'.format(e), 'danger')
+        else:
+            flash('Nothing selected to purge.', 'warning')
+    form.verify.data = ""
+    return render_template('system/db.html', form=form)
+
+# System Admin - Database Functions
+@sysadmin.route("/databases/purge/registry", methods=['GET','POST'])
+def db_purge_registry():
+    app.config['devices'].update()
+    form = DBPurgeRegistryForm()
+    if form.validate_on_submit():
+        Path(settings.TINYDB['db_device_reg']).remove()
+        flash('Purged registry', 'success')
+    form.verify.data = ""
+    return render_template('system/db.html', form=form)
+
+# System Admin - Database Functions
+@sysadmin.route("/databases/purge/logs", methods=['GET','POST'])
+def db_purge_logs():
+    app.config['devices'].update()
+    form = DBPurgeLogsForm()
+    form.cats.choices = app.config.get('log').get_categories()
+
+    if form.validate_on_submit():
+        if len(form.cats.data) > 0:
+            app.config.get('log').purge(
+                start=arrow.get(form.start.data),
+                end=arrow.get(form.end.data),
+                categories=form.cats.data
+            )
             flash('Logs Purged', 'success')
+        else:
+            flash('Nothing to purge. Please select at least one category', 'warning')
+    form.verify.data = ""
+    return render_template('system/db.html', form=form, log=app.config.get('log').stats(), devices=None)
 
+
+
+   
     
-    # Always clear verify
-    purge_form.verify.data = ""
-    return render_template('system/db.html', purge_form=purge_form)
 
 # -----------------------------------------------------------------------------
 # Logs Viewer

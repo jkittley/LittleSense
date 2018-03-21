@@ -1,7 +1,6 @@
 
 old/
 *.pyc
-server/config/secure.py
 server/data/tinydb/*.json
 server/data/*.db
 backups/
@@ -9,3 +8,5 @@ docs/build/
 docs/make.bat
 docs/Makefile
 *.afdesign
+server/test/.pytest_cache/
+server/.pytest_cache/

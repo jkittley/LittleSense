@@ -17,12 +17,11 @@ To create an ssh key open command prompt on your local machine and:
     * On Windows: Run ```dir /c/Users/<YOUR_USERNAME>/```
     * On Linux: Run ```ls ~/.ssh```
 
-You should see two the following files "id_rsa"  "id_rsa.pub" among others. Important! "id_rsa" is private, do NOT copy this anywhwere! The "id_rsa.pub" file is one you transfer to other machines.
+You should see the following files: "id_rsa" and "id_rsa.pub" among others. Important! "id_rsa" is private, do NOT copy this anywhwere! The "id_rsa.pub" file is one you transfer to other machines.
 
-5. Set the PUBLIC_SSH_KEY variable in the settings file to "~/.ssh/id_rsa.pub" for Mac and Linux users and "/c/Users/<YOUR_USERNAME>/" for Windows.
+5. Set the PUBLIC_SSH_KEY variable in the settings file to "/Users/<YOUR_USERNAME>/.ssh/id_rsa.pub" for Mac and Linux users and "/c/Users/<YOUR_USERNAME>/" for Windows.
 
 If you have not run the initial intall on the Pi yet then stop here. The SSH key will be added when the install begins. If you have already initialised the PI then run the following command: ```fab add_ssh_key -H littlesense.local```
-
 
 
 Changing the .local Address

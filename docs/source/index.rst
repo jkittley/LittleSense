@@ -5,6 +5,10 @@
 
 .. include:: global.rst
 
+.. note::
+
+   This project has just been released so it may contain bugs. If you spot one then please report it as an issue. We want to make this project awesome and to do that we need your help!
+
 Welcome to |project| documentation!
 ===================================
 So you want to deploy a bunch of sensors and store the data they produce locally? Well you 
@@ -48,14 +52,11 @@ The project is structured in two main section. We recomment starting by setting 
    :maxdepth: 2
 
    self
-   server_install
-   server_extra
-   server_about
+   getstarted
+   getdata
    customisation
-   device
-   utils
-   exceptions
    api
+   server_about
    
 About the code
 --------------
@@ -70,13 +71,12 @@ For a breif moment we thought it was funny and also memorable domain names are h
 
 Contribute
 ----------
-- Issue Tracker: github.com/jkittley/|slug|/issues
-- Source Code: github.com/jkittley/|slug|
+- Issue Tracker: https://github.com/jkittley/LittleSense/issues
+- Source Code: https://github.com/jkittley/LittleSense
 
 Support
 -------
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+If you are having issues, please let us know by submitting an issue.
 
 License
 -------

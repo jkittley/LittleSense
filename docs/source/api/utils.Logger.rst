@@ -16,7 +16,6 @@ Logger
       ~Logger.error
       ~Logger.funcexec
       ~Logger.get_categories
-      ~Logger.get_ifdb
       ~Logger.interaction
       ~Logger.list_records
       ~Logger.purge
@@ -30,7 +29,6 @@ Logger
    .. automethod:: error
    .. automethod:: funcexec
    .. automethod:: get_categories
-   .. automethod:: get_ifdb
    .. automethod:: interaction
    .. automethod:: list_records
    .. automethod:: purge

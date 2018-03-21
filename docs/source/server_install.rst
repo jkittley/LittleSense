@@ -4,16 +4,6 @@ Installation
 ============
 The fastest way to get this code up and running on a Raspberry Pi is with `Fabric <http://www.fabfile.org/>`_. Fabric is a tool which automates deployment of code and installation of dependancies on remote machines. In order to do this you must first setup the system on your local machine. N.B. We actually employ a fork of Fabric which is Python 3 compatable.
 
-Getting Started Video Tutorial
-------------------------------
-This is a 10 minute video which walks you through the setup process from installing NOOBs on your Pi to collecting data. All the instructions you need are then detailed below.
-
-.. raw:: html
-
-    <iframe width="690" height="380" src="https://www.youtube.com/embed/gAPfL7tdLxY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-    <br>
-    <br>
-
 Local Install
 -------------
 1. Create a Python 3.5+ virtual environment (we recommend using `Anaconda <https://www.anaconda.com/download/>`_ as a tool for managing local environments. If you have Anaconda installed you can call ```conda create --name myenv``` to create an environment called "myenv".
@@ -61,14 +51,13 @@ Now we want to enable a few service, namely SSH access so we can connect over th
 6. Hit "ok" to return to the main menu.
 7. Select "Finish" and "OK" to reboot.
 
-
 Remote (Raspberry PI) First Install
 -----------------------------------
 Once you have prepared your Pi: 
 
 1. Activated your local virtual environment e.g. ```conda activate myenv```.
 2. Navigate to your local project folder and enter the server subfolder.
-3. Run ```fab -H <PI_IP_ADDRESS> init``` to setup the Pi for the first time. 
+3. Run ```fab -H littlesense.local init``` to setup the Pi for the first time. 
 4. Enter your username and password. If you have specifed a SSH public key path in the settings, this will be the only time the Pi will ask you. 
 
 The init process can take quite a while - it will install large packages like Python 3.5 and update the OS. Don't worry deploying changes is much faster!
@@ -78,9 +67,7 @@ Remote Updates
 When you want to update the Pi with changes that you have make locally (and tested!):
 
 1. Make sure you are using the virtual environment and in the server folder. 
-2. Run the command: ```fab -H 192.168.0.106 deploy```. 
-
-If have chosen not to specify a SSH Key you can add ```-u <USERNAME> -p<PASSWORD>``` to the end of the command to speed things up.
+2. Run the command: ```fab -H littlesense.local deploy```. 
 
 .. toctree::
    :maxdepth: 3

@@ -7,7 +7,6 @@ from .readings import Readings
 from .metric import Metric
 from .influx import get_InfluxDB
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice, InvalidReadingsRequest
-from tinydb import TinyDB, Query
 from unipath import Path
 import arrow
 
@@ -26,10 +25,10 @@ class Devices():
        
     def update(self):
         """Refreshed cache of known devices from database"""
-        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "device_id"').get_points()
+        devices_in_readings = self._ifdb.query('SHOW TAG VALUES FROM "{}" WITH KEY = "device_id"'.format(settings.INFLUX_READINGS)).get_points()
         self.all = [ self.get(d['value'], True) for d in devices_in_readings ]
-        self.registered = list(filter(lambda x: x.is_registered, self.all))
-        self.unregistered = list(filter(lambda x: not x.is_registered, self.all))
+        self.registered = list(filter(lambda x: x.is_registered(), self.all))
+        self.unregistered = list(filter(lambda x: not x.is_registered(), self.all))
 
     def get(self, device_id:str, create_if_unknown:bool=False):
         """Get (or create) a specific Device
@@ -60,11 +59,13 @@ class Devices():
         if self._ifdb is None:
             return
         try:
-            counts = next(self._ifdb.query('SELECT count(*) FROM "reading"').get_points())
+            counts = next(self._ifdb.query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_READINGS)).get_points())
         except StopIteration:
             counts = {}
+        if 'time' in counts.keys():
+            del counts['time']
         try:
-            last_upd = next(self._ifdb.query('SELECT * FROM "reading" ORDER BY time DESC LIMIT 1').get_points())
+            last_upd = next(self._ifdb.query('SELECT * FROM "{}" ORDER BY time DESC LIMIT 1'.format(settings.INFLUX_READINGS)).get_points())
             last_upd = arrow.get(last_upd['time'])
             humanize = last_upd.humanize()
         except StopIteration:
@@ -93,14 +94,10 @@ class Devices():
 
         registered   = kwargs.get('registered', False)
         unregistered = kwargs.get('unregistered', False)
-        registry     = kwargs.get('registry', False)
-
-        if registry:
-            Path(settings.TINYDB['db_device_reg']).remove()
+        device_ids   = kwargs.get('devices', [])
 
         default_start = arrow.utcnow().shift(years=-10)
         start = kwargs.get('start', default_start)
-
         default_end = arrow.utcnow().shift(minutes=-settings.PURGE['unreg_interval'])
         end = kwargs.get('end', default_end)
 
@@ -111,15 +108,23 @@ class Devices():
             to_process = self.registered
         elif unregistered:
             to_process = self.unregistered
-       
+        else:
+            to_process = self.all.copy()
+            for device in to_process:
+                if device.id not in device_ids:
+                    to_process.remove(device)
+
+        print(to_process)
+
         if to_process is not None:
             for device in to_process:
-                q = 'DELETE FROM "reading" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                q = 'DELETE FROM "{messurement}" WHERE time > \'{start}\' AND time < \'{end}\' AND "device_id"=\'{device_id}\''.format(
+                    messurement=settings.INFLUX_READINGS,
                     device_id=device.id,
                     start=start,
                     end=end
                 )
-                log.funcexec('Purged', registered=registered, unregistered=unregistered)
+                log.funcexec('Purged', registered=registered, unregistered=unregistered, to_process=[ d.id for d in to_process])
                 self._ifdb.query(q)
         else:
             raise ValueError('Nothing specified to process')
@@ -155,7 +160,7 @@ class Devices():
         }
 
     def __str__(self):
-        return "Device List"
+        return "Device List. Contains {} devices".format(len(self))
 
     def __repr__(self):
         return "Devices()"
@@ -193,7 +198,7 @@ class Device():
         """Create a new device in the database"""
         data = {
             'device_id': self.id, 
-            'name': "Unregistered",
+            'name': "No name",
             "registered": False
         }
         self._tydb.upsert(data, Query().device_id == self.id)
@@ -310,7 +315,7 @@ class Device():
         self._add_fields(list(fields.keys()))
         # Create reading
         reading = {
-            "measurement": "reading",
+            "measurement": settings.INFLUX_READINGS,
             "tags": {
                 "device_id": self.id,
                 "commlink": commlink_name
@@ -329,7 +334,7 @@ class Device():
             list: List of commlink names.
 
         """
-        all_tags = self._ifdb.query('SHOW TAG VALUES FROM "reading" WITH KEY = "commlink" WHERE "device_id"=\'{}\''.format(self.id))
+        all_tags = self._ifdb.query('SHOW TAG VALUES FROM "{0}" WITH KEY = "commlink" WHERE "device_id"=\'{1}\''.format(settings.INFLUX_READINGS, self.id))
         return [ x['value'] for x in list(all_tags.get_points()) if x['value'] != "NONE" ]
 
     def last_reading(self):
@@ -340,7 +345,7 @@ class Device():
             last_upd_keys: The keys assosiated with the reading.
 
         """
-        last_upds = self._ifdb.query('SELECT * FROM "reading" GROUP BY * ORDER BY DESC LIMIT 1')
+        last_upds = self._ifdb.query('SELECT * FROM "{}" GROUP BY * ORDER BY DESC LIMIT 1'.format(settings.INFLUX_READINGS))
         try:
             last_upd = list(last_upds.get_points(tags=dict(device_id=self.id)))[0]
         except IndexError:
@@ -399,7 +404,8 @@ class Device():
             raise InvalidReadingsRequest("Invalid limit. Must be integer between {} and {}".format(min_results, max_results))
          
         # Build Query
-        q = 'SELECT {fields} FROM "reading" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
+        q = 'SELECT {fields} FROM "{messurement}" WHERE {timespan} AND "device_id"=\'{device_id}\' GROUP BY time({interval}) FILL({fill}) ORDER BY time DESC {limit}'.format(
+            messurement=settings.INFLUX_READINGS,
             device_id=self.id, 
             interval="{}s".format(interval),
             timespan="time > '{start}' AND time <= '{end}'".format(start=s, end=e),
@@ -411,6 +417,24 @@ class Device():
         readings = list(readings.get_points())
         # Return
         return Readings(readings, self.id, s, e, interval, fillmode, fields_data)
+
+    def count(self):
+        """Count the number of readings for this device
+                 
+        Returns:
+            int: Number of readings for this device
+
+        """
+        q = 'SELECT count(*) FROM "{messurement}" WHERE "device_id"=\'{device_id}\''.format(
+            messurement=settings.INFLUX_READINGS,
+            device_id=self.id, 
+        )
+        cmax = 0
+        counts = next(self._ifdb.query(q).get_points())
+        for field_id, count in counts.items():
+            if count is not None and field_id != 'time':
+                cmax = max(cmax, int(count))
+        return cmax
         
     def get_dtypes(self, category:str=None):
         """Get the most recent reading from this devices data.
@@ -443,9 +467,7 @@ class Device():
         seen = self._seen_field_ids
         seen = list(set(seen + field_ids_list))
         self._tydb.update({ 'fields': seen }, Query().device_id == self.id)
-        self._load()
-
-    
+        self._load()   
 
     def _field_id_components(self, field_id):
         """Split feild id into parts i.e. data rtype, name and unit"""
@@ -534,7 +556,7 @@ class Device():
             elif fd['is_boolean']:
                 if agrfunc is None:
                     agrfunc = "count"
-                if agrfunc in ['count', 'first', 'last', 'max', 'min']:
+                if agrfunc in ['count', 'first', 'last']:
                     qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
                 else:
                     log.debug('_fields_to_query invalid agrfunc', **fd)
