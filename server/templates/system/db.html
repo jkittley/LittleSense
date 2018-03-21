@@ -80,10 +80,15 @@
     {% else %}
     <div class="card border-top-0 rounded-0">
         <div class="card-body">
-          Danger! These options allow you to perminantly delete data. This cannot be undone so please make a backup first.
-          <p><strong>Note:</strong> Data older than 
-          {{ config.AUTO_PURGE_UNREG_KEEP }} minutes for unregistered devices is deleted 
-          automatically every {{ config.AUTO_PURGE_UNREG_INTERVAL }} minutes.
+          <div class="alert alert-danger" role="alert">
+            <p class="lead">Danger! These options allow you to perminantly delete data. This cannot be undone so please make a backup first.</p>
+          </div>
+          <div class="alert alert-secondary" role="alert">
+            <p class="lead"><strong>Note:</strong> Data older than 
+            {{ config.PURGE['unreg_keep_for'] }} minutes for unregistered devices is deleted 
+            automatically every {{ config.PURGE['unreg_interval'] }} minutes. Log data is also automatically removed after {{ config.PURGE['days_to_keep_log']}} days.
+            </p>
+          </div>
         </div>
     </div>
     {% endif %}
