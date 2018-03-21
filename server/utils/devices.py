@@ -7,7 +7,6 @@ from .readings import Readings
 from .metric import Metric
 from .influx import get_InfluxDB
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedFieldName, UnknownDevice, InvalidReadingsRequest
-from tinydb import TinyDB, Query
 from unipath import Path
 import arrow
 
@@ -420,6 +419,12 @@ class Device():
         return Readings(readings, self.id, s, e, interval, fillmode, fields_data)
 
     def count(self):
+        """Count the number of readings for this device
+                 
+        Returns:
+            int: Number of readings for this device
+
+        """
         q = 'SELECT count(*) FROM "{messurement}" WHERE "device_id"=\'{device_id}\''.format(
             messurement=settings.INFLUX_READINGS,
             device_id=self.id, 
