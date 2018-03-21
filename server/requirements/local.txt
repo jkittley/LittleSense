@@ -20,3 +20,4 @@ sphinxcontrib-httpdomain==1.6.1
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1
 sphinx-automodapi==0.7
+pytest==3.4.2
