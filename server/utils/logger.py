@@ -17,7 +17,15 @@ class Logger():
             return self._ifdb
 
     def stats(self):
-        return { "count": self.__len__() }
+        cat_counts = {}
+        for cat, _ in self.get_categories():
+            q = "SELECT count(message) FROM \"{}\" WHERE \"category\"='{}'".format(settings.INFLUX_LOGS, cat)
+            try:
+                c = next(self.get_ifdb().query(q).get_points())['count']
+                cat_counts[cat] = c
+            except StopIteration:
+                pass
+        return { "count": self.__len__(), "categories": cat_counts }
 
     def _add_to_log(self, cat, message, **data):
         logmsg = {
@@ -112,15 +120,21 @@ class Logger():
         start = kwargs.get('start', default_start)
         default_end = arrow.utcnow()
         end = kwargs.get('end', default_end)
+        cats = kwargs.get('categories', [])
         q = 'DELETE FROM "{messurement}" WHERE time > \'{start}\' AND time < \'{end}\''.format(
             messurement=settings.INFLUX_LOGS,
             start=start,
             end=end
         )
-        self.funcexec('Purged logs', start=start.format(), end=end.format())
-        self.get_ifdb().query(q)
-        return True
-
+        # No categories specified e.g. cron task
+        if len(cats) == 0:
+            self.funcexec('Purged logs', start=start.format(), end=end.format())
+            self.get_ifdb().query(q)
+        # With categories
+        else:
+            for cat in cats:
+                self.get_ifdb().query("{} AND \"category\"='{}'".format(q, cat))
+           
 
     def __len__(self):
         try:
