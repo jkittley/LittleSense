@@ -2,14 +2,13 @@
 
 Customising |project|
 =====================
-Yay, you are all setup and want to make |project| your own. On this page we link to tutorials which will guide you through making changes to |project|.
-
-What do you want to change?
----------------------------
+Now you are all setup, you can make |project| your own by adding a little style. 
 
 .. toctree::
    :maxdepth: 1
 
-   custom_logo
+   custom_look
    custom_dashboards
    custom_commlinks
+   utils
+   exceptions

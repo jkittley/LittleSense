@@ -1,7 +1,7 @@
 .. include:: global.rst
 
-System Design Notes
-===================
+Design Notes
+============
 The server employs many technologies. Below we list the most prominant and link to their respective websites. If all of this is a bit confusing then don’t worry, we only mention them here as a reference for anyone who is interested.
 
 - InfluxDb (https://www.influxdata.com/) to store and inspect time series sensor data

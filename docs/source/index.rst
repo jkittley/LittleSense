@@ -52,14 +52,11 @@ The project is structured in two main section. We recomment starting by setting 
    :maxdepth: 2
 
    self
-   server_install
-   server_extra
-   server_about
+   getstarted
+   getdata
    customisation
-   device
-   utils
-   exceptions
    api
+   server_about
    
 About the code
 --------------
@@ -74,8 +71,8 @@ For a breif moment we thought it was funny and also memorable domain names are h
 
 Contribute
 ----------
-- Issue Tracker: https://github.com/jkittley/|slug|/issues
-- Source Code: https://github.com/jkittley/|slug|
+- Issue Tracker: https://github.com/jkittley/LittleSense/issues
+- Source Code: https://github.com/jkittley/LittleSense
 
 Support
 -------

@@ -4,16 +4,6 @@ Installation
 ============
 The fastest way to get this code up and running on a Raspberry Pi is with `Fabric <http://www.fabfile.org/>`_. Fabric is a tool which automates deployment of code and installation of dependancies on remote machines. In order to do this you must first setup the system on your local machine. N.B. We actually employ a fork of Fabric which is Python 3 compatable.
 
-Getting Started Video Tutorial
-------------------------------
-This is a 10 minute video which walks you through the setup process from installing NOOBs on your Pi to collecting data. All the instructions you need are then detailed below.
-
-.. raw:: html
-
-    <iframe width="690" height="380" src="https://www.youtube.com/embed/gAPfL7tdLxY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-    <br>
-    <br>
-
 Local Install
 -------------
 1. Create a Python 3.5+ virtual environment (we recommend using `Anaconda <https://www.anaconda.com/download/>`_ as a tool for managing local environments. If you have Anaconda installed you can call ```conda create --name myenv``` to create an environment called "myenv".
