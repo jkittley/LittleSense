@@ -556,7 +556,7 @@ class Device():
             elif fd['is_boolean']:
                 if agrfunc is None:
                     agrfunc = "count"
-                if agrfunc in ['count', 'first', 'last', 'max', 'min']:
+                if agrfunc in ['count', 'first', 'last']:
                     qfields += '{agrfunc}("{fid}") AS "{did}__{agrfunc}__{fid}", '.format(fid=field_id, agrfunc=agrfunc, did=self.id)
                 else:
                     log.debug('_fields_to_query invalid agrfunc', **fd)
