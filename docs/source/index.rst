@@ -5,6 +5,10 @@
 
 .. include:: global.rst
 
+.. note::
+
+   This project has just been released so it may contain bugs. If you spot one then please report it as an issue. We want to make this project awesome and to do that we need your help!
+
 Welcome to |project| documentation!
 ===================================
 So you want to deploy a bunch of sensors and store the data they produce locally? Well you 
