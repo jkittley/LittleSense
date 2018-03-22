@@ -28,12 +28,13 @@ env.user = settings.DEPLOY_USER
 
 @task
 def deploy():
-    sync_files()
-    set_permissions()
-    install_venv_requirements()
-    restart_web_services()
-    restart_bg_services()
-    update_crontab()
+    setup_nginx()
+    # sync_files()
+    # set_permissions()
+    # install_venv_requirements()
+    # restart_web_services()
+    # restart_bg_services()
+    # update_crontab()
 
 @task
 def init():
@@ -228,6 +229,11 @@ def install_venv_requirements():
 def setup_nginx():
     print_title('Installing Nginx')
     deb.install('nginx')
+
+    server_hosts = [env.hosts[0], "raspberrypi.local", "{}.local".format(settings.ROOT_NAME)]
+    server_hosts.append( socket.gethostbyname(env.host) )
+    server_hosts = set(server_hosts)
+
     nginx_conf = '''
         # the upstream component nginx needs to connect to
         upstream django {{
@@ -239,7 +245,7 @@ def setup_nginx():
 
             # Block all names not in list i.e. prevent HTTP_HOST errors
             if ($host !~* ^({SERVER_NAMES})$) {{
-                return 444;
+               return 444;
             }}
 
             listen      80;
@@ -262,13 +268,14 @@ def setup_nginx():
                 proxy_pass http://unix:{SOCKET_FILES_PATH}{PROJECT_NAME}.sock;
         }}
     }}'''.format(
-        SERVER_NAMES="{0}|{1}.local|raspberrypi.local".format(env.hosts[0], settings.ROOT_NAME),
+        SERVER_NAMES="|".join(server_hosts),
         PROJECT_NAME=settings.ROOT_NAME,
         PROJECT_PATH=settings.DIR_CODE,
         STATIC_FILES_PATH=settings.DIR_CODE,
         VIRTUALENV_PATH=settings.DIR_VENV,
         SOCKET_FILES_PATH=settings.DIR_SOCK
     )  
+
     sites_available = "/etc/nginx/sites-available/%s" % settings.ROOT_NAME
     sites_enabled = "/etc/nginx/sites-enabled/%s" % settings.ROOT_NAME
     files.append(sites_available, nginx_conf, use_sudo=True)
