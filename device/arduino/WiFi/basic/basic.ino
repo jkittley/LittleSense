@@ -14,8 +14,8 @@
 // ========================
 // Settings
 // ========================
-String ssid = "AIR-G";
-String pass = "02380636550";
+String ssid = "YOUR WIFI NAME";
+String pass = "YOUR PASSWORD";
 
 // IP Address of LittleSense server
 const char* host = "192.168.1.188";
