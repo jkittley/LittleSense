@@ -32,11 +32,18 @@
                 <td>{{ device.id }}</th>
                 <td>{{ device.name }}</th>
                 <td class="time-to-rel">{{ last_update.time }}</td>
-                <td>{% for f in device.fields() %}
+                <td>
+                  {% for f in device.fields() %}
                   {{ f.name }} ({{ f.unit }})
                   {% if not loop.last %}, {% endif %}
-                  {% endfor %}</td>
-                <td>{{ device.get_commlinks() }}</td>
+                  {% endfor %}
+                </td>
+                <td>
+                  {% for clink in device.get_commlinks() %}
+                  {{ clink }}
+                  {% if not loop.last %}, {% endif %}
+                  {% endfor %}
+                </td>
                 <td><a href="{{ url_for('.device_register_preview', device_id=device.id) }}" class="btn btn-block btn-primary">Preview</a></td>
                 {% if device.is_registered() %}
                 <td><a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-primary">Configure</a></td>
