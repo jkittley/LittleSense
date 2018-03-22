@@ -1,4 +1,5 @@
 from datetime import datetime
+import arrow
 from flask import Blueprint, abort
 from flask_restful import Api, Resource, url_for, reqparse
 from flask import current_app as app
@@ -197,7 +198,7 @@ class ReadingsAPI(Resource):
           }
 
         :query device_id: Device ID e.g. test_device_id
-        :query utc: UTC timestamp string e.g. 2018-03-20T13:30:00Z
+        :query utc: UTC timestamp string e.g. 2018-03-20T13:30:00Z. If absent or set to "NOW", the server will add a timestamp on receiving.
         :query field: Field ID e.g. float_light_level_lux
         :query dtype: Field data type e.g. float or int
         :query unit: Field messurement unit e.g. lux or C
@@ -211,14 +212,15 @@ class ReadingsAPI(Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('device_id',     type=str, required=True, help='Device ID e.g. test_device_id')
-        parser.add_argument('utc',           type=str, required=True, help='UTC timestamp string e.g. 2018-03-20T13:30:00Z')
+        parser.add_argument('utc',           type=str, default="NOW", help='UTC timestamp string e.g. 2018-03-20T13:30:00Z')
         parser.add_argument('field',         type=str, required=True, help='Field Name e.g. light_level must be alpha numeric and contain no spaces only underscores')
         parser.add_argument('dtype',         type=str, required=True, help='Field data type e.g. float')
         parser.add_argument('unit',          type=str, required=True, help='Unit of messurement')
         parser.add_argument('value',         type=str, required=True, help='Value to record')
         args = parser.parse_args()  
         
-        print (args)
+        if args['utc'].lower() == "now":
+            args['utc'] = arrow.utcnow()
 
         try:
             device = Device(args['device_id'], True)
