@@ -4,6 +4,9 @@ Common Issues
 =============
 In this section we make not of a few things which may trip you up when trying to connect devices to |project|.
 
+Connecting to the RESTful API
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Are you trying to connect to a .local address?
 ----------------------------------------------
 Some devices and software libraries cannot automatically discover .local addresses. Instead try the IP address of the |project| server. You may also need to check that the Nginx configuration of your |project| server allows the IP address (see below).
