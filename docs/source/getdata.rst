@@ -9,7 +9,7 @@ Now you have a |project| Raspberry Pi server up and running we need to start col
 
    receive
    device
-
+   device_common_errors
 
 
 
