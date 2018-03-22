@@ -112,38 +112,43 @@
 {% block content %}
 <div id="chart"></div>
 
-<div class="container-fluid">
+<div class="container">
 
     <div class="row">
         <div class="col">
-            <a href="{{ url_for('.devices') }}" class="btn btn-block btn-info">Back</a>
+            <a href="{{ url_for('.devices') }}" class="btn btn-block btn-secondary">Back</a>
+        </div>
+        <div class="col">
+        <button class="btn btn-secondary btn-block " type="button" data-toggle="collapse" data-target="#collapseAddReading" aria-expanded="false" aria-controls="collapseAddReading">
+            Manually Add Reading
+          </button>
         </div>
         <div id="option-config" class="col">
-            <a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">Configure / Register</a>
+            <a href="{{ url_for('.device_register_config', device_id=device.id) }}" class="btn btn-block btn-success">
+                {{ "Configure" if device.is_registered() else "Register" }}
+            </a>
         </div>
     </div>
     <BR>
 
-    <div class="row">
-        <div class="col-lg-6">
-            <form id="putform" class="form form-horizontal" action="">
-                    {% for field in form.errors %}
-                    {% for error in form.errors[field] %}
-                        <div class="alert alert-danger">
-                            <strong>{{ form[field].label }}</strong> {{error}}
-                        </div>
-                    {% endfor %}
-                    {% endfor %}
-                <div class="card">
-                    <div class="card-header">Add Reading</div>
-                    <div class="card-body">
-                        {{ form.csrf_token }}
-                        {{ b_wtf.bootstrap_form(form) }}  
-                        <input type="submit" class="btn btn-block btn-success float-right" value="Save">
+    <div class="collapse" id="collapseAddReading">
+        <form id="putform" class="form form-horizontal" action="">
+                {% for field in form.errors %}
+                {% for error in form.errors[field] %}
+                    <div class="alert alert-danger">
+                        <strong>{{ form[field].label }}</strong> {{error}}
                     </div>
+                {% endfor %}
+                {% endfor %}
+            <div class="card">
+                <div class="card-header">Add Reading</div>
+                <div class="card-body">
+                    {{ form.csrf_token }}
+                    {{ b_wtf.bootstrap_form(form) }}  
+                    <input type="submit" class="btn btn-block btn-success float-right" value="Save">
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
 </div>

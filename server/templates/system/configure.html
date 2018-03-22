@@ -70,7 +70,7 @@
                                 </label>
                             </div>
                             <hr>
-                            <input type="submit" class="btn btn-block btn-success float-right" value="Save">
+                            <button type="submit" class="btn btn-block btn-success float-right">{{ "Save Changes" if device.is_registered() else "Register" }}</button>
                         </div>
                         <div class="card-footer">Note: On save the device will be registered is not already.</div>
                     </div>
