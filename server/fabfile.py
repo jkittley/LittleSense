@@ -28,13 +28,12 @@ env.user = settings.DEPLOY_USER
 
 @task
 def deploy():
-    setup_nginx()
-    # sync_files()
-    # set_permissions()
-    # install_venv_requirements()
-    # restart_web_services()
-    # restart_bg_services()
-    # update_crontab()
+    sync_files()
+    set_permissions()
+    install_venv_requirements()
+    restart_web_services()
+    restart_bg_services()
+    update_crontab()
 
 @task
 def init():
