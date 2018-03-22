@@ -3,7 +3,7 @@ Welcome to Little Sense! This project is designed to make the deployment of sens
 
 ![System Overview](docs/img/architecture.svg)
 
-The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through a radio channel such as RFM69. Please see the the respective readme files for more information. Detailed documentation can be found here: http://littlesense.readthedocs.io and in each folder there is a readme file which contains some helpful information when modifying the code.
+The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through a radio channel such as RFM69. Detailed documentation can be found here: http://littlesense.readthedocs.io and in each folder there is a readme file which contains some helpful information when modifying the code.
 
 * Documentation: http://littlesense.readthedocs.io
 * Website: http://littlesense.org

@@ -1,2 +1,2 @@
 # Little Sense
-All images and JS and CSS libraries which are called upon by the HTML templates contained in the templates directory.
+All static files such as images and Javascript libraries are stored in this directory. For more information see http://littlesense.readthedocs.io.
