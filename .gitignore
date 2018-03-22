@@ -11,5 +11,5 @@ docs/Makefile
 server/test/.pytest_cache/
 server/.pytest_cache/
 
-device/BLE
-device/RFM69
+device/arduino/BLE
+device/arduino/RFM69
