@@ -1,0 +1,105 @@
+{% extends 'system/base.html' %}
+{% import 'macros.html' as b_wtf %}
+
+{% block title %}Serial{% endblock %}
+
+{% block menu %}
+{% with active = 'serial' %}
+{% include 'system/menu.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block script %}
+<script>
+  var scrollToLastOption = function() {
+    var element = document.getElementById("serial_out"),
+        olen = element.options.length, i = olen,
+        selCache = [], stVal;
+    while(i--) selCache[i] = element.options[i].selected;
+    // setting last option as selected results in scrolling to that option
+    element.selectedIndex = olen-1;
+    // once again loop through options and set values that were previously selected
+    stVal = element.scrollTop;
+    i = olen;
+    while(i--) element.options[i].selected = selCache[i];
+    // doesn't work on Opera (not tested on IE)
+    element.scrollTop = stVal;
+  };
+
+  var addLine = function(text, autoScroll=false) {
+    $('#serial_out').append($('<option>', { 
+        text : text
+    }));
+    if (autoScroll) scrollToLastOption();
+  };
+
+  var update = function() {
+    $.getJSON( "{{ url_for('.serial') }}?since="+moment().format(), function( data ) {
+        //console.log(data);
+        $.each(data.messages, function(k, v) {
+            addLine('rx> ' + v, $('#auto_scroll').prop('checked'));
+        });
+        
+    });
+  };
+
+  var onTXsubmit = function(event) {
+    event.preventDefault();
+    $.ajax({
+        type: "POST",
+        url: "{{ url_for('.serial') }}",
+        dataType: "json",
+        data: $(this).serialize(),
+        success: function() { 
+            addLine('tx> ' + $('[name=message]').val(), true);
+            $('[name=message]').val(""); 
+        },
+        error: function(e) { 
+            console.log(e); 
+            showAlert('Failed to send: '+e.responseText, 'danger'); 
+        }       
+    });
+  };
+
+  $(document).ready(function() { 
+    setInterval(update, 1000);
+    $('#txform').submit(onTXsubmit);
+    //$('#serial_out').scroll(function() { $('#auto_scroll').prop('checked', false); });
+  });
+</script>
+{% endblock %}
+
+{% block style %}
+<style>
+    #serial_out {
+        font-family: "Lucida Console", "Courier New", monospace;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="card">
+    <div class="card-header">Live Stream 
+            <div class="form-check float-right">
+                <input type="checkbox" class="form-check-input" id="auto_scroll" checked="checked">
+                <label class="form-check-label" for="auto_scroll">Auto Scroll</label>
+            </div>
+    </div>
+    <select multiple class="form-control border-0" size="15" id="serial_out">
+        <option>Connecting...</option>
+    </select>
+    <div class="card-footer">
+        <form id="txform" action="{{ url_for('.serial') }}" method="POST">
+            {{form.hidden_tag()}}
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" id="message"/>
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>   
+            </div>
+        </form>
+    </div>
+</div>
+<BR>    
+{% endblock %}

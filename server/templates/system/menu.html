@@ -29,3 +29,9 @@
             Backup / Restore
         </a>
     </li>
+    <li class="nav-item">
+            <a class="nav-link {{ 'active' if active=='serial' else '' }}" href="{{ url_for('.serial') }}">
+                <i class="fas fa-plug"></i>
+                Serial Monitor
+            </a>
+        </li>

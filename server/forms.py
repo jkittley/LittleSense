@@ -7,10 +7,12 @@ from utils import Logger
 
 log = Logger()
 
+class SerialTXForm(FlaskForm):
+    message = StringField('Message', validators=[DataRequired()])
+
 class DeviceSettingsForm(FlaskForm):
     device_id = StringField('Device Id', validators=[DataRequired()]) 
     name = StringField('Name', validators=[DataRequired()])
-
 
 class DBPurgeDeviceReadingsForm(FlaskForm):
     devices = SelectMultipleField('Devices', choices=[])
