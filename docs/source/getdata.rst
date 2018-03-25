@@ -8,6 +8,7 @@ Now you have a |project| Raspberry Pi server up and running we need to start col
    :maxdepth: 1
 
    receive
+   attach_receivers_to_serial
    device
    device_common_errors
 

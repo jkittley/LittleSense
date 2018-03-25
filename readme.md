@@ -3,13 +3,11 @@ Welcome to Little Sense! This project is designed to make the deployment of sens
 
 ![System Overview](docs/img/architecture.svg)
 
-The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through a radio channel such as RFM69. Detailed documentation can be found here: http://littlesense.readthedocs.io and in each folder there is a readme file which contains some helpful information when modifying the code.
+The project is centered around a RasperryPi which acts as a web server and radio receiver. Sensor devices (based on Arduinos for example) can transmit data to the server via the web API or through any radio channel. Detailed documentation can be found here: http://littlesense.readthedocs.io and in each folder there is a readme file which contains some helpful information when modifying the code.
 
 * Documentation: http://littlesense.readthedocs.io
 * Website: http://littlesense.org
 
 ## Quick Overview
-In short you can through key:value pairs at the server (along with a UTC time string and a unique sender device id) and the server will record them without question. The keys encode the data type (int, string, float), the variable name (e.g. light_level) and the unit of measurement (e.g. lux). For example, a key:value pair might look like float_light_level_lux=35. This allows the system to automatically processes received data with zero configuration. Through a web interface, users can register devices for which they want to record data. Data from registered devices will be kept indefinitely. Unregistered device data will be held for a specified amount of time before they are automatically deleted. Using the web interface users can also inspect and visuals the data through customisable dashboards. 
-
-You can add your own visualisations easily and request data from the server by passing a JSON encoded list of device_id, variable name and aggregation function (e.g. max, mean) along with a start time, end time and interval period. The system will automatically aggregat the results, returning aggregated values for each variable for each interval in the specified time period. 
+In short you can through key:value pairs at the server (along with a UTC time string and a unique sender device id) and the server will record them without question. Through a web interface, users can register devices for which they want to record data. Data from registered devices will be kept indefinitely. Unregistered device data will be held for a specified amount of time before they are automatically deleted. Using the web interface users can also inspect and visuals the data through customisable dashboards. 
 

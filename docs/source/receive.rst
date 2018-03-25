@@ -6,7 +6,7 @@ One of the most important things once the system is setup is to receive data fro
 
 Background Service 
 ^^^^^^^^^^^^^^^^^^
-|project| on initial setup creates a background task which keeps ```receive.py``` running constantly. It is in this file that you can configure all things related to receivng data from your radio. When you make a change and redeploy using the fabric command, this background service gets rebooted automatically. However if you want to control it manually then you can use the following commands (when SSH'd into the Pi).
+|project| on initial setup creates a background task which keeps ```receive.py``` running constantly. This script listens to communications send via the serial port. In this way you can attach any radio receiver via USB and relay messages to |project|. When you make a change and redeploy using the fabric command, this background service gets rebooted automatically. However if you want to control it manually then you can use the following commands (when SSH'd into the Pi).
 
 ```sudo systemctl status receiver``` - What is the current status of the receiver
 ```sudo systemctl stop receiver``` - Stop the service
