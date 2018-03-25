@@ -5,3 +5,4 @@ from .logger import Logger
 from .backup import BackupManager
 from .influx import get_InfluxDB, influx_connected
 from .dashboard import DashBoards
+from .serial_logger import SerialLogger

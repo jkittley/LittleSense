@@ -7,6 +7,7 @@ import asyncio
 import serial_asyncio
 import signal
 import click, arrow
+from utils import SerialLogger
 
 class Output(asyncio.Protocol):
     def connection_made(self, transport):
@@ -41,11 +42,16 @@ class Output(asyncio.Protocol):
 @click.option('--verbose/--no-verbose', default=False)
 def launch(test=False, verbose=False):
 
-    loop = asyncio.get_event_loop()
-    coro = serial_asyncio.create_serial_connection(loop, Output, '/dev/ttyUSB0', baudrate=115200)
-    loop.run_until_complete(coro)
-    loop.run_forever()
-    loop.close()
+    slog = SerialLogger()
+
+    print("Adding to serial log")
+    slog.add_line("TESTING 123")
+
+    # loop = asyncio.get_event_loop()
+    # coro = serial_asyncio.create_serial_connection(loop, Output, '/dev/ttyUSB0', baudrate=115200)
+    # loop.run_until_complete(coro)
+    # loop.run_forever()
+    # loop.close()
 
 
 

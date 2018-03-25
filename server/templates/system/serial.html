@@ -11,6 +11,8 @@
 
 {% block script %}
 <script>
+  var lastUpdTime = moment().utc().subtract(1, 'hour');
+
   var scrollToLastOption = function() {
     var element = document.getElementById("serial_out"),
         olen = element.options.length, i = olen,
@@ -26,20 +28,28 @@
     element.scrollTop = stVal;
   };
 
-  var addLine = function(text, autoScroll=false) {
-    $('#serial_out').append($('<option>', { 
-        text : text
-    }));
+  var addLine = function(dir, time, text, autoScroll=false) {
+        var length = 20;
+        var trimmedString = text.length > length ? 
+            text.substring(0, length - 3) + "... (Double Click)" : 
+            text;
+        var opt = $('<option>', { 
+            text : dir + '> ' + time + ' -- ' + trimmedString,
+            value: text,
+        })
+        .data('time', time)
+        .data('dir', dir);
+        $('#serial_out').append(opt);
     if (autoScroll) scrollToLastOption();
   };
 
   var update = function() {
-    $.getJSON( "{{ url_for('.serial') }}?since="+moment().format(), function( data ) {
+    $.getJSON( "{{ url_for('.serial') }}?since="+lastUpdTime.format(), function( data ) {
         //console.log(data);
         $.each(data.messages, function(k, v) {
-            addLine('rx> ' + v, $('#auto_scroll').prop('checked'));
+            addLine('rx', v.time, v.message, $('#auto_scroll').prop('checked'));
+            if (moment(v.time).utc().isAfter(lastUpdTime)) lastUpdTime = moment(v.time).add(1, 'second').utc();
         });
-        
     });
   };
 
@@ -51,7 +61,7 @@
         dataType: "json",
         data: $(this).serialize(),
         success: function() { 
-            addLine('tx> ' + $('[name=message]').val(), true);
+            addLine('tx', moment().utc().format(), $('[name=message]').val(), true);
             $('[name=message]').val(""); 
         },
         error: function(e) { 
@@ -61,9 +71,19 @@
     });
   };
 
+  var showSerialModal = function(e) {
+    var target = $(e.target);
+    $('#serialModal .modal-body pre').html(target.val());
+    $('#serialModal .time').html(target.data('time'))
+    $('#serialModal .dir').html(target.data('dir'))
+    $('#serialModal').modal({ show: true });
+  };
+
   $(document).ready(function() { 
+    update();
     setInterval(update, 1000);
     $('#txform').submit(onTXsubmit);
+    $('select').dblclick(showSerialModal);
     //$('#serial_out').scroll(function() { $('#auto_scroll').prop('checked', false); });
   });
 </script>
@@ -101,5 +121,28 @@
         </form>
     </div>
 </div>
-<BR>    
+<BR>  
+    
+<div id="serialModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Line Details</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>
+                <span class="dir"></span> 
+                <span class="time"></span>
+            </p>
+            <pre>Loading</pre>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

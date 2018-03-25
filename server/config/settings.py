@@ -25,9 +25,11 @@ class DefaultSetting(SecureSettings):
     # Influx Messurements
     INFLUX_READINGS = "reading"
     INFLUX_LOGS = "logger"
+    INFLUX_SERIAL = "serial"
     INFLUX_MESSUREMENTS = [
         (INFLUX_READINGS, "Readings"),
-        (INFLUX_LOGS, "Logs")
+        (INFLUX_LOGS, "Logs"),
+        (INFLUX_SERIAL, "Serial Log")
     ]
 
     # Details of the TinyDB databases
@@ -100,9 +102,11 @@ class RemotelSetting(DefaultSetting):
 class TestSettings(DefaultSetting):
     INFLUX_READINGS = "test_reading"
     INFLUX_LOGS = "test_logger"
+    INFLUX_SERIAL = "test_serial"
     INFLUX_MESSUREMENTS = [
         (INFLUX_READINGS, "Readings"),
-        (INFLUX_LOGS, "Logs")
+        (INFLUX_LOGS, "Logs"),
+        (INFLUX_SERIAL, "Serial Log")
     ]
    
 # -----------------------------------------------------------------------------

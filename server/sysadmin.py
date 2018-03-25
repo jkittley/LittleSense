@@ -5,11 +5,11 @@
 
 from random import randint
 from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory, request
-from forms import SerialTXForm, DeviceSettingsForm, DBPurgeReadingsForm, DBPurgeDeviceReadingsForm, DBPurgeRegistryForm, DBPurgeLogsForm, LogFilterForm, BackupForm, ReadingForm
+from forms import SerialTXForm, DeviceSettingsForm, DBPurgeReadingsForm, DBPurgeDeviceReadingsForm, DBPurgeRegistryForm, DBPurgeLogsForm, LogFilterForm, BackupForm, ReadingForm, AreYouSureForm
 import arrow
 from unipath import Path
 from flask import current_app as app
-from utils import Device, Devices, Logger, BackupManager, DashBoards
+from utils import Device, Devices, Logger, BackupManager, DashBoards, SerialLogger
 from config import settings
 from flask import jsonify
 
@@ -175,7 +175,9 @@ def serial():
         else:
             return "Form is invalid", 400
     if 'since' in request.values:
-        return jsonify(dict(messages=[randint(0,100), randint(100,200)]))
+        slog = SerialLogger()
+        start = arrow.get(request.values['since'])
+        return jsonify(dict(messages=[ x for x in slog.list_lines(start=start) ]))
     else:
         return render_template('system/serial.html', form=form)
 
