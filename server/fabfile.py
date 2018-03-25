@@ -213,12 +213,7 @@ def install_venv_requirements():
     print_title('Installing remote virtual env requirements')
     with virtualenv(settings.DIR_VENV):
         install_requirements('{0}requirements/remote.txt'.format(settings.DIR_CODE), use_sudo=False)
-        # Install radio requirements
-        print_title('Installing Radio Specific virtual env requirements')
-        for p in Path('commlink').listdir(filter=DIRS):
-            if p.child('requirements.txt').exists():
-                radio_req = '{0}{1}'.format(settings.DIR_CODE, p.child('requirements.txt'))
-                install_requirements(radio_req, use_sudo=False)
+       
 
 # ----------------------------------------------------------------------------------------
 # Sub Tasks - Web Server
