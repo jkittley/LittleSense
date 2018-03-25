@@ -61,7 +61,7 @@ def init():
     ## Initialise cron jobs to run background tasks
     update_crontab()
     set_env_vars()
-    setup_receiver()
+    setup_transceiver()
     restart_bg_services()
     # Final server reboot for luck
     restart_web_services()
@@ -84,9 +84,9 @@ def restart_db_services():
 # Restart background services
 @task
 def restart_bg_services():
-    print_title('Restarting background services i.e. receiver script')
+    print_title('Restarting background services i.e. transceiver script')
     sudo('systemctl daemon-reload')
-    sudo('systemctl restart receiver')
+    sudo('systemctl restart transceiver')
 
 
 # Restart background services
@@ -98,8 +98,8 @@ def services_status():
     sudo('systemctl status nginx')
     print_title('Systemctl status gunicorn')
     sudo('systemctl status gunicorn')
-    print_title('Systemctl status receiver')
-    sudo('systemctl status receiver')
+    print_title('Systemctl status transceiver')
+    sudo('systemctl status transceiver')
 
 
 # ----------------------------------------------------------------------------------------
@@ -352,10 +352,10 @@ def set_env_vars():
         run('export LOCAL=0')
 
 # Setup listing
-def setup_receiver():
-    print_title('Setting up receiver script - for radios')
+def setup_transceiver():
+    print_title('Setting up transceiver script - for radios')
     conf = '''[Unit]
-        Description=Radio receiver daemon
+        Description=Radio transceiver daemon
         After=network.target
 
         [Service]
@@ -363,7 +363,7 @@ def setup_receiver():
         Group={GRP}
         Restart=always
         WorkingDirectory={PATH}
-        ExecStart={VIRTUALENV_PATH}/bin/python receiver.py
+        ExecStart={VIRTUALENV_PATH}/bin/python transceiver.py
 
         [Install]
         WantedBy=multi-user.target
@@ -377,10 +377,10 @@ def setup_receiver():
             SOCKET_FILES_PATH=settings.DIR_SOCK
         )
     
-    service = "/etc/systemd/system/receiver.service"
+    service = "/etc/systemd/system/transceiver.service"
     files.append(service, conf, use_sudo=True)
-    sudo('systemctl enable receiver')
-    sudo('systemctl start receiver')
+    sudo('systemctl enable transceiver')
+    sudo('systemctl start transceiver')
 
 
 
