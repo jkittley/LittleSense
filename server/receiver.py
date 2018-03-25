@@ -22,6 +22,16 @@ comms_pool = []
 # formatter must return three thing: timestamp (utc), device_id (sting) and a 
 # dictionary of field:value pairs as described above.
 # =============================================================================
+# Little Sense does it’s best to minimise configuration server side. To help 
+# this, all sensor devices should transmit readings where the variable name 
+# is constructed as `<dtype>_<variable-name>_<unit>`.
+# 
+# - dtype: (Data type) can be either int, float, bool, str or string. 
+# - name:  The name can include extra semicolons e.g. float_light_level_lux is 
+#          valid. 
+# - unit:  Unit can be anything you want, but is used to automatically group 
+#          reading in some visualisations.
+# =============================================================================
 
 def pack_formatter_rf69(unformatted):
     utc = arrow.utcnow()

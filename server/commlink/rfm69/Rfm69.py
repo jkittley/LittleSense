@@ -221,6 +221,7 @@ class Rfm69(object):
         while not self.canSend():
             self.receiveDone()
         self.sendFrame(toAddress, buff, False, True)
+   
 
     def sendFrame(self, toAddress, buff, requestACK, sendACK):
         #turn off receiver to prevent reception while filling fifo
@@ -239,8 +240,10 @@ class Rfm69(object):
             ack = 0x80
         elif requestACK:
             ack = 0x40
-        if isinstance(buff, basestring):
-            self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + [int(ord(i)) for i in list(buff)])
+        if isinstance(buff, str):
+            tosend = [REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + [int(ord(i)) for i in list(buff)]
+            print (tosend)
+            self.spi.xfer2(tosend)
         else:
             self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + buff)
 
@@ -269,7 +272,6 @@ class Rfm69(object):
             self.ACK_REQUESTED = CTLbyte & 0x40
 
             self.DATA = self.spi.xfer2([REG_FIFO & 0x7f] + [0 for i in range(0, self.DATALEN)])[1:]
-
             self.RSSI = self.readRSSI()
         self.intLock = False
 

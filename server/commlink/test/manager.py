@@ -2,7 +2,10 @@
 # TEST RADIO
 # 
 # !!! You should NOT need to edit this file !!!
-# Please use the formatter function to process packet data.
+# 
+# All commlink classes take two functions. The first is used to format the 
+# received packet into a dictionary e.g. { dtype_name_unit: value }. The second
+# tels the commlink class how to save the function.
 # 
 # =============================================================================
 
@@ -10,24 +13,16 @@ import arrow
 import time
 import string
 from commlink import CommLink
-from uuid import getnode as get_mac_address
-from utils import Logger
 from random import randint, choice
-
-log = Logger()
 
 class ManagerTEST(CommLink):
 
-    def __init__(self, packet_formatter_func):
-        self.MAC_ADDRESS = get_mac_address()
-        self.commlink_name = "RadioTest"
-        self.packet_formatter = self.validate_formatter(packet_formatter_func)
+    def initialise(self, **kwargs):
+        self._report("Initialised")
+        self.COMMLINK_NAME = "RadioTest"
 
-    def initialise(self):
-        print("Initialised")
-    
-    def receive(self):
-        log.debug("Rfm69 receive started")
+    def receive(self, **kwargs):
+        self._report("test receiver started")
         while True:
  
             # |Pretend to take ime receiving
@@ -36,16 +31,16 @@ class ManagerTEST(CommLink):
             # Prep data from packets
             try:
                 utc, device_id, formatted = self.packet_formatter({})
-                log.debug("Test Radio Packet receieved", **formatted)
-                self._save_reading(utc, device_id, formatted)
-                print('Test packet saved', utc, device_id, formatted)
+                self._report("Test Radio Packet receieved", **formatted)
+                # Save reading
+                self.save_reading(self.COMMLINK_NAME, utc, device_id, formatted)
+                self._report('Test packet saved', utc, device_id, formatted)
             except Exception as e:
-                log.error("Test Radio failed to format and save packet")
-                print('Test packet failed to save')
-                print(e)
+                self._error("Test Radio failed to format and save packet")
+                self._report('Test packet failed to save')
+                self._report(e)
 
-            
 
-    def shutdown(self):
-        log.debug("RadioTest shutting down")
+    def shutdown(self, **kwargs):
+        self._report("RadioTest shutting down")
         
