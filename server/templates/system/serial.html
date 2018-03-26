@@ -29,12 +29,14 @@
   };
 
   var addLine = function(dir, time, text, autoScroll=false) {
+      console.log(text);
         var length = 20;
+        var dir_spacer = (dir==="rx") ? ' --> ' : ' <-- ';
         var trimmedString = text.length > length ? 
             text.substring(0, length - 3) + "... (Double Click)" : 
             text;
         var opt = $('<option>', { 
-            text : dir + '> ' + time + ' -- ' + trimmedString,
+            text : dir + '> ' + time + dir_spacer + trimmedString,
             value: text,
         })
         .data('time', time)
@@ -44,10 +46,12 @@
   };
 
   var update = function() {
+    $('#sys_message_connecting').html('Connected.');
+    $('#refesh_message').html(moment().utc().format('hh:mm:ss'));
     $.getJSON( "{{ url_for('.serial') }}?since="+lastUpdTime.format(), function( data ) {
-        //console.log(data);
         $.each(data.messages, function(k, v) {
-            addLine('rx', v.time, v.message, $('#auto_scroll').prop('checked'));
+            console.log(v);
+            addLine(v.rxtx, v.time, v.message, $('#auto_scroll').prop('checked'));
             if (moment(v.time).utc().isAfter(lastUpdTime)) lastUpdTime = moment(v.time).add(1, 'second').utc();
         });
     });
@@ -105,9 +109,12 @@
                 <input type="checkbox" class="form-check-input" id="auto_scroll" checked="checked">
                 <label class="form-check-label" for="auto_scroll">Auto Scroll</label>
             </div>
+            <div class="float-right" style="margin-right:20px;">
+                <i class="fas fa-sync"></i> <span id="refesh_message"></span>
+            </div>
     </div>
     <select multiple class="form-control border-0" size="15" id="serial_out">
-        <option>Connecting...</option>
+        <option id="sys_message_connecting">Connecting...</option>
     </select>
     <div class="card-footer">
         <form id="txform" action="{{ url_for('.serial') }}" method="POST">

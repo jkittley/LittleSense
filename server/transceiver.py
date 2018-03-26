@@ -3,13 +3,23 @@
 # purpose of this script is to receive information from the sensors connected
 # via a communication link e.g. Radio or GPIO pins.
 # =============================================================================
-import asyncio
+import asyncio, sys, json, time
 import serial_asyncio
+from serial.serialutil import SerialException
 import signal
 import click, arrow
-from utils import SerialLogger
+from utils import SerialLogger, Logger
+
+loop = None
+
+# On the Pi you can run 'ls /dev/{tty,cu}.*' to list all serial ports.
+SERIAL_PORT = '/dev/tty.usbmodem1441'
 
 class Output(asyncio.Protocol):
+
+    def __init__(self):
+        self.json_str = "" 
+
     def connection_made(self, transport):
         self.transport = transport
         print('port opened', transport)
@@ -17,9 +27,13 @@ class Output(asyncio.Protocol):
         transport.write(b'Hello, World!\n')  # Write serial data via transport
 
     def data_received(self, data):
-        print('data received', repr(data))
+        # print('data received', repr(data))
+        self.json_str += data.decode("utf-8")
         if b'\n' in data:
-            self.transport.close()
+            
+            # print(json.loads(str(self.json_str)))
+            self.json_str = ""
+            # self.transport.close()
 
     def connection_lost(self, exc):
         print('port closed')
@@ -42,15 +56,28 @@ class Output(asyncio.Protocol):
 @click.option('--verbose/--no-verbose', default=False)
 def launch(test=False, verbose=False):
 
+    log = Logger()
     slog = SerialLogger()
 
     print("Adding to serial log")
-    slog.add_line("TESTING 123")
+    slog.rx("TESTING RX ".format())
+    slog.tx("TESTING TX ".format())
 
     # loop = asyncio.get_event_loop()
-    # coro = serial_asyncio.create_serial_connection(loop, Output, '/dev/ttyUSB0', baudrate=115200)
-    # loop.run_until_complete(coro)
-    # loop.run_forever()
+
+    # while True:
+    #     try:        
+    #         coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
+    #         loop.run_until_complete(coro)
+    #         loop.run_forever()
+    #     except SerialException as e:
+    #         log.error(str(e))
+    #         if verbose:
+    #             print("Error occurred")
+    #             print(e)
+    #             print("Waiting 5 seconds and trying again.")
+    #         time.sleep(5)
+    
     # loop.close()
 
 
@@ -87,8 +114,8 @@ def launch(test=False, verbose=False):
 
 def signal_handler(signal, frame):
     print ('Stopping process...')
-    for comm in comms_pool:
-        comm.shutdown()
+    if loop is not None:
+        loop.stop()
     sys.exit(0)
 
 if __name__ == "__main__":

@@ -10,31 +10,35 @@ class SerialLogger():
         self._ifdb = get_InfluxDB()
         self._ifdb.create_retention_policy('serial_data', '1h', 1, default=False)
 
-    def add_line(self, message, **data):
-        """Get list of categories and human readable names.
+    def add_line(self, rxtx, message):
+        """Add a serial line to the log.
         
         Args:
+            rxtx: Was the message received (rx) or sent (tx)
             msg: Message to record
 
-        Keyword Args:
-            *: All keyworord arguments which are JSON serialisable are recorded as sublimental information.
-
         """
-        print("Adding to serial log", message)
+        print(rxtx)
         logmsg = {
             "measurement": settings.INFLUX_SERIAL,
-            "tags": {},
+            "tags": {
+                "rxtx": str(rxtx).lower().strip(),
+            },
             "time": arrow.utcnow().format(),
             "fields": {
-                "message": str(message)
+                "message": str(message).strip()
             }
         }
-        if len(data) > 0:
-            logmsg['fields']['extra'] = json.dumps(data)
-
         # Save Reading
         self._ifdb.write_points([logmsg], retention_policy="serial_data")
         
+    def rx(self, message):
+        """Add line to log for RX"""
+        self.add_line('rx', message)
+
+    def tx(self, message):
+        """Add line to log for TX"""
+        self.add_line('tx', message)
 
     def list_lines(self, **kwargs):
         start   = kwargs.get('start', arrow.utcnow().shift(days=-1))
