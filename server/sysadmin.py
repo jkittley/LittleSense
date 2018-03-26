@@ -9,7 +9,7 @@ from forms import SerialTXForm, DeviceSettingsForm, DBPurgeReadingsForm, DBPurge
 import arrow
 from unipath import Path
 from flask import current_app as app
-from utils import Device, Devices, Logger, BackupManager, DashBoards, SerialLogger
+from utils import Device, Devices, Logger, BackupManager, DashBoards, SerialLogger, SerialTXQueue
 from config import settings
 from flask import jsonify
 
@@ -170,14 +170,16 @@ def serial():
     form = SerialTXForm()
     if request.method == 'POST':
         if form.validate():
-            print('----->', form.message.data)
+            txq = SerialTXQueue()
+            txq.push(form.message.data)
             return jsonify(dict(success=True))
         else:
+            print(form.errors)
             return "Form is invalid", 400
     if 'since' in request.values:
         slog = SerialLogger()
         start = arrow.get(request.values['since'])
-        return jsonify(dict(messages=[ x for x in slog.list_lines(start=start) ]))
+        return jsonify(dict(messages=[ x for x in slog.filter(start=start) ]))
     else:
         return render_template('system/serial.html', form=form)
 

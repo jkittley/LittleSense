@@ -8,13 +8,25 @@ import serial_asyncio
 from serial.serialutil import SerialException
 import signal
 import click, arrow
-from utils import SerialLogger, Logger
+from utils import SerialLogger, SerialTXQueue, Logger
 
 loop = None
+log = Logger()
+serial_log = SerialLogger()
+tx_queue = SerialTXQueue()
 
 # On the Pi you can run 'ls /dev/{tty,cu}.*' to list all serial ports.
-SERIAL_PORT = '/dev/tty.usbmodem1441'
+SERIAL_PORT = '/dev/tty.usbmodem1411'
 
+async def transmitter(verbose):
+    while True:
+        next_message = tx_queue.pop()
+        if next_message is not None:
+            serial_log.tx(next_message['message'])
+            if verbose:
+                print("Processing", next_message)
+        await asyncio.sleep(0)
+    
 class Output(asyncio.Protocol):
 
     def __init__(self):
@@ -30,8 +42,7 @@ class Output(asyncio.Protocol):
         # print('data received', repr(data))
         self.json_str += data.decode("utf-8")
         if b'\n' in data:
-            
-            # print(json.loads(str(self.json_str)))
+            serial_log.rx(str(self.json_str))
             self.json_str = ""
             # self.transport.close()
 
@@ -56,29 +67,15 @@ class Output(asyncio.Protocol):
 @click.option('--verbose/--no-verbose', default=False)
 def launch(test=False, verbose=False):
 
-    log = Logger()
-    slog = SerialLogger()
+    loop = asyncio.get_event_loop()
 
-    print("Adding to serial log")
-    slog.rx("TESTING RX ".format())
-    slog.tx("TESTING TX ".format())
-
-    # loop = asyncio.get_event_loop()
-
-    # while True:
-    #     try:        
-    #         coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
-    #         loop.run_until_complete(coro)
-    #         loop.run_forever()
-    #     except SerialException as e:
-    #         log.error(str(e))
-    #         if verbose:
-    #             print("Error occurred")
-    #             print(e)
-    #             print("Waiting 5 seconds and trying again.")
-    #         time.sleep(5)
+    coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
+    loop.run_until_complete(coro) 
     
-    # loop.close()
+    loop.create_task(transmitter(verbose))
+    
+    loop.run_forever()
+    loop.close()
 
 
 

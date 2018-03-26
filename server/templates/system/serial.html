@@ -29,19 +29,21 @@
   };
 
   var addLine = function(dir, time, text, autoScroll=false) {
-      console.log(text);
-        var length = 20;
-        var dir_spacer = (dir==="rx") ? ' --> ' : ' <-- ';
-        var trimmedString = text.length > length ? 
-            text.substring(0, length - 3) + "... (Double Click)" : 
-            text;
-        var opt = $('<option>', { 
-            text : dir + '> ' + time + dir_spacer + trimmedString,
-            value: text,
-        })
-        .data('time', time)
-        .data('dir', dir);
-        $('#serial_out').append(opt);
+    var length = 40;
+    var dir_spacer = (dir==="rx") ? ' --> ' : ' <-- ';
+    var trimmedString = text.length > length ? 
+        text.substring(0, length - 3) + "... (Double Click)" : 
+        text;
+    var opt = $('<option>', { 
+        text : dir + '> ' + time + dir_spacer + trimmedString,
+        value: text,
+    })
+    .data('time', time)
+    .data('dir', dir);
+    $('#serial_out').append(opt);
+    // Cap number of entries
+    var cap = $("#serial_out").children().length - 50;
+    for (var i=0; i<cap; i++) $("#serial_out option:first").remove();
     if (autoScroll) scrollToLastOption();
   };
 
@@ -65,7 +67,7 @@
         dataType: "json",
         data: $(this).serialize(),
         success: function() { 
-            addLine('tx', moment().utc().format(), $('[name=message]').val(), true);
+            addLine('tx', 'Queued To Send', $('[name=message]').val(), true);
             $('[name=message]').val(""); 
         },
         error: function(e) { 
@@ -77,7 +79,12 @@
 
   var showSerialModal = function(e) {
     var target = $(e.target);
-    $('#serialModal .modal-body pre').html(target.val());
+    var display = target.val();
+    try {
+        
+        display = JSON.stringify(JSON.parse(display), null, 2);
+    } catch (e) {}
+    $('#serialModal .modal-body pre').html(display);
     $('#serialModal .time').html(target.data('time'))
     $('#serialModal .dir').html(target.data('dir'))
     $('#serialModal').modal({ show: true });
