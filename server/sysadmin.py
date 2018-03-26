@@ -179,7 +179,7 @@ def serial():
     if 'since' in request.values:
         slog = SerialLogger()
         start = arrow.get(request.values['since'])
-        return jsonify(dict(messages=[ x for x in slog.filter(start=start) ]))
+        return jsonify(dict(messages=[ x for x in slog.filter(start=start, limit=100) ]))
     else:
         return render_template('system/serial.html', form=form)
 
