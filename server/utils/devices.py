@@ -309,7 +309,11 @@ class Device():
 
         """
         # Clean and validate incoming data
-        utc_str = self._clean_utc_str(utc)
+        if utc.lower() == "now":
+            utc_str = arrow.utcnow().format()
+        else:
+            utc_str = self._clean_utc_str(utc)
+
         fields  = self._clean_fields(fields, self.id)
         # Add seen fields to device register
         self._add_fields(list(fields.keys()))

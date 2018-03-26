@@ -219,9 +219,6 @@ class ReadingsAPI(Resource):
         parser.add_argument('value',         type=str, required=True, help='Value to record')
         args = parser.parse_args()  
         
-        if args['utc'].lower() == "now":
-            args['utc'] = arrow.utcnow()
-
         try:
             device = Device(args['device_id'], True)
             field_id = "{}_{}_{}".format(args['dtype'],args['field'],args['unit'])
