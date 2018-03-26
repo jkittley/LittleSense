@@ -123,11 +123,14 @@ class SerialLogger():
         """
         start   = kwargs.get('start', arrow.utcnow().shift(days=-1))
         end     = kwargs.get('end', arrow.utcnow())
-        query = 'SELECT * FROM "{policy}"."{mess}" WHERE time >= \'{start}\' and time <= \'{end}\''.format(
+        limit   = kwargs.get('limit', 500)
+        
+        query = 'SELECT * FROM "{policy}"."{mess}" WHERE time >= \'{start}\' and time <= \'{end}\' ORDER BY time DESC LIMIT {limit}'.format(
             policy="serial_data",
             mess=settings.INFLUX_SERIAL, 
             start=start, 
-            end=end
+            end=end,
+            limit=limit
         )
         results = list(self._ifdb.query(query).get_points())
         return results
