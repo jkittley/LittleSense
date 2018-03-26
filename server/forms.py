@@ -53,7 +53,7 @@ class AreYouSureForm(FlaskForm):
 
 class LogFilterForm(FlaskForm):
     start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
-    end = DateTimeField('End', default=arrow.utcnow(), validators=[])
+    end = DateTimeField('End', default=arrow.utcnow().shift(hours=+1), validators=[])
     cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default='')
     limit = SelectField('Per&nbsp;Page', choices=[
         ('50', 50),
