@@ -1,5 +1,7 @@
 .. include:: global.rst
 
+.. _rest-api:
+
 RESTful API Documentation
 =========================
 This section documents the RESTful API offered by |project|. Using the URI endpoints listed below you can add and examine data collected by sensor devices on your network.
