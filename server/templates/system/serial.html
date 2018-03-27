@@ -81,7 +81,6 @@
     var target = $(e.target);
     var display = target.val();
     try {
-        
         display = JSON.stringify(JSON.parse(display), null, 2);
     } catch (e) {}
     $('#serialModal .modal-body pre').html(display);

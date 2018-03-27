@@ -48,7 +48,7 @@
     function updSuccess(data) {
         var names = {};
         $.each(data.fields, function(field_id, field_info) {
-            names[field_id] = field_info.name;
+            names[field_id] = field_info.friendly;
         });
         chart.load({
             json: data.readings,

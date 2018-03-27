@@ -3,12 +3,13 @@
 # purpose of this script is to receive information from the sensors connected
 # via a communication link e.g. Radio or GPIO pins.
 # =============================================================================
-import asyncio, sys, json, time
+import asyncio, sys, json, time, string
+from random import randint, choice
 import serial_asyncio
 from serial.serialutil import SerialException
 import signal
 import click, arrow
-from utils import SerialLogger, SerialTXQueue, Logger, Device
+from utils import SerialLogger, SerialTXQueue, Logger, Device, Field, FieldValue
 
 loop = None
 log = Logger()
@@ -26,7 +27,31 @@ async def transmitter(verbose):
             if verbose:
                 print("Processing", next_message)
         await asyncio.sleep(0)
-    
+
+async def test_data_generator(verbose):
+    while True:
+        if verbose:
+            print("Generating test data")
+
+        device1 = Device('test_device_1', True)
+        field_values = [
+            FieldValue(Field("float", "signal", "db"), randint(0,450)/10.0),
+            FieldValue(Field("float", "audio_level", "db"), randint(0,450)/10.0),
+            FieldValue(Field("int", "light_level", "lux"), randint(0,100)),
+            FieldValue(Field("float", "temp", "f"), randint(0,72)),
+        ]
+        device1.add_reading("NOW", field_values, 'test_data')
+        
+        device2 = Device('test_device_2', True)
+
+        field_values = [
+            FieldValue(Field("float", "temp", "c"), randint(20,35)/10.0),
+            FieldValue(Field("boolean", "switch", "state"), randint(0,1)),
+            FieldValue(Field("string", "message", "text"), 'HEY' + ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(10)) ),
+        ]
+        device2.add_reading("NOW", field_values, 'test_data')
+        await asyncio.sleep(5)
+
 class Output(asyncio.Protocol):
 
     def __init__(self):
@@ -44,12 +69,10 @@ class Output(asyncio.Protocol):
         if b'\n' in data:
             serial_log.rx(str(self.json_str))
             try:
-                asjson = json.loads(str(self.json_str))
-                utc = "NOW" if 'utc' not in asjson else asjson['utc']
-                field_id = "{}_{}_{}".format(asjson['dtype'], asjson['field'], asjson['unit'])
-                fields = dict()
-                fields[field_id] = asjson['value']
-                device = Device(asjson['device_id'], True)
+                asdict = json.loads(str(self.json_str))
+                utc = "NOW" if 'utc' not in asdict else asdict['utc']
+                fields = Field.fromDict(asdict)
+                device = Device(asdict['device_id'], True)
                 device.add_reading(utc, fields, 'serial_port')
             except KeyError as e:
                 log.error('Serial data missing key', exception=str(e))
@@ -79,16 +102,16 @@ class Output(asyncio.Protocol):
 @click.option('--test/--no-test', default=False)
 @click.option('--verbose/--no-verbose', default=False)
 def launch(test=False, verbose=False):
-
     loop = asyncio.get_event_loop()
-
-    coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
-    loop.run_until_complete(coro) 
-    
+    if not test:
+        coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
+        loop.run_until_complete(coro) 
+    else:
+        loop.create_task(test_data_generator(verbose))
     loop.create_task(transmitter(verbose))
-    
     loop.run_forever()
     loop.close()
+
 
 # # =============================================================================
 # # Do not edit below this line

@@ -63,8 +63,6 @@ class Logger():
             ('error', 'Error'),
             ('interaction', 'Interaction'),
             ('funcexec', 'Function Execution'),
-            ('device', 'Sensor Device'),
-            ('comms', 'Communication e.g. Radio'),
         ]
 
     def comms(self, msg:str, **kwargs):
