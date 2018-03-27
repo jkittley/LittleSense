@@ -10,3 +10,6 @@ docs/Makefile
 *.afdesign
 server/test/.pytest_cache/
 server/.pytest_cache/
+
+device/arduino/BLE
+device/arduino/RFM69

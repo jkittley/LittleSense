@@ -7,10 +7,12 @@ from utils import Logger
 
 log = Logger()
 
+class SerialTXForm(FlaskForm):
+    message = StringField('Message', validators=[DataRequired()])
+
 class DeviceSettingsForm(FlaskForm):
     device_id = StringField('Device Id', validators=[DataRequired()]) 
     name = StringField('Name', validators=[DataRequired()])
-
 
 class DBPurgeDeviceReadingsForm(FlaskForm):
     devices = SelectMultipleField('Devices', choices=[])
@@ -51,7 +53,7 @@ class AreYouSureForm(FlaskForm):
 
 class LogFilterForm(FlaskForm):
     start = DateTimeField('Start', default=arrow.utcnow().shift(days=-1), validators=[])
-    end = DateTimeField('End', default=arrow.utcnow(), validators=[])
+    end = DateTimeField('End', default=arrow.utcnow().shift(hours=+1), validators=[])
     cat = SelectField('Category',choices=[('','All')] + log.get_categories(), default='')
     limit = SelectField('Per&nbsp;Page', choices=[
         ('50', 50),

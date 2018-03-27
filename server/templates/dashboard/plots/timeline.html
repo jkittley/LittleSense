@@ -1,0 +1,108 @@
+<script src="{{ url_for('static', filename='_vis/vis.js') }}"></script>
+<link href="{{ url_for('static', filename='_vis/vis-timeline-graph2d.min.css') }}" rel="stylesheet" type="text/css" />
+<style  type='text/css'>
+    #plot-{{ plot_id }} .vis-timeline {
+        border: 0;
+    }
+    #card-{{ plot_id }} .card-body {
+        padding:0;
+    }
+</style>
+<script>
+(function(){ 
+
+    var elem_id = "plot-{{ plot_id }}";
+    var intervalTimer = null;
+    var timeline = null;
+    var dataset = null;
+    var counter = 0;
+    var reading_interval = parseInt('{{ plot.time.reading_interval_seconds }}');
+    var refresh_interval = 1000 * parseInt('{{ plot.refresh_interval_seconds }}');
+    var metrics = JSON.parse('{ "metrics": {{ plot.metrics|tojson|safe }} }');
+        metrics = metrics['metrics'];
+    var time_init = JSON.parse('{{ plot.time|default("{}")|tojson|safe }}');
+   
+    function initPlot() {     
+        // DOM element where the Timeline will be attached
+        var container = document.getElementById(elem_id);
+        // Create a DataSet (allows two way data-binding)
+        dataset = new vis.DataSet([
+            {id: 1, content: 'item 1', start: '2014-04-20'}
+        ]);
+        // Configuration for the Timeline
+        var options = {
+            zoomMax: 1000 * 60 * 60,
+            stack: false,
+            maxHeight: 400,
+            start: moment.utc().subtract(5, 'minutes').toDate(),
+            end: moment().utc().toDate()
+        };
+        // Create a Timeline
+        timeline = new vis.Timeline(container, dataset, options);
+    }
+    
+    function updSuccess(data) {
+        most_recent = null;
+        
+        // Create groupds the first time dat is received
+        if (counter === 0) {
+            var groups = new vis.DataSet();
+            $.each(data.fields, function(i, field) {
+                groups.add({
+                    id: field.name, 
+                    content: field.friendly
+                });
+            });
+            timeline.setGroups(groups);
+        }
+        
+        // Add readings
+        $.each(data.readings, function(i, reading) {
+            $.each(data.fields, function(i, field) {
+                if (reading[field.name] !== null && reading[field.name] !==undefined) {
+                    dataset.update({
+                        id: counter, 
+                        group: field.name, 
+                        content: ""+reading[field.name], 
+                        start: moment(reading.time).toDate(),
+                        type: 'box',
+                        className: 'box-'+field.name
+                    });
+                    counter++;
+                }
+            });
+            if (most_recent===null || moment(reading.time).isAfter(most_recent)) most_recent = moment(reading.time);
+        });
+        
+        // Move timeline to most resent data
+        if (most_recent!==null) timeline.moveTo(moment(most_recent).toDate())
+    }
+
+    function updError() {
+        showAlert("Failed to fetch data from the server. Now terminating automatic refreshing.", 'danger');
+        clearInterval(intervalTimer);
+    }
+
+    function updatePlot() {
+        var new_times = calculate_times(time_init);
+        if (new_times===null) { updError(); return; }
+        console.log(new_times)
+        getData(
+            new_times.last_update,
+            new_times.end,
+            time_init.fill, 
+            reading_interval,
+            metrics,
+            updSuccess,
+            updError
+        );
+        last_update = moment.utc()
+    }
+
+    // Startup and set refresh
+    initPlot();
+    updatePlot();
+    if (refresh_interval >0) intervalTimer = setInterval(updatePlot, refresh_interval); 
+
+})();
+</script>

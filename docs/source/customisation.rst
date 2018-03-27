@@ -9,6 +9,6 @@ Now you are all setup, you can make |project| your own by adding a little style.
 
    custom_look
    custom_dashboards
-   custom_commlinks
+   custom_pages
    utils
    exceptions

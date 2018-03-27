@@ -14,14 +14,14 @@ class Readings():
 
     """
     
-    def __init__(self, readings:list, device_id:str, time_start:str, time_end:str, time_interval:int, fillmode:str, fields_data:dict):
+    def __init__(self, readings:list, device_id:str, time_start:str, time_end:str, time_interval:int, fillmode:str, query_fields:dict):
         self.device_ids = [device_id]
         self.readings = sorted(readings, key=lambda k: k['time']) 
         self.time_start = arrow.get(time_start)
         self.time_end = arrow.get(time_end)
         self.time_interval = time_interval
         self.fillmode = fillmode
-        self.fields_data = fields_data
+        self.query_fields = query_fields
 
     def all(self, **kwargs):
         """Return all readings as a dictionary:
@@ -55,8 +55,8 @@ class Readings():
             "start": self.time_start.format(),
             "end": self.time_end.format(),
             "count": len(self.readings),
-            "fields": self.fields_data,
-            "field_ids": list(self.fields_data.keys()),
+            "fields": { k:f.as_dict() for k, f in self.query_fields.items() },
+            "field_ids": list(self.query_fields.keys()),
             'readings': formatted_readings
         }
 
@@ -88,10 +88,11 @@ class Readings():
         self.device_ids = list(set(self.device_ids + other.device_ids))
 
         # Merge field datas
-        self.fields_data.update(other.fields_data)
+        self.query_fields.update(other.query_fields)
     
         # Merge readings
-        fields_default = { k:None for k, v in self.fields_data.items() }
+        fields_default = { k:None for k, _ in self.query_fields.items() }
+
         self_readings_by_time  = self.all(format="by_time")['readings']
         other_readings_by_time = other.all(format="by_time")['readings']
         self_times  = list(self_readings_by_time.keys())
@@ -112,4 +113,4 @@ class Readings():
         return "Readings Result Object"
 
     def __repr__(self):
-        return "Readings(readings, device_id, time_start, time_end, time_interval, fillmode, limit, fields_data)"
+        return "Readings(readings, device_id, time_start, time_end, time_interval, fillmode, limit, query_fields)"

@@ -1,0 +1,161 @@
+{% extends 'system/base.html' %}
+{% import 'macros.html' as b_wtf %}
+
+{% block title %}Serial{% endblock %}
+
+{% block menu %}
+{% with active = 'serial' %}
+{% include 'system/menu.html' %}
+{% endwith %}
+{% endblock %}
+
+{% block script %}
+<script>
+  var lastUpdTime = moment().utc().subtract(1, 'hour');
+
+  var scrollToLastOption = function() {
+    var element = document.getElementById("serial_out"),
+        olen = element.options.length, i = olen,
+        selCache = [], stVal;
+    while(i--) selCache[i] = element.options[i].selected;
+    // setting last option as selected results in scrolling to that option
+    element.selectedIndex = olen-1;
+    // once again loop through options and set values that were previously selected
+    stVal = element.scrollTop;
+    i = olen;
+    while(i--) element.options[i].selected = selCache[i];
+    // doesn't work on Opera (not tested on IE)
+    element.scrollTop = stVal;
+  };
+
+  var addLine = function(dir, time, text, autoScroll=false) {
+    var length = 40;
+    var dir_spacer = (dir==="rx") ? ' --> ' : ' <-- ';
+    var trimmedString = text.length > length ? 
+        text.substring(0, length - 3) + "... (Double Click)" : 
+        text;
+    var opt = $('<option>', { 
+        text : dir + '> ' + time + dir_spacer + trimmedString,
+        value: text,
+    })
+    .data('time', time)
+    .data('dir', dir);
+    $('#serial_out').append(opt);
+    // Cap number of entries
+    var cap = $("#serial_out").children().length - 50;
+    for (var i=0; i<cap; i++) $("#serial_out option:first").remove();
+    if (autoScroll) scrollToLastOption();
+  };
+
+  var update = function() {
+    $('#sys_message_connecting').html('Connected.');
+    $('#refesh_message').html(moment().utc().format('hh:mm:ss'));
+    $.getJSON( "{{ url_for('.serial') }}?since="+lastUpdTime.format(), function( data ) {
+        $.each(data.messages, function(k, v) {
+            console.log(v);
+            addLine(v.rxtx, v.time, v.message, $('#auto_scroll').prop('checked'));
+            if (moment(v.time).utc().isAfter(lastUpdTime)) lastUpdTime = moment(v.time).add(1, 'second').utc();
+        });
+    });
+  };
+
+  var onTXsubmit = function(event) {
+    event.preventDefault();
+    $.ajax({
+        type: "POST",
+        url: "{{ url_for('.serial') }}",
+        dataType: "json",
+        data: $(this).serialize(),
+        success: function() { 
+            addLine('tx', 'Queued To Send', $('[name=message]').val(), true);
+            $('[name=message]').val(""); 
+        },
+        error: function(e) { 
+            console.log(e); 
+            showAlert('Failed to send: '+e.responseText, 'danger'); 
+        }       
+    });
+  };
+
+  var showSerialModal = function(e) {
+    var target = $(e.target);
+    var display = target.val();
+    try {
+        display = JSON.stringify(JSON.parse(display), null, 2);
+    } catch (e) {}
+    $('#serialModal .modal-body pre').html(display);
+    $('#serialModal .time').html(target.data('time'))
+    $('#serialModal .dir').html(target.data('dir'))
+    $('#serialModal').modal({ show: true });
+  };
+
+  $(document).ready(function() { 
+    update();
+    setInterval(update, 1000);
+    $('#txform').submit(onTXsubmit);
+    $('select').dblclick(showSerialModal);
+    //$('#serial_out').scroll(function() { $('#auto_scroll').prop('checked', false); });
+  });
+</script>
+{% endblock %}
+
+{% block style %}
+<style>
+    #serial_out {
+        font-family: "Lucida Console", "Courier New", monospace;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="card">
+    <div class="card-header">Live Stream 
+            <div class="form-check float-right">
+                <input type="checkbox" class="form-check-input" id="auto_scroll" checked="checked">
+                <label class="form-check-label" for="auto_scroll">Auto Scroll</label>
+            </div>
+            <div class="float-right" style="margin-right:20px;">
+                <i class="fas fa-sync"></i> <span id="refesh_message"></span>
+            </div>
+    </div>
+    <select multiple class="form-control border-0" size="15" id="serial_out">
+        <option id="sys_message_connecting">Connecting...</option>
+    </select>
+    <div class="card-footer">
+        <form id="txform" action="{{ url_for('.serial') }}" method="POST">
+            {{form.hidden_tag()}}
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" id="message"/>
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>   
+            </div>
+        </form>
+    </div>
+</div>
+<BR>  
+    
+<div id="serialModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Line Details</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>
+                <span class="dir"></span> 
+                <span class="time"></span>
+            </p>
+            <pre>Loading</pre>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

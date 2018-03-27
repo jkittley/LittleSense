@@ -17,6 +17,17 @@
       $('#offset').val( $(this).data('goto') * $('#limit').val() );
       $('#filter').submit();
     });
+    $('.more-details').click(function(e) {
+      console.log($(this).data('details'));
+      var display = $(this).data('details');
+      try {
+        display = JSON.stringify(display, null, 2);
+      } catch (e) {
+        console.log(e);
+      }
+      $('#details_modal pre').html( display );
+      $('#details_modal').modal({ show: true });
+    });
   });
   
 </script>
@@ -102,23 +113,51 @@
 <table class="table table-bordered">
     <thead>
       <tr>
-        <th>Date & Time</th>
-        <th>Category</th>
+        <th width="45px"></th>
+        <th width="445px">Date & Time</th>
         <th>Message</th>
-        <th>Extra</th>
+        <th width="100px">Details</th>
       </tr>
     </thead>
     <tbody>
+        {% with icons = { "error": "fas fa-exclamation-triangle", "interaction": "fas fa-mouse-pointer", "debug": "fas fa-bug", "funcexec": "fas fa-exchange-alt" } %}
         {% for ld in logdata.results %}
         <tr>
-            <td>{{ ld.time }}</td>
-            <td class="cat-{{ ld.category }}"><strong>{{ ld.category }}</strong></td>
+            <td>
+              <a href="javascript: alert('{{ ld.category }}');" alt="{{ ld.category }}" class="cat-{{ ld.category }}"><i class="{{ icons[ld.category] }} fa-fw"></i></a>
+            </td>
+            <td>
+              
+              <script>document.write(moment('{{ ld.time }}').format() + ' (' + moment('{{ ld.time }}').fromNow() + ')');</script>
+            </td>
             <td>{{ ld.message }}</td>
-            <td>{{ ld.extra }}</td>
+            <td>{% if ld.extra %}<button class="btn btn-block btn-sm btn-secondary more-details" data-details="{{ ld.extra }}">Details</button>{% endif %}</td>
         </tr>
         {% endfor %}
+        {% endwith %}
     </tbody>
 </table>
 {{ self.pagination() }}
 <BR>
+
+<!-- Modal -->
+<div class="modal fade" id="details_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <pre>Loading</pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

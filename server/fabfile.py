@@ -61,7 +61,7 @@ def init():
     ## Initialise cron jobs to run background tasks
     update_crontab()
     set_env_vars()
-    setup_receiver()
+    setup_transceiver()
     restart_bg_services()
     # Final server reboot for luck
     restart_web_services()
@@ -84,9 +84,9 @@ def restart_db_services():
 # Restart background services
 @task
 def restart_bg_services():
-    print_title('Restarting background services i.e. receiver script')
+    print_title('Restarting background services i.e. transceiver script')
     sudo('systemctl daemon-reload')
-    sudo('systemctl restart receiver')
+    sudo('systemctl restart transceiver')
 
 
 # Restart background services
@@ -98,8 +98,8 @@ def services_status():
     sudo('systemctl status nginx')
     print_title('Systemctl status gunicorn')
     sudo('systemctl status gunicorn')
-    print_title('Systemctl status receiver')
-    sudo('systemctl status receiver')
+    print_title('Systemctl status transceiver')
+    sudo('systemctl status transceiver')
 
 
 # ----------------------------------------------------------------------------------------
@@ -213,12 +213,7 @@ def install_venv_requirements():
     print_title('Installing remote virtual env requirements')
     with virtualenv(settings.DIR_VENV):
         install_requirements('{0}requirements/remote.txt'.format(settings.DIR_CODE), use_sudo=False)
-        # Install radio requirements
-        print_title('Installing Radio Specific virtual env requirements')
-        for p in Path('commlink').listdir(filter=DIRS):
-            if p.child('requirements.txt').exists():
-                radio_req = '{0}{1}'.format(settings.DIR_CODE, p.child('requirements.txt'))
-                install_requirements(radio_req, use_sudo=False)
+       
 
 # ----------------------------------------------------------------------------------------
 # Sub Tasks - Web Server
@@ -228,6 +223,11 @@ def install_venv_requirements():
 def setup_nginx():
     print_title('Installing Nginx')
     deb.install('nginx')
+
+    server_hosts = [env.hosts[0], "raspberrypi.local", "{}.local".format(settings.ROOT_NAME)]
+    server_hosts.append( socket.gethostbyname(env.host) )
+    server_hosts = set(server_hosts)
+
     nginx_conf = '''
         # the upstream component nginx needs to connect to
         upstream django {{
@@ -239,7 +239,7 @@ def setup_nginx():
 
             # Block all names not in list i.e. prevent HTTP_HOST errors
             if ($host !~* ^({SERVER_NAMES})$) {{
-                return 444;
+               return 444;
             }}
 
             listen      80;
@@ -262,13 +262,14 @@ def setup_nginx():
                 proxy_pass http://unix:{SOCKET_FILES_PATH}{PROJECT_NAME}.sock;
         }}
     }}'''.format(
-        SERVER_NAMES="{0}|{1}.local|raspberrypi.local".format(env.hosts[0], settings.ROOT_NAME),
+        SERVER_NAMES="|".join(server_hosts),
         PROJECT_NAME=settings.ROOT_NAME,
         PROJECT_PATH=settings.DIR_CODE,
         STATIC_FILES_PATH=settings.DIR_CODE,
         VIRTUALENV_PATH=settings.DIR_VENV,
         SOCKET_FILES_PATH=settings.DIR_SOCK
     )  
+
     sites_available = "/etc/nginx/sites-available/%s" % settings.ROOT_NAME
     sites_enabled = "/etc/nginx/sites-enabled/%s" % settings.ROOT_NAME
     files.append(sites_available, nginx_conf, use_sudo=True)
@@ -351,10 +352,10 @@ def set_env_vars():
         run('export LOCAL=0')
 
 # Setup listing
-def setup_receiver():
-    print_title('Setting up receiver script - for radios')
+def setup_transceiver():
+    print_title('Setting up transceiver script - for radios')
     conf = '''[Unit]
-        Description=Radio receiver daemon
+        Description=Radio transceiver daemon
         After=network.target
 
         [Service]
@@ -362,7 +363,7 @@ def setup_receiver():
         Group={GRP}
         Restart=always
         WorkingDirectory={PATH}
-        ExecStart={VIRTUALENV_PATH}/bin/python receiver.py
+        ExecStart={VIRTUALENV_PATH}/bin/python transceiver.py
 
         [Install]
         WantedBy=multi-user.target
@@ -376,10 +377,10 @@ def setup_receiver():
             SOCKET_FILES_PATH=settings.DIR_SOCK
         )
     
-    service = "/etc/systemd/system/receiver.service"
+    service = "/etc/systemd/system/transceiver.service"
     files.append(service, conf, use_sudo=True)
-    sudo('systemctl enable receiver')
-    sudo('systemctl start receiver')
+    sudo('systemctl enable transceiver')
+    sudo('systemctl start transceiver')
 
 
 

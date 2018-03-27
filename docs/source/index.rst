@@ -1,13 +1,11 @@
-.. sensortank documentation master file, created by
+.. Little Sense documentation master file, created by
    sphinx-quickstart on Mon Mar 12 14:37:40 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 .. include:: global.rst
 
 .. note::
 
-   This project has just been released so it may contain bugs. If you spot one then please report it as an issue. We want to make this project awesome and to do that we need your help!
+   This project has just been released so it may contain bugs. If you spot one then please report it as an issue on Github. We want to make this project awesome and to do that we need your help!
 
 Welcome to |project| documentation!
 ===================================
@@ -18,11 +16,7 @@ experienced programmers can develope bespoke sensor network applciations. Out of
 sensors. In addition the code has been specifically designed and written to make editing 
 the layout and functionality easy.
 
-At the heart of this project (and those of its creators) is the `Raspberry Pi <https://www.raspberrypi.org/>`_. 
-The Pi acts as a server, listening for data (over WiFi or other radio technologies e.g. RFM69), storing the 
-data it hears away in an timeseries obtimised database (`InfluxDB <https://www.influxdb.com/>`_) and presenting 
-visualisations via web interface. In addition the project comes with a bunch of example sensor code which you can 
-quickly deploy to microcontrollers like the Arduino.
+At the heart of this project (and its creators) is the `Raspberry Pi <https://www.raspberrypi.org/>`_. The Pi acts as a server, listening for data over WiFi and Serial ports, storing the data it receives in a timeseries optimised database (`InfluxDB <https://www.influxdb.com/>`_). Radio receivers (such as RFM69) can be connected to the Raspberry Pi via USB allowing for low energy sensor devices to communicated via any radio or protocal (there's a bunch of examples in the repository). The Pi also provides a local website on which the recieved data can be inspected and the system monitored and debugged.
 
 .. image:: _static/architecture.png
 
@@ -30,23 +24,14 @@ Features
 --------
 
 - All the latest tech: Python 3, InfluxDB, Flask...
-- One line deploy and update
-- Example sensor code for Arduinos
-- Communication via various Radios and WiFi
-- Simple to expand and modify
-- Well documented
-
-Overview
-========
-So what does |project| do? Well in short you can through any number of key:value pairs at the server (along with a UTC time string and a unique sender device id) and the server will record them without question. The keys are made up from three parts: the data type (int, string, float), the variable name (e.g. light_level) and the unit of measurement (e.g. lux). An example key:value pair might look like float_light_level_lux=35. Formating the keys in this way allows |project| to automatically processes sensor data with zero configuration. 
-
-Did you say it just records everything? Yes, but |project| only keeps the data of unregistered devices for a specified period, after which it automatically deletes them. You can easily register devices using the web interface. Using the web interface you or your users can also inspect and visuals the data through customisable dashboards. 
-
-You can add your own visualisations easily and request data from the server by passing a JSON encoded list of device_id, variable name and aggregation function (e.g. max, mean) along with a start time, end time and interval period. The system will automatically aggregat the results, returning aggregated values for each variable for each interval in the specified time period. 
+- Simple setup and updates using Fabric automation scripts.
+- Example sensor device code.
+- Communication via various Radios and WiFi.
+- Designed to be simple to expand and modify.
+- Well documented.
 
 Contents
 --------
-The project is structured in two main section. We recomment starting by setting up the server.
 
 .. toctree::
    :maxdepth: 2
@@ -66,8 +51,7 @@ All the code you need can be found at: https://github.com/jkittley/LittleSense
 
 Why |project|
 -------------
-For a breif moment we thought it was funny and also memorable domain names are hard to find. I'm sure one day we will regret it, but for now it stays.
-
+My mother always said should have a little sense and listen.
 
 Contribute
 ----------
@@ -82,11 +66,9 @@ License
 -------
 The project is licensed under the BSD license.
 
-
-Indices and tables
-==================
+Index
+=====
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
 

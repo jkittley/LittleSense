@@ -3,13 +3,15 @@
 # webapp.py with the admin panel functionality.
 # =============================================================================
 
+from random import randint
 from flask import Blueprint, render_template, abort, redirect, url_for, flash, send_from_directory, request
-from forms import DeviceSettingsForm, DBPurgeReadingsForm, DBPurgeDeviceReadingsForm, DBPurgeRegistryForm, DBPurgeLogsForm, LogFilterForm, BackupForm, ReadingForm
+from forms import SerialTXForm, DeviceSettingsForm, DBPurgeReadingsForm, DBPurgeDeviceReadingsForm, DBPurgeRegistryForm, DBPurgeLogsForm, LogFilterForm, BackupForm, ReadingForm, AreYouSureForm
 import arrow
 from unipath import Path
 from flask import current_app as app
-from utils import Device, Devices, Logger, BackupManager, DashBoards
+from utils import Device, Devices, Logger, BackupManager, DashBoards, SerialLogger, SerialTXQueue
 from config import settings
+from flask import jsonify
 
 sysadmin = Blueprint('sysadmin', __name__, template_folder='templates/system')
 
@@ -157,9 +159,32 @@ def db_purge_logs():
     return render_template('system/db.html', form=form, log=app.config.get('log').stats(), devices=None)
 
 
+# -----------------------------------------------------------------------------
+# Serial Viewer
+# -----------------------------------------------------------------------------
 
-   
-    
+
+# System Admin - Serial data viewer
+@sysadmin.route("/serial", methods=['GET','POST'])
+def serial():
+    form = SerialTXForm()
+    if request.method == 'POST':
+        if form.validate():
+            txq = SerialTXQueue()
+            txq.push(form.message.data)
+            return jsonify(dict(success=True))
+        else:
+            print(form.errors)
+            return "Form is invalid", 400
+    if 'since' in request.values:
+        slog = SerialLogger()
+        start = arrow.get(request.values['since'])
+        return jsonify(dict(messages=[ x for x in slog.filter(start=start, limit=100) ]))
+    else:
+        return render_template('system/serial.html', form=form)
+
+
+ 
 
 # -----------------------------------------------------------------------------
 # Logs Viewer

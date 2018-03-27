@@ -25,14 +25,17 @@ class DefaultSetting(SecureSettings):
     # Influx Messurements
     INFLUX_READINGS = "reading"
     INFLUX_LOGS = "logger"
+    INFLUX_SERIAL = "serial"
     INFLUX_MESSUREMENTS = [
         (INFLUX_READINGS, "Readings"),
-        (INFLUX_LOGS, "Logs")
+        (INFLUX_LOGS, "Logs"),
+        (INFLUX_SERIAL, "Serial Log")
     ]
 
     # Details of the TinyDB databases
     TINYDB = {
-        "db_device_reg": "data/tinydb/devices.json"
+        "db_device_reg": "data/tinydb/devices.json",
+        "db_serial_tx": "data/tinydb/serial_tx.json"
     }
     # Saved Dashboard locations
     DASHBOARDS_PATH = "data/dashboards"    
@@ -100,9 +103,11 @@ class RemotelSetting(DefaultSetting):
 class TestSettings(DefaultSetting):
     INFLUX_READINGS = "test_reading"
     INFLUX_LOGS = "test_logger"
+    INFLUX_SERIAL = "test_serial"
     INFLUX_MESSUREMENTS = [
         (INFLUX_READINGS, "Readings"),
-        (INFLUX_LOGS, "Logs")
+        (INFLUX_LOGS, "Logs"),
+        (INFLUX_SERIAL, "Serial Log")
     ]
    
 # -----------------------------------------------------------------------------

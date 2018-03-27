@@ -3,8 +3,6 @@
     "footer": null,
     "plots": [
         {
-            "id": 1,
-            "pos": 1,
             "title": "Plot 1",
             "width": 6,
             "help": "Some help text for the viewer",
@@ -39,8 +37,6 @@
             "refresh_interval_seconds": 5
         },
         {
-            "id": 2,
-            "pos": 2,
             "title": "Plot 2",
             "width": 6,
             "help": "Some help text for the viewer",
@@ -48,7 +44,7 @@
                 "name": "Device 2: Temp (C)",
                 "field_id": "float_temp_c",
                 "device_id": "test_device_2",
-                "agrfunc": "mean"             
+                "aggrfunc": "mean"             
             },{
                 "name": "Device 2: Switch State (OnOff)",
                 "field_id": "bool_switch_state",
@@ -67,6 +63,35 @@
                 "fill": "none"
             },
             "type": "timeseries",
+            "refresh_interval_seconds": 5
+        },
+        {
+            "title": "Plot 1",
+            "width": 12,
+            "help": "Some help text for the viewer",
+            "metrics": [{
+                "name": "Device 1: Signal (dB)",
+                "field_id": "float_signal_db",
+                "device_id": "test_device_1",
+                "aggrfunc": "mean"             
+            },{
+                "name": "Device 1: Report (text)",
+                "field_id": "string_message_text",
+                "device_id": "test_device_2",
+                "aggrfunc": "last"
+            }],
+            "time": {
+                "start": null,
+                "end": null,
+                "reading_interval_seconds": 5,
+                "period": {
+                    "days": 0,
+                    "hours": 0,
+                    "minutes": 5
+                },
+                "fill": "none"
+            },
+            "type": "timeline",
             "refresh_interval_seconds": 5
         }
         ]

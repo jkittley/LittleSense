@@ -1,9 +1,10 @@
 from datetime import datetime
+import arrow
 from flask import Blueprint, abort
 from flask_restful import Api, Resource, url_for, reqparse
 from flask import current_app as app
-from utils.exceptions import InvalidReadingsRequest, UnknownDevice, IllformedFieldName
-from utils import Metric, Device
+from utils.exceptions import InvalidReadingsRequest, UnknownDevice, IllformedField
+from utils import Metric, Device, Field
 
 api_bp = Blueprint('api', __name__)
 api = Api(api_bp)
@@ -197,7 +198,7 @@ class ReadingsAPI(Resource):
           }
 
         :query device_id: Device ID e.g. test_device_id
-        :query utc: UTC timestamp string e.g. 2018-03-20T13:30:00Z
+        :query utc: UTC timestamp string e.g. 2018-03-20T13:30:00Z. If absent or set to "NOW", the server will add a timestamp on receiving.
         :query field: Field ID e.g. float_light_level_lux
         :query dtype: Field data type e.g. float or int
         :query unit: Field messurement unit e.g. lux or C
@@ -211,25 +212,22 @@ class ReadingsAPI(Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('device_id',     type=str, required=True, help='Device ID e.g. test_device_id')
-        parser.add_argument('utc',           type=str, required=True, help='UTC timestamp string e.g. 2018-03-20T13:30:00Z')
+        parser.add_argument('utc',           type=str, default="NOW", help='UTC timestamp string e.g. 2018-03-20T13:30:00Z')
         parser.add_argument('field',         type=str, required=True, help='Field Name e.g. light_level must be alpha numeric and contain no spaces only underscores')
         parser.add_argument('dtype',         type=str, required=True, help='Field data type e.g. float')
         parser.add_argument('unit',          type=str, required=True, help='Unit of messurement')
         parser.add_argument('value',         type=str, required=True, help='Value to record')
         args = parser.parse_args()  
         
-        print (args)
-
         try:
             device = Device(args['device_id'], True)
-            field_id = "{}_{}_{}".format(args['dtype'],args['field'],args['unit'])
-            fields = dict()
-            fields[field_id] = args['value']
-            device.add_reading(args['utc'], fields, "WebAPI")
-            return dict(success=True, fields=fields)
+            field = Field.fromDict(args)
+            device.add_reading(args['utc'], [field], "WebAPI")
+            return dict(success=True, fields=field)
+
         except UnknownDevice:
             return abort(400, "Device: {} unknown".format(args['device_id']))
-        except IllformedFieldName as e:
+        except IllformedField as e:
             return abort(400, str(e))
    
 
@@ -341,28 +339,27 @@ class ReadingsAPI(Resource):
             try:
                 for metric_str in args['metric[]']:
                     m = Metric.fromString(metric_str)
-                    metrics_by_device.setdefault(m.device_id, []).append(m)
+                    metrics_by_device.setdefault(m.device.id, []).append(m)
             except ValueError as e:
                 abort(400, str(e))
 
         elif args['device_id'] is not None:
             try:
-                device = Device(args['device_id'])
-                metrics_by_device = dict()
-                metrics_by_device[device.id] = "" 
+                metrics_by_device = { d.id:"" for d in [ Device(args['device_id']) ] }
             except UnknownDevice:
                 abort(404, "Unknown device ID")
 
         else:
             abort(404, "You must specify a device id or a series of metrics")
 
+    
         merged_results = None
         for device_id, metrics in metrics_by_device.items():
             # Fetch readings
             try:
                 device = Device(device_id)
                 device_results = device.get_readings(
-                    fields   = metrics,
+                    metrics   = metrics,
                     fill     = args.get('fill'), 
                     interval = args.get('interval'), 
                     start    = args.get('start'),
@@ -379,6 +376,7 @@ class ReadingsAPI(Resource):
             except InvalidReadingsRequest as e:
                 abort(404, str(e))
         
+
         if merged_results is not None:
             return merged_results.all()
 
