@@ -155,7 +155,7 @@ class Field():
         return self.dtype in self.DATA_TYPES_BOOLEAN
 
     def __str__(self):
-        return "Field {}".format(self.id)
+        return "{} ({})".format(self.friendly, self.unit)
 
     def __repr__(self):
         return "Field({},{},{})".format(self.dtype, self.name, self.unit)

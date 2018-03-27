@@ -7,6 +7,7 @@ from .readings import Readings
 from .metric import Metric
 from .influx import get_InfluxDB
 from .device import Device
+from .field import Field
 from .exceptions import InvalidUTCTimestamp, InvalidFieldDataType, IllformedField, UnknownDevice, InvalidReadingsRequest
 from unipath import Path
 import arrow
@@ -59,9 +60,16 @@ class Devices():
         if self._ifdb is None:
             return
         try:
-            counts = next(self._ifdb.query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_READINGS)).get_points())
+            counts = {}
+            results = next(self._ifdb.query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_READINGS)).get_points())
+            for k, v in results.items():
+                if k != 'time':
+                    f = Field.fromString(k.replace('count_',''))
+                    counts[f] = v
+
         except StopIteration:
             counts = {}
+
         if 'time' in counts.keys():
             del counts['time']
         try:

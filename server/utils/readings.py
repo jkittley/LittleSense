@@ -92,7 +92,6 @@ class Readings():
     
         # Merge readings
         fields_default = { k:None for k, _ in self.query_fields.items() }
-        print(fields_default)
 
         self_readings_by_time  = self.all(format="by_time")['readings']
         other_readings_by_time = other.all(format="by_time")['readings']
