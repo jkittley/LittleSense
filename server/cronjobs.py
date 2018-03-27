@@ -25,7 +25,6 @@ class Maintenance():
         devices = Devices()
         devices.purge(unregistered=True, end=arrow.utcnow().shift(minutes=-settings.PURGE['unreg_keep_for']))
 
-
     @staticmethod
     def task_auto_backup():
         print('Automatically backing up data')
@@ -69,14 +68,18 @@ class Maintenance():
             job.setall('0 0 * * *')
             my_cron.write()
 
-        
+        # ===== Add custom tasks execution below this line ======= #
 
+
+
+
+# ------------ Do not edit below this line ----------------
 @click.command()
 @click.option('--task', default='update_crontab', help='Task to run')
 def main(task):
     log.funcexec('Crontab called for task: {}'.format(task))
     method_to_call = getattr(Maintenance, task)
     method_to_call()
-
+    
 if __name__ == "__main__":
     main(None)
