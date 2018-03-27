@@ -30,7 +30,7 @@
                 },
                 "fill": "none"
             },
-            "type": "timeseries",
+            "type": "ticker",
             "refresh_interval_seconds": 5
         }
         ]

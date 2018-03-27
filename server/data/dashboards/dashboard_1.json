@@ -48,7 +48,7 @@
                 "name": "Device 2: Temp (C)",
                 "field_id": "float_temp_c",
                 "device_id": "test_device_2",
-                "agrfunc": "mean"             
+                "aggrfunc": "mean"             
             },{
                 "name": "Device 2: Switch State (OnOff)",
                 "field_id": "bool_switch_state",
