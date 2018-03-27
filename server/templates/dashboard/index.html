@@ -30,7 +30,7 @@
     var api_url = "{{ url_for('api.readingsapi') }}";
 
 
-    function calculate_times(init) {
+    function calculate_times(init, force_start=null) {
         if (init==null) {
             showAlert('No init time provided to calculate_times', 'danger');
             return null;
@@ -46,7 +46,10 @@
             end = moment(init.end, 'YYYY-MM-DD, h:mm:ss');
         }
         if (init.start == null) {
-            if (init.period != undefined) {
+            if (force_start !== null) {
+                start = moment(force_start);
+
+            } else if (init.period != undefined) {
                 // If there is no start time then use the period settings
                 start = moment(end).subtract(init.period.days, 'days')
                                     .subtract(init.period.hours, 'hours')
