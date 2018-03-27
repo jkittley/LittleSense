@@ -331,7 +331,7 @@ class Device():
           
             # If aggregation function valid
             if metric.aggregation_function not in allowed_aggfuncs:
-                log.error('_metrics_to_query aggregation function {} not permitted'.format(aggrfunc), field=metric.field.as_dict())
+                log.error('_metrics_to_query aggregation function {} not permitted'.format(metric.aggregation_function), field=metric.field.as_dict())
                 continue
             
             query_field_name = "{device_id}__{aggrfunc}__{field_id}".format(
