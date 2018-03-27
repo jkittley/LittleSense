@@ -1,7 +1,7 @@
 <script>
 (function(){ 
 
-    var elem_id = "plot-{{ plot.id }}";
+    var elem_id = "plot-{{ plot_id }}";
     var chart = null;
     var intervalTimer = null;
     var reading_interval = parseInt('{{ plot.time.reading_interval_seconds }}');
@@ -10,8 +10,7 @@
         metrics = metrics['metrics'];
     var units = JSON.parse('{ "units": {{ plot.units|default("[]")|tojson|safe }} }');
         units = units['units'];
-    var colors = palette('tol', metrics.length);
-
+ 
     var time_init = JSON.parse('{{ plot.time|default("{}")|tojson|safe }}');
    
     function initPlot() {       
