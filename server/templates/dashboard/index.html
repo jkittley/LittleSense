@@ -19,58 +19,75 @@
     .jumbotron.footer {
         margin-bottom: 0px;
     }
+    .bottom-buffer { 
+        margin-bottom: 20px; 
+    }
 </style>
 {% endblock %}
 
 {% block script %}
 <script>
-    $(document).ready(function() { 
-        $('[data-toggle="popover"]').popover()
-    });
-    var api_url = "{{ url_for('api.readingsapi') }}";
-
-
-    function calculate_times(init, force_start=null) {
+    
+    // Help icon pop up
+    $(document).ready(function() { $('[data-toggle="popover"]').popover() });
+    
+    // Calculate time window for requesting new data.
+    //
+    // Args:
+    //      init (obj): Init time object with start, end and period.
+    //
+    // Returns:
+    //      start: start of time period
+    //      end: end of time period
+    //      last_update: time of last update
+    //
+    var last_update = null;
+    function calculate_times(init) {
         if (init==null) {
             showAlert('No init time provided to calculate_times', 'danger');
             return null;
         }
-        start = null;
-        end = null;
-
+        start = null; end = null;
+        
+        // Is the end of the time period specified or should it be updated for each request
         if (init.end == null) {
-            // If there is no end time then set to now
-            end = moment().utc()
+            // If there is no init.end specified then set to now
+            end = moment().utc(); 
         } else{
-            // If there is an end time then cancel the refresh
+            // If there is an init.end time then convert to moment type
             end = moment(init.end, 'YYYY-MM-DD, h:mm:ss');
         }
+        
+        // Is there a start time specified or should it be calculated from the period.
         if (init.start == null) {
-            if (force_start !== null) {
-                start = moment(force_start);
-
-            } else if (init.period != undefined) {
-                // If there is no start time then use the period settings
+            // There is no start so calculate it from period
+            if (init.period != undefined) {
                 start = moment(end).subtract(init.period.days, 'days')
-                                    .subtract(init.period.hours, 'hours')
-                                    .subtract(init.period.minutes, 'minutes')
+                                   .subtract(init.period.hours, 'hours')
+                                   .subtract(init.period.minutes, 'minutes')
             } else {
                 showAlert('No start time or period', 'danger')
                 return null;
             }
+
         } else {
+            // There is a start time so convert to moment object
             start = moment(init.start, 'YYYY-MM-DD, h:mm:ss');
         }
 
+        // Safety check - has start and end time been calculated?
         if (start === null || end === null) {
             showAlert('Failed to calculate start and end times', 'danger');
             return null;
         }
-        // console.log([start_time.format(), end_time.format()]);
+        
+        // Default last update to start
+        if (last_update==null) last_update = start;
 
         return {
             start: start.format(),
             end: end.format(),
+            last_update: last_update.format()
         }
     }
 
@@ -79,13 +96,10 @@
         $.each(metrics, function(k,v) { 
             metrics_list.push(v.device_id+','+v.field_id+','+v.aggrfunc)
         });
-        
-
         var query = {
             dataType: "json",
             method: "GET",
-            url: api_url,
-
+            url: "{{ url_for('api.readingsapi') }}",
             data: {
                 start: start,
                 end: end,
@@ -93,10 +107,12 @@
                 interval: interval,
                 metric: metrics_list,
             },
-            success: callback_success,
+            success: function(returned_data) {
+                last_update = moment().utc();
+                callback_success(returned_data);
+            },
             error: callback_error
         }
-        console.log(query);
         $.ajax(query); 
     }
 
@@ -104,7 +120,6 @@
 {% endblock %}
 
 {% block menu %}
-
 <li class="nav-item dropdown">
     {% if dashes|length > 1 %}
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -119,11 +134,9 @@
         <span class="navbar-text"><i class="fas fa-desktop"></i> {{ dash.title }}</span>
     {% endif %}
 </li>
-
 {% endblock %}
 
 {% block body %}
-
 {% if dash %}
 {% if dash.header %}
 <div class="jumbotron">
@@ -134,8 +147,9 @@
 <div class="container-fluid">
 <div class="row">
     {% for plot in dash.plots %}
-    <div class="col-xl-{{ plot.width }}">
-            <div class="card">
+    {% set plot_id = loop.index %}
+        <div class="col-xl-{{ plot.width }}">
+            <div class="card bottom-buffer" id="card-{{ plot_id }}">
                 <div class="card-header">
                     <div class="row">
                         <div class="col lead">{{ plot.title }}</div>
@@ -154,11 +168,11 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="plot-{{ plot.id }}"></div>
+                    <div id="plot-{{ plot_id }}"></div>
                 </div>            
             </div>
             {% include 'dashboard/plots/' + plot.type + '.html' %}
-    </div>
+        </div>
     {% endfor %}
 </div>
 </div>

@@ -3,8 +3,6 @@
     "footer": null,
     "plots": [
         {
-            "id": 1,
-            "pos": 1,
             "title": "Plot 1",
             "width": 12,
             "help": "Some help text for the viewer",
@@ -30,7 +28,7 @@
                 },
                 "fill": "none"
             },
-            "type": "ticker",
+            "type": "timeline",
             "refresh_interval_seconds": 5
         }
         ]
