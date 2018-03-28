@@ -13,3 +13,5 @@ server/.pytest_cache/
 
 device/arduino/BLE
 device/arduino/RFM69
+
+.vscode/
