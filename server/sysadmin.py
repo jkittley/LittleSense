@@ -176,15 +176,14 @@ def serial():
         else:
             print(form.errors)
             return "Form is invalid", 400
-    if 'since' in request.values:
-        slog = SerialLogger()
-        start = arrow.get(request.values['since'])
-        return jsonify(dict(messages=[ x for x in slog.filter(start=start, limit=100) ]))
-    else:
-        return render_template('system/serial.html', form=form)
+    
+    return render_template('system/serial.html', form=form)
 
-
- 
+# System Admin - Serial data viewer
+@sysadmin.route("/serial/log/tail/<int:nlines>", methods=['GET'])
+def serial_log_tail(nlines):
+    slog = SerialLogger()
+    return slog.tail(nlines)
 
 # -----------------------------------------------------------------------------
 # Logs Viewer
