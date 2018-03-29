@@ -41,8 +41,8 @@
     //      end: end of time period
     //      last_update: time of last update
     //
-    var last_update = null;
-    function calculate_times(init) {
+    function calculate_times(init, last_update) {
+        console.log(last_update);
         if (init==null) {
             showAlert('No init time provided to calculate_times', 'danger');
             return null;
@@ -55,16 +55,20 @@
             end = moment().utc(); 
         } else{
             // If there is an init.end time then convert to moment type
-            end = moment(init.end, 'YYYY-MM-DD, h:mm:ss');
+            end = moment(init.end, 'YYYY-MM-DD, h:mm:ss').utc();
         }
         
+        if (last_update !== null && last_update !== undefined) {
+            start = moment(last_update).utc();
+        
         // Is there a start time specified or should it be calculated from the period.
-        if (init.start == null) {
+        } else if (init.start == null) {
             // There is no start so calculate it from period
             if (init.period != undefined) {
                 start = moment(end).subtract(init.period.days, 'days')
                                    .subtract(init.period.hours, 'hours')
                                    .subtract(init.period.minutes, 'minutes')
+                                   .utc();
             } else {
                 showAlert('No start time or period', 'danger')
                 return null;
@@ -72,7 +76,7 @@
 
         } else {
             // There is a start time so convert to moment object
-            start = moment(init.start, 'YYYY-MM-DD, h:mm:ss');
+            start = moment(init.start, 'YYYY-MM-DD, h:mm:ss').utc();;
         }
 
         // Safety check - has start and end time been calculated?
@@ -80,14 +84,10 @@
             showAlert('Failed to calculate start and end times', 'danger');
             return null;
         }
-        
-        // Default last update to start
-        if (last_update==null) last_update = start;
 
         return {
             start: start.format(),
             end: end.format(),
-            last_update: last_update.format()
         }
     }
 
@@ -99,7 +99,7 @@
         var query = {
             dataType: "json",
             method: "GET",
-            url: "{{ url_for('api.readingsapi') }}",
+            url: "{{ url_for('api.readingsapi') }}?refresh="+moment().format(),
             data: {
                 start: start,
                 end: end,
