@@ -30,9 +30,8 @@ class Maintenance():
         print('Automatically backing up data')
         log.funcexec('Automatically backing up data')
         from utils import BackupManager
-        from utils.influx import INFLUX_READINGS
         manager = BackupManager()
-        manager.create(INFLUX_READINGS, arrow.utcnow().shift(days=settings.BACKUP['days'], hours=settings.BACKUP['hours']))
+        manager.create(settings.INFLUX_READINGS, arrow.utcnow().shift(days=settings.BACKUP['days'], hours=settings.BACKUP['hours']))
 
     @staticmethod
     def update_crontab():
