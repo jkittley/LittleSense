@@ -3,6 +3,7 @@ old/
 *.pyc
 server/data/tinydb/*.json
 server/data/*.db
+server/data/*.log
 backups/
 docs/build/
 docs/make.bat
