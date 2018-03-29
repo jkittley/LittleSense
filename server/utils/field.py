@@ -48,7 +48,7 @@ class Field():
                 raise IllformedField('Key: {} missing'.format(key))
 
         # Create class 
-        cls(dictionary['dtype'],dictionary['name'],dictionary['unit'])
+        return cls(dictionary['dtype'],dictionary['name'],dictionary['unit'])
 
     @classmethod
     def fromString(cls, field_string):
