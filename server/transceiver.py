@@ -3,9 +3,9 @@
 # purpose of this script is to receive information from the sensors connected
 # via a communication link e.g. Radio or GPIO pins.
 # =============================================================================
-import asyncio, sys, json, time, string
+import sys, json, time, string, io
 from random import randint, choice
-import serial_asyncio
+import serial
 from serial.serialutil import SerialException
 import signal
 import click, arrow
@@ -15,84 +15,84 @@ loop = None
 log = Logger()
 serial_log = SerialLogger()
 tx_queue = SerialTXQueue()
+comments = []
 
 # On the Pi you can run 'ls /dev/{tty,cu}.*' to list all serial ports.
-SERIAL_PORT = '/dev/tty.usbmodem1411'
+SERIAL_PORT = '/dev/tty.usbmodem1461'
 
-async def transmitter(verbose):
-    while True:
-        next_message = tx_queue.pop()
-        if next_message is not None:
-            serial_log.tx(next_message['message'])
-            if verbose:
-                print("Processing", next_message)
-        await asyncio.sleep(0)
 
-async def test_data_generator(verbose):
-    while True:
+def process_json(line, test, verbose):
+    if verbose:
+        print('JSON', line)
+    serial_log.rx('JSON: ' + line)
+    try:
+        asdict = json.loads(line)
+        utc = "NOW" if 'utc' not in asdict else asdict['utc']
+
+        fvs = FieldValue(Field.fromDict(asdict), asdict['value'])
+        device = Device(asdict['device_id'], True)
+
+        device.add_reading(utc, [fvs], 'serial_port')
+    except KeyError as e:
+        log.error('Serial data missing key', exception=str(e))
         if verbose:
-            print("Generating test data")
+            print('Exception', e)
+    # except Exception as e:
+    #     log.error('Serial receive failed', exception=str(e))
+    #     if verbose:
+    #         print('Exception', e)
+    
+def process_comment(comments, test, verbose):
+    print('Comment', comments)
+    serial_log.rx('Comment: ' + '| '.join(comments))
 
-        device1 = Device('test_device_1', True)
-        field_values = [
-            FieldValue(Field("float", "signal", "db"), randint(0,450)/10.0),
-            FieldValue(Field("float", "audio_level", "db"), randint(0,450)/10.0),
-            FieldValue(Field("int", "light_level", "lux"), randint(0,100)),
-            FieldValue(Field("float", "temp", "f"), randint(0,72)),
-        ]
-        device1.add_reading("NOW", field_values, 'test_data')
-        
-        device2 = Device('test_device_2', True)
+def read_serial(ser, test, verbose, comments):
+    line = ser.readline().decode("utf-8").strip()
+    if verbose:
+        print('data received', line)
 
-        field_values = [
-            FieldValue(Field("float", "temp", "c"), randint(20,35)/10.0),
-            FieldValue(Field("boolean", "switch", "state"), randint(0,1)),
-            FieldValue(Field("string", "message", "text"), 'HEY' + ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(10)) ),
-        ]
-        device2.add_reading("NOW", field_values, 'test_data')
-        await asyncio.sleep(5)
+    if line.startswith('{') and line.endswith('}'):
+        process_json(line, test, verbose)
+    elif line.startswith('#'):
+        comments.append(line)
+    else:
+        process_comment(comments, test, verbose)
+        comments = []
+            
+def test_data_generator(verbose):
+    if verbose:
+        print("Generating test data")
 
-class Output(asyncio.Protocol):
+    device1 = Device('test_device_1', True)
+    field_values = [
+        FieldValue(Field("float", "signal", "db"), randint(0,450)/10.0),
+        FieldValue(Field("float", "audio_level", "db"), randint(0,450)/10.0),
+        FieldValue(Field("int", "light_level", "lux"), randint(0,100)),
+        FieldValue(Field("float", "temp", "f"), randint(0,72)),
+    ]
+    device1.add_reading("NOW", field_values, 'test_data')
+    
+    device2 = Device('test_device_2', True)
 
-    def __init__(self):
-        self.json_str = "" 
+    field_values = [
+        FieldValue(Field("float", "audio_level", "db"), randint(20,35)/10.0),
+        FieldValue(Field("float", "battery_level", "volts"), randint(20,35)/10.0),
+        FieldValue(Field("float", "signal_strength", "db"), randint(20,35)/10.0),
+        FieldValue(Field("boolean", "switch", "state"), randint(0,1)),
+        FieldValue(Field("string", "message", "text"), 'HEY' + ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(10)) ),
+    ]
+    device2.add_reading("NOW", field_values, 'test_data')
 
-    def connection_made(self, transport):
-        self.transport = transport
-        print('port opened', transport)
-        transport.serial.rts = False  # You can manipulate Serial object via transport
-        transport.write(b'Hello, World!\n')  # Write serial data via transport
+def transmit(ser, verbose):
+    next_message = tx_queue.pop()
+    if next_message is not None:
+        serial_log.tx(next_message['message'])
+        if verbose:
+            print("Processing", next_message)
+        sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
+        sio.write("{}\n".format(next_message))
+        sio.flush() # it is buffering. required to get the data out *now*
 
-    def data_received(self, data):
-        # print('data received', repr(data))
-        self.json_str += data.decode("utf-8")
-        if b'\n' in data:
-            serial_log.rx(str(self.json_str))
-            try:
-                asdict = json.loads(str(self.json_str))
-                utc = "NOW" if 'utc' not in asdict else asdict['utc']
-                fields = Field.fromDict(asdict)
-                device = Device(asdict['device_id'], True)
-                device.add_reading(utc, fields, 'serial_port')
-            except KeyError as e:
-                log.error('Serial data missing key', exception=str(e))
-            except Exception as e:
-                log.error('Serial receive failed', exception=str(e))
-                
-            self.json_str = ""
-            # self.transport.close()
-
-    def connection_lost(self, exc):
-        print('port closed')
-        self.transport.loop.stop()
-
-    def pause_writing(self):
-        print('pause writing')
-        print(self.transport.get_write_buffer_size())
-
-    def resume_writing(self):
-        print(self.transport.get_write_buffer_size())
-        print('resume writing')
 
 # =============================================================================
 # Main event loop manager
@@ -102,16 +102,18 @@ class Output(asyncio.Protocol):
 @click.option('--test/--no-test', default=False)
 @click.option('--verbose/--no-verbose', default=False)
 def launch(test=False, verbose=False):
-    loop = asyncio.get_event_loop()
-    if not test:
-        coro = serial_asyncio.create_serial_connection(loop, Output, SERIAL_PORT, baudrate=115200)
-        loop.run_until_complete(coro) 
+    if test:
+        while True:
+            test_data_generator(verbose)
+            time.sleep(5)
     else:
-        loop.create_task(test_data_generator(verbose))
-    loop.create_task(transmitter(verbose))
-    loop.run_forever()
-    loop.close()
-
+        with serial.Serial(SERIAL_PORT, 115200, timeout=10) as ser:
+            while True:
+                read_serial(ser, test, verbose, comments)
+                transmit(ser, verbose)
+                if not ser.is_open:
+                    ser.open()
+                
 
 # # =============================================================================
 # # Do not edit below this line
