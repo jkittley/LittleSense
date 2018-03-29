@@ -15,11 +15,9 @@ loop = None
 log = Logger()
 serial_log = SerialLogger()
 tx_queue = SerialTXQueue()
-comments = []
 
 # On the Pi you can run 'ls /dev/{tty,cu}.*' to list all serial ports.
 SERIAL_PORT = '/dev/tty.usbmodem1461'
-
 
 def process_json(line, test, verbose):
     if verbose:
@@ -28,36 +26,34 @@ def process_json(line, test, verbose):
     try:
         asdict = json.loads(line)
         utc = "NOW" if 'utc' not in asdict else asdict['utc']
-
         fvs = FieldValue(Field.fromDict(asdict), asdict['value'])
         device = Device(asdict['device_id'], True)
-
         device.add_reading(utc, [fvs], 'serial_port')
     except KeyError as e:
         log.error('Serial data missing key', exception=str(e))
         if verbose:
             print('Exception', e)
-    # except Exception as e:
-    #     log.error('Serial receive failed', exception=str(e))
-    #     if verbose:
-    #         print('Exception', e)
+    except Exception as e:
+        log.error('Serial receive failed', exception=str(e))
+        if verbose:
+            print('Exception', e)
     
-def process_comment(comments, test, verbose):
-    print('Comment', comments)
-    serial_log.rx('Comment: ' + '| '.join(comments))
+def process_comment(line, test, verbose):
+    print('Comment', line)
+    serial_log.rx('Comment: {}'.format(line))
 
-def read_serial(ser, test, verbose, comments):
+def read_serial(ser, test, verbose):
     line = ser.readline().decode("utf-8").strip()
     if verbose:
         print('data received', line)
-
+    # Process line
     if line.startswith('{') and line.endswith('}'):
         process_json(line, test, verbose)
     elif line.startswith('#'):
-        comments.append(line)
+        process_comment(line, test, verbose)
     else:
-        process_comment(comments, test, verbose)
-        comments = []
+        if verbose:
+            print('Unknown line type', line)
             
 def test_data_generator(verbose):
     if verbose:
@@ -79,7 +75,7 @@ def test_data_generator(verbose):
         FieldValue(Field("float", "battery_level", "volts"), randint(20,35)/10.0),
         FieldValue(Field("float", "signal_strength", "db"), randint(20,35)/10.0),
         FieldValue(Field("boolean", "switch", "state"), randint(0,1)),
-        FieldValue(Field("string", "message", "text"), 'HEY' + ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(10)) ),
+        FieldValue(Field("string", "message", "text"), ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(10)) ),
     ]
     device2.add_reading("NOW", field_values, 'test_data')
 
@@ -109,7 +105,7 @@ def launch(test=False, verbose=False):
     else:
         with serial.Serial(SERIAL_PORT, 115200, timeout=10) as ser:
             while True:
-                read_serial(ser, test, verbose, comments)
+                read_serial(ser, test, verbose)
                 transmit(ser, verbose)
                 if not ser.is_open:
                     ser.open()
