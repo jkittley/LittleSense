@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 # create a file handler
 
-log_file = Path('data/serial.log')
+log_file = Path(os.path.realpath(__file__)).parent.parent.child('data').child('serial.log')
 if not log_file.exists():
     log_file.write_file("")
 handler = RotatingFileHandler(log_file, mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
