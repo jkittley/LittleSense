@@ -3,6 +3,7 @@ old/
 *.pyc
 server/data/tinydb/*.json
 server/data/*.db
+server/data/*.log
 backups/
 docs/build/
 docs/make.bat
@@ -13,3 +14,5 @@ server/.pytest_cache/
 
 device/arduino/BLE
 device/arduino/RFM69
+
+.vscode/

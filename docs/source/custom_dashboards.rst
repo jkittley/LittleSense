@@ -27,8 +27,6 @@ Each item in the plots array must be an object like the one in the example below
 
     "plots": [
         {
-            "id": 1,
-            "pos": 1,
             "title": "Plot 1",
             "width": 6,
             "help": "Some help text for the viewer",
@@ -40,8 +38,6 @@ Each item in the plots array must be an object like the one in the example below
         ...
     ]
 
-:id: Must be unique.
-:pos: Used to order the plots. Starts in the top left.
 :title: The plot title
 :width: The plot width. A vaulue from 1 to 12
 :help: Help text for the user

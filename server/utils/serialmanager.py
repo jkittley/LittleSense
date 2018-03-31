@@ -4,6 +4,24 @@ import arrow, json, math
 from functools import wraps
 from tinydb import TinyDB, Query
 import uuid
+import os, logging
+from logging.handlers import RotatingFileHandler
+from unipath import Path
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# create a file handler
+
+log_file = Path(os.path.realpath(__file__)).parent.parent.child('data').child('serial.log')
+if not log_file.exists():
+    log_file.write_file("")
+handler = RotatingFileHandler(log_file, mode='a', maxBytes=5*1024*1024, backupCount=2, encoding=None, delay=0)
+handler.setLevel(logging.INFO)
+# create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(handler)
 
 class SerialTXQueue():
     """An interface between the web UI and serial interface. Messages can be added to the queue which will then be sent by the background transeiver service."""
@@ -64,11 +82,7 @@ class SerialTXQueue():
 
   
 class SerialLogger():
-    """Log specifically designed for the serial data with InfluxDB backend. Data has a special retention poilicy meaning that it is automatically destroyed after an hour."""
-
-    def __init__(self):
-        self._ifdb = get_InfluxDB()
-        self._ifdb.create_retention_policy('serial_data', '1h', 1, default=False)
+    """Log specifically designed for the serial data."""
 
     def add_message(self, rxtx:str, message:str):
         """Add a serial message to the log.
@@ -78,18 +92,7 @@ class SerialLogger():
             message: Message to record
 
         """
-        logmsg = {
-            "measurement": settings.INFLUX_SERIAL,
-            "tags": {
-                "rxtx": str(rxtx).lower().strip(),
-            },
-            "time": arrow.utcnow().format(),
-            "fields": {
-                "message": str(message).strip()
-            }
-        }
-        # Save Reading
-        self._ifdb.write_points([logmsg], retention_policy="serial_data")
+        logger.info("{} {}".format(rxtx, str(message).strip()))
         
     def rx(self, message:str):
         """Shortcut to add_message for RX
@@ -109,32 +112,30 @@ class SerialLogger():
         """
         self.add_message('tx', message)
 
-    def all(self):
-        """Short cut to filter with no params"""
-        return self.filter()
+    def tail(self, nlines:int=15):
+        """Return the tail of the logg file
+        
+        Args:
+            nlines: Number of lines to return
 
-    def filter(self, **kwargs):
-        """List serial messages in log.
-
-        Keyword Args:
-            start: Start of search period
-            end: Endo of search period
+        Returns:
+            str: lines seporated with newlines
 
         """
-        start   = kwargs.get('start', arrow.utcnow().shift(days=-1))
-        end     = kwargs.get('end', arrow.utcnow())
-        limit   = kwargs.get('limit', 500)
-        
-        query = 'SELECT * FROM "{policy}"."{mess}" WHERE time >= \'{start}\' and time <= \'{end}\' ORDER BY time DESC LIMIT {limit}'.format(
-            policy="serial_data",
-            mess=settings.INFLUX_SERIAL, 
-            start=start, 
-            end=end,
-            limit=limit
-        )
-        results = list(self._ifdb.query(query).get_points())
-        return results
-       
+        bufsize = 8192
+        fsize = os.stat(log_file).st_size
+        iter = 0
+        with open(log_file) as f:
+            if bufsize > fsize:
+                bufsize = fsize-1
+            data = []
+            while True:
+                iter +=1
+                f.seek(fsize-bufsize*iter)
+                data.extend(f.readlines())
+                if len(data) >= nlines or f.tell() == 0:
+                    return ''.join(data[-nlines:])
+                           
     def __len__(self):
         try:
             counts = next(self._ifdb.query('SELECT count(*) FROM "{}"'.format(settings.INFLUX_SERIAL)).get_points())
@@ -143,7 +144,7 @@ class SerialLogger():
             return 0
 
     def __iter__(self):
-        return (x for x in self.all())
+        return (x for x in self.tail())
 
     def __str__(self):
         return "Serial Logger"

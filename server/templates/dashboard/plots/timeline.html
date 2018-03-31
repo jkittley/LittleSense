@@ -21,7 +21,9 @@
     var metrics = JSON.parse('{ "metrics": {{ plot.metrics|tojson|safe }} }');
         metrics = metrics['metrics'];
     var time_init = JSON.parse('{{ plot.time|default("{}")|tojson|safe }}');
-   
+    
+    var last_update = null;
+
     function initPlot() {     
         // DOM element where the Timeline will be attached
         var container = document.getElementById(elem_id);
@@ -32,7 +34,7 @@
         // Configuration for the Timeline
         var options = {
             zoomMax: 1000 * 60 * 60,
-            stack: false,
+            stack: true,
             maxHeight: 400,
             start: moment.utc().subtract(5, 'minutes').toDate(),
             end: moment().utc().toDate()
@@ -75,7 +77,9 @@
         });
         
         // Move timeline to most resent data
-        if (most_recent!==null) timeline.moveTo(moment(most_recent).toDate())
+        if (most_recent!==null) { 
+            timeline.moveTo(moment(most_recent).toDate());
+        }
     }
 
     function updError() {
@@ -84,11 +88,13 @@
     }
 
     function updatePlot() {
-        var new_times = calculate_times(time_init);
+        var new_times = calculate_times(time_init, last_update);
         if (new_times===null) { updError(); return; }
-        console.log(new_times)
+        
+        last_update = new_times.end;
+
         getData(
-            new_times.last_update,
+            new_times.start,
             new_times.end,
             time_init.fill, 
             reading_interval,
@@ -96,10 +102,10 @@
             updSuccess,
             updError
         );
-        last_update = moment.utc()
     }
 
     // Startup and set refresh
+    
     initPlot();
     updatePlot();
     if (refresh_interval >0) intervalTimer = setInterval(updatePlot, refresh_interval); 

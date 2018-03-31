@@ -11,15 +11,13 @@ SerialLogger
    .. autosummary::
 
       ~SerialLogger.add_message
-      ~SerialLogger.all
-      ~SerialLogger.filter
       ~SerialLogger.rx
+      ~SerialLogger.tail
       ~SerialLogger.tx
 
    .. rubric:: Methods Documentation
 
    .. automethod:: add_message
-   .. automethod:: all
-   .. automethod:: filter
    .. automethod:: rx
+   .. automethod:: tail
    .. automethod:: tx

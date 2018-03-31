@@ -7,20 +7,15 @@
             "width": 6,
             "help": "Some help text for the viewer",
             "metrics": [{
-                "name": "Device 1: Signal (dB)",
-                "field_id": "float_signal_db",
+                "name": "Device 1: Audio Level (dB)",
+                "field_id": "float_audio_level_db",
                 "device_id": "test_device_1",
                 "aggrfunc": "mean"             
             },{
-                "name": "Device 1: Max Light Level (Lux)",
-                "field_id": "int_light_level_lux",
-                "device_id": "test_device_1",
-                "aggrfunc": "max"
-            },{
-                "name": "Device 2: Switch State (OnOff)",
-                "field_id": "bool_switch_state",
+                "name": "Device 2: Audio Level (dB)",
+                "field_id": "float_audio_level_db",
                 "device_id": "test_device_2",
-                "aggrfunc": "count"
+                "aggrfunc": "mean"             
             }],
             "time": {
                 "start": null,
@@ -41,8 +36,13 @@
             "width": 6,
             "help": "Some help text for the viewer",
             "metrics": [{
-                "name": "Device 2: Temp (C)",
-                "field_id": "float_temp_c",
+                "name": "Device 2: Signal Strength (dB)",
+                "field_id": "float_signal_strength_db",
+                "device_id": "test_device_2",
+                "aggrfunc": "mean"             
+            },{
+                "name": "Device 2: Battery (Volts)",
+                "field_id": "float_battery_level_volts",
                 "device_id": "test_device_2",
                 "aggrfunc": "mean"             
             },{
@@ -66,7 +66,7 @@
             "refresh_interval_seconds": 5
         },
         {
-            "title": "Plot 1",
+            "title": "Timeline",
             "width": 12,
             "help": "Some help text for the viewer",
             "metrics": [{
@@ -75,7 +75,7 @@
                 "device_id": "test_device_1",
                 "aggrfunc": "mean"             
             },{
-                "name": "Device 1: Report (text)",
+                "name": "Device 2: Report (text)",
                 "field_id": "string_message_text",
                 "device_id": "test_device_2",
                 "aggrfunc": "last"

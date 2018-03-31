@@ -40,7 +40,7 @@ class FieldValue():
             raise ValueError('Cannot parse value {} - {}'.format(value, str(e)))
 
     def __str__(self):
-        return "Reading for Device {}, Field {} = {}".format(self.device.id, self.field.id, self.value)
+        return "FieldValue for Field {} and value {}".format(self.field.id, self.value)
 
     def __repr__(self):
-        return "Reading(Device, Field, value)"
+        return "FieldValue(Field, value)"
